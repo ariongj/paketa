@@ -109,7 +109,7 @@ export function HeroSection({ slides, autoplay }: { slides: HeroSlide[]; autopla
         </div>
       )}
 
-      <Link to="/proizvodi" className="sr-only">
+      <Link to="/produktet" className="sr-only">
         {t('allProducts')}
       </Link>
     </section>

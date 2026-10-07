@@ -143,7 +143,7 @@ export default function CartPage() {
               <h1 className="display relative mt-6 text-[34px] leading-tight text-ink sm:text-5xl">{t('emptyTitle')}</h1>
               <p className="relative mt-3 max-w-lg text-[15.5px] leading-relaxed text-muted">{t('emptyText')}</p>
               <div className="relative mt-8 flex flex-wrap justify-center gap-3">
-                <ButtonLink to="/proizvodi" size="lg" iconRight={<ArrowRight className="h-4 w-4" />}>
+                <ButtonLink to="/produktet" size="lg" iconRight={<ArrowRight className="h-4 w-4" />}>
                   {t('browse')}
                 </ButtonLink>
                 <ButtonLink to="/#mjerenje" size="lg" variant="outline" icon={<Ruler className="h-4 w-4" />}>
@@ -163,7 +163,7 @@ export default function CartPage() {
                   {items(totals.count)} · <span className="font-semibold text-ink">{money(totals.total, lang)}</span>
                 </p>
               </div>
-              <Link to="/proizvodi" className="group hidden items-center gap-2 text-sm font-semibold text-ink-soft hover:text-ink sm:inline-flex">
+              <Link to="/produktet" className="group hidden items-center gap-2 text-sm font-semibold text-ink-soft hover:text-ink sm:inline-flex">
                 <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
                 {t('continue')}
               </Link>
@@ -181,7 +181,7 @@ export default function CartPage() {
                   </div>
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-3 px-1 sm:justify-end">
-                  <Link to="/proizvodi" className="group inline-flex items-center gap-2 text-sm font-semibold text-ink-soft hover:text-ink sm:hidden">
+                  <Link to="/produktet" className="group inline-flex items-center gap-2 text-sm font-semibold text-ink-soft hover:text-ink sm:hidden">
                     <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
                     {t('continue')}
                   </Link>
@@ -214,7 +214,7 @@ export default function CartPage() {
                   <CouponBox totals={totals} className="mt-5" />
                   <div className="my-5 h-px bg-line" />
                   <TotalsRows v={view} big />
-                  <Button size="lg" className="mt-6 w-full" iconRight={<ArrowRight className="h-4 w-4" />} onClick={() => navigate('/placanje')}>
+                  <Button size="lg" className="mt-6 w-full" iconRight={<ArrowRight className="h-4 w-4" />} onClick={() => navigate('/pagesa')}>
                     {t('toCheckout')}
                   </Button>
                   <p className="mt-3 flex items-center justify-center gap-1.5 text-[12px] text-muted">
@@ -235,7 +235,7 @@ export default function CartPage() {
             eyebrow={t('recoEyebrow')}
             title={empty ? t('recoTitleEmpty') : t('recoTitle')}
             action={
-              <Link to="/proizvodi" className="group inline-flex items-center gap-2 text-sm font-semibold text-ink hover:text-brand-700">
+              <Link to="/produktet" className="group inline-flex items-center gap-2 text-sm font-semibold text-ink hover:text-brand-700">
                 {t('viewAll')} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
             }

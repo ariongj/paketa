@@ -196,7 +196,14 @@ export function Accent({ text, className, accentClassName }: { text: string; cla
     <span className={className}>
       {parts.map((p, i) =>
         p.startsWith('*') && p.endsWith('*') ? (
-          <em key={i} className={cn('font-display italic text-brand-600', accentClassName)}>
+          // Paketoje accent: brand green with a lime "marker" swipe behind the lower half of the word
+          <em
+            key={i}
+            className={cn(
+              'not-italic text-brand-600 [background-image:linear-gradient(transparent_58%,var(--color-lime)_58%,var(--color-lime)_92%,transparent_92%)] [box-decoration-break:clone] px-[0.04em]',
+              accentClassName,
+            )}
+          >
             {p.slice(1, -1)}
           </em>
         ) : (

@@ -3,11 +3,26 @@
 
 export type Lang = 'me' | 'sq' | 'en';
 
-/** A localized string: Montenegrin (default), Albanian, English. */
+/**
+ * A localized string. Paketoje: `sq` Albanian (default), `en` English, `me` Serbian (Latin) —
+ * the `me` key name is kept from the shared platform code.
+ */
 export type L10n = { me: string; sq: string; en: string };
 
-/** Units a product can be sold in. */
-export type Unit = 'kom' | 'm2' | 'm' | 'set';
+/**
+ * Units a product is sold in (the cart quantity counts these):
+ * - 'pack'  — a pack/sleeve of `packSize` pieces; `price` is per pack, the per-piece price is derived
+ * - 'kom'   — a single item (a roll, a box sold as one piece…)
+ * - 'set'   — a set
+ * - 'm'     — metre
+ */
+export type Unit = 'kom' | 'pack' | 'm' | 'set';
+
+/** Volume price (Çmim shumice): from `minQty` units in one cart line the unit price drops by `pct` %. */
+export interface PriceTier {
+  minQty: number;
+  pct: number;
+}
 
 export type Badge = 'new' | 'sale' | 'bestseller' | 'premium';
 
@@ -20,6 +35,8 @@ export interface Category {
   image: string;
   order: number;
   featured: boolean;
+  /** Range announced but not in stock yet ("Së shpejti") — shown with a notify/quote form instead of products */
+  soon?: boolean;
 }
 
 export interface ProductOptionValue {
@@ -56,19 +73,26 @@ export interface Product {
   name: L10n;
   short: L10n;
   description: L10n;
-  /** Regular price in EUR (VAT included) per unit — the "compare-at" (Çmimi referues) when salePrice is set */
+  /** Regular price in EUR (VAT included) per selling unit (per pack for 'pack') — the "compare-at" (Çmimi referues) when salePrice is set */
   price: number;
   /** Optional sale price (VAT included) — the active selling price */
   salePrice?: number | null;
   unit: Unit;
-  /** m² per package (flooring/tiles) — cart quantity is in packages */
+  /** Pieces per pack (unit 'pack'). The per-piece price shown to shoppers is price / packSize. */
   packSize?: number;
+  /** Packs per shipping carton — "add a full carton" shortcut and carton-based volume pricing */
+  cartonPacks?: number;
+  /** Volume pricing per cart line, ascending minQty (e.g. 10 packs −5 %, 1 carton −10 %) */
+  tiers?: PriceTier[];
   /** On-hand quantity available to sell (999 = made to order / unlimited) */
   stock: number;
   images: string[];
   options: ProductOption[];
   specs: ProductSpec[];
-  /** Installation offered as an add-on, priced per unit (per m² for m2 products) */
+  /**
+   * Paketoje: custom LOGO PRINT add-on ("Printim me logo"), priced per selling unit (per pack).
+   * The field keeps its platform name `installation`.
+   */
   installation?: { available: boolean; price: number } | null;
   badges: Badge[];
   featured: boolean;
@@ -103,12 +127,14 @@ export interface Product {
 export interface CartItem {
   key: string;
   productId: string;
-  /** pieces / metres / packages (for m2 products) */
+  /** packs / pieces / sets / metres — see Product.unit */
   qty: number;
   options: Record<string, string>;
+  /** Paketoje: custom logo print requested for this line */
   installation: boolean;
 }
 
+/** 'installation' = Paketoje "in print production" (orders with a custom logo print), before shipping. */
 export type OrderStatus = 'new' | 'confirmed' | 'processing' | 'shipped' | 'installation' | 'completed' | 'cancelled';
 export type PaymentMethod = 'cod' | 'bank' | 'card';
 export type PaymentStatus = 'pending' | 'paid' | 'refunded';
@@ -125,9 +151,12 @@ export interface OrderLine {
   /** Human readable option summary, e.g. "Širina: 80 cm · Boja: Bijela" */
   options: string;
   unitPrice: number;
+  /** Paketoje: custom logo print on this line */
   installation: boolean;
   installationPrice: number;
   lineTotal: number;
+  /** Volume-price discount (%) baked into unitPrice, if a tier applied */
+  tierPct?: number;
   /** CMS v2: total discount allocated to this line (product + share of order discounts), EUR */
   discount?: number;
   /** CMS v2: how that discount splits per rule (PDF p.24 "Çdo allocation ruhet në porosi") */
@@ -173,6 +202,7 @@ export interface Customer {
   city: string;
   address: string;
   company?: string;
+  /** Business number — Kosovo NUI (field name kept from the platform) */
   pib?: string;
   note?: string;
 }
@@ -230,6 +260,7 @@ export interface Order {
   draftId?: string;
 }
 
+/** Paketoje: 'measurement' = free SAMPLES request, 'quote' = wholesale / logo-print quote. */
 export type InquiryType = 'measurement' | 'contact' | 'quote';
 export type InquiryStatus = 'new' | 'contacted' | 'scheduled' | 'done';
 /** Where an inquiry came from (PDF p.43) */
@@ -376,7 +407,9 @@ export interface Settings {
   city: string;
   mapUrl: string;
   hours: L10n;
+  /** NUI — Kosovo business number */
   pib: string;
+  /** VAT (TVSH) number */
   pdv: string;
   bankName: string;
   bankAccount: string;

@@ -133,10 +133,10 @@ export default function About() {
             </h1>
             <p className="mt-7 max-w-xl text-[17.5px] leading-[1.7] text-ink-soft">{l(settings.about)}</p>
             <div className="mt-9 flex flex-wrap gap-3">
-              <ButtonLink to="/projekti" variant="dark" size="lg" iconRight={<ArrowRight className="h-4 w-4" />}>
+              <ButtonLink to="/referencat" variant="dark" size="lg" iconRight={<ArrowRight className="h-4 w-4" />}>
                 {t('ourWork')}
               </ButtonLink>
-              <ButtonLink to="/kontakt" variant="outline" size="lg">
+              <ButtonLink to="/kontakti" variant="outline" size="lg">
                 {ts('nav_contact')}
               </ButtonLink>
             </div>
@@ -202,7 +202,7 @@ export default function About() {
         <ProcessSteps
           data={process}
           action={
-            <ButtonLink to="/usluge" variant="outline" iconRight={<ArrowRight className="h-4 w-4" />}>
+            <ButtonLink to="/sherbimet" variant="outline" iconRight={<ArrowRight className="h-4 w-4" />}>
               {t('allServices')}
             </ButtonLink>
           }

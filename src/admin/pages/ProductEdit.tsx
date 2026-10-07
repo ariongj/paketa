@@ -400,7 +400,7 @@ function Editor({ source }: { source?: ProductX }) {
         actions={
           <>
             {!isNew && origStatus === 'active' && (
-              <a href={href(`/proizvod/${original.p.slug}`)} target="_blank" rel="noreferrer" className={buttonClass({ variant: 'outline', size: 'sm', shape: 'rounded' })}>
+              <a href={href(`/produkt/${original.p.slug}`)} target="_blank" rel="noreferrer" className={buttonClass({ variant: 'outline', size: 'sm', shape: 'rounded' })}>
                 <ExternalLink className="h-4 w-4" /> <span className="max-sm:sr-only">{t('viewOnSite')}</span>
               </a>
             )}

@@ -1,7 +1,7 @@
 import { defineDict } from '@/i18n';
 import type { Lang } from '@/lib/types';
 
-/** Strings for the catalogue page (/proizvodi) and its building blocks. */
+/** Strings for the catalogue page (/produktet) and its building blocks. */
 export const T = defineDict({
   me: {
     catalog: 'Katalog',

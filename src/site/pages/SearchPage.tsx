@@ -320,7 +320,7 @@ export default function SearchPage() {
                 </Chip>
               ))}
               {activeCat && (
-                <Link to={`/proizvodi/${activeCat.slug}`} className="ml-1 inline-flex shrink-0 items-center gap-1 text-[13.5px] font-semibold text-brand-700 hover:text-brand-800">
+                <Link to={`/produktet/${activeCat.slug}`} className="ml-1 inline-flex shrink-0 items-center gap-1 text-[13.5px] font-semibold text-brand-700 hover:text-brand-800">
                   {t('wholeCategory')} <ArrowUpRight className="h-4 w-4" />
                 </Link>
               )}
@@ -383,7 +383,7 @@ export default function SearchPage() {
               <h2 className="display text-[30px] leading-[1.05] text-ink sm:text-[40px]">
                 <Accent text={t('browse')} />
               </h2>
-              <Link to="/proizvodi" className="inline-flex shrink-0 items-center gap-1.5 text-[14px] font-semibold text-ink hover:text-brand-700">
+              <Link to="/produktet" className="inline-flex shrink-0 items-center gap-1.5 text-[14px] font-semibold text-ink hover:text-brand-700">
                 {t('allProducts')} <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -409,7 +409,7 @@ export default function SearchPage() {
             text={t('customText')}
             actions={
               <>
-                <ButtonLink to="/kontakt" variant="light" size="lg" iconRight={<ArrowRight className="h-4 w-4" />}>
+                <ButtonLink to="/kontakti" variant="light" size="lg" iconRight={<ArrowRight className="h-4 w-4" />}>
                   {t('customCta')}
                 </ButtonLink>
                 <a

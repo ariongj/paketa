@@ -132,7 +132,7 @@ function AskTile() {
         <p className="mt-3 text-[15px] leading-relaxed text-paper/65">{t('ask_text')}</p>
       </div>
       <div className="relative mt-auto flex flex-col gap-2 pt-8">
-        <ButtonLink to="/kontakt" variant="light" iconRight={<ArrowUpRight className="h-4 w-4" />}>
+        <ButtonLink to="/kontakti" variant="light" iconRight={<ArrowUpRight className="h-4 w-4" />}>
           {t('ask_button')}
         </ButtonLink>
         <a href={telHref(settings.phone)} className="inline-flex h-11 items-center justify-center gap-2 rounded-full border border-white/25 px-5 text-sm font-semibold text-white transition hover:bg-white/10">
@@ -203,7 +203,7 @@ export default function Blog() {
                 title={t('emptyTitle')}
                 text={t('emptyText')}
                 action={
-                  <ButtonLink to="/kontakt" variant="dark">
+                  <ButtonLink to="/kontakti" variant="dark">
                     {t('contact')}
                   </ButtonLink>
                 }

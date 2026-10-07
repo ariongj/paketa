@@ -222,7 +222,7 @@ export const B = defineDict({
     image: 'Slika',
     ctaLabel: 'Tekst dugmeta',
     href: 'Link',
-    hrefHint: 'Npr. /proizvodi, /kontakt ili /proizvodi/podovi',
+    hrefHint: 'Npr. /produktet, /kontakti ili /produktet/podovi',
     accentHint: 'Riječi u {word} postaju istaknuti kurziv',
     accentWord: 'zvjezdicama',
 
@@ -508,7 +508,7 @@ export const B = defineDict({
     image: 'Imazhi',
     ctaLabel: 'Teksti i butonit',
     href: 'Lidhja',
-    hrefHint: 'P.sh. /proizvodi, /kontakt ose /proizvodi/podovi',
+    hrefHint: 'P.sh. /produktet, /kontakti ose /produktet/podovi',
     accentHint: 'Fjalët mes {word} bëhen theks në kursiv',
     accentWord: 'yjeve',
 
@@ -794,7 +794,7 @@ export const B = defineDict({
     image: 'Image',
     ctaLabel: 'Button label',
     href: 'Link',
-    hrefHint: 'e.g. /proizvodi, /kontakt or /proizvodi/podovi',
+    hrefHint: 'e.g. /produktet, /kontakti or /produktet/podovi',
     accentHint: 'Words in {word} become italic accents',
     accentWord: 'asterisks',
 

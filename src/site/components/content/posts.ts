@@ -6,7 +6,7 @@ import { slugify } from '@/lib/utils';
 /** Language-independent key for a post's tag (used in ?tag= filters). */
 export const tagKey = (p: Post) => slugify(p.tag.me);
 
-export const postHref = (p: Post) => `/savjeti/${p.slug}`;
+export const postHref = (p: Post) => `/blog/${p.slug}`;
 
 /** Published posts, newest first. */
 export function usePublishedPosts() {

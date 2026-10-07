@@ -81,7 +81,7 @@ export default function CmsPageView() {
           return (
             <li key={p.id}>
               <Link
-                to={`/stranica/${p.slug}`}
+                to={`/faqe/${p.slug}`}
                 aria-current={current ? 'page' : undefined}
                 className={cn(
                   'group flex items-center gap-3 rounded-2xl px-3 py-3 text-[14.5px] font-semibold transition-colors',
@@ -113,7 +113,7 @@ export default function CmsPageView() {
             <ButtonLink to="/" variant="dark" iconRight={<ArrowRight className="h-4 w-4" />}>
               {c('home')}
             </ButtonLink>
-            <ButtonLink to="/kontakt" variant="outline">
+            <ButtonLink to="/kontakti" variant="outline">
               {t('nf_contact')}
             </ButtonLink>
           </>
@@ -174,7 +174,7 @@ export default function CmsPageView() {
                     {l(settings.hours)}
                   </li>
                 </ul>
-                <ButtonLink to="/kontakt" variant="light" className="mt-7 w-full" iconRight={<ArrowRight className="h-4 w-4" />}>
+                <ButtonLink to="/kontakti" variant="light" className="mt-7 w-full" iconRight={<ArrowRight className="h-4 w-4" />}>
                   {t('contact')}
                 </ButtonLink>
               </div>

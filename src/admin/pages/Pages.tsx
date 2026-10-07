@@ -286,7 +286,7 @@ export default function Pages() {
                           </Link>
                           <LangDots value={[p.title, p.body]} />
                         </div>
-                        <div className="mt-0.5 truncate font-mono text-[12px] text-muted">/stranica/{p.slug}</div>
+                        <div className="mt-0.5 truncate font-mono text-[12px] text-muted">/faqe/{p.slug}</div>
                       </div>
                     </div>
 
@@ -365,7 +365,7 @@ function RowActions({
     <ActionMenu
       label={ta('actions')}
       items={[
-        { label: te('viewOnSite'), icon: ExternalLink, onSelect: () => window.open(href(`/stranica/${p.slug}`), '_blank', 'noopener') },
+        { label: te('viewOnSite'), icon: ExternalLink, onSelect: () => window.open(href(`/faqe/${p.slug}`), '_blank', 'noopener') },
         { label: ta('edit'), icon: Pencil, onSelect: () => navigate(`/admin/stranice/${p.id}`) },
         ...(canFooter
           ? [
@@ -387,11 +387,11 @@ function ThemePages() {
   const te = useDict(ed, 'admin');
   const rows: { name: string; path: string; where: string; to: string }[] = [
     { name: t('tp_home'), path: '/', where: t('w_editor'), to: '/admin/prodavnica/editor' },
-    { name: t('tp_about'), path: '/o-nama', where: t('w_settings'), to: '/admin/konfiguracija' },
-    { name: t('tp_contact'), path: '/kontakt', where: t('w_settings'), to: '/admin/konfiguracija' },
-    { name: t('tp_services'), path: '/usluge', where: t('w_models'), to: '/admin/modeli?model=cm-usluge' },
-    { name: t('tp_projects'), path: '/projekti', where: t('w_projects'), to: '/admin/projekti' },
-    { name: t('tp_blog'), path: '/savjeti', where: t('w_blog'), to: '/admin/savjeti' },
+    { name: t('tp_about'), path: '/rreth-nesh', where: t('w_settings'), to: '/admin/konfiguracija' },
+    { name: t('tp_contact'), path: '/kontakti', where: t('w_settings'), to: '/admin/konfiguracija' },
+    { name: t('tp_services'), path: '/sherbimet', where: t('w_models'), to: '/admin/modeli?model=cm-usluge' },
+    { name: t('tp_projects'), path: '/referencat', where: t('w_projects'), to: '/admin/projekti' },
+    { name: t('tp_blog'), path: '/blog', where: t('w_blog'), to: '/admin/savjeti' },
     { name: `${t('tp_faq')} · ${t('faqWhere')}`, path: '/', where: t('w_models'), to: '/admin/modeli?model=cm-faq' },
   ];
   return (

@@ -270,7 +270,7 @@ export default function Products() {
   const menuFor = (p: ProductX): MenuItem[] => {
     const items: MenuItem[] = [{ label: canEdit ? t('edit') : ta('open'), icon: Pencil, onSelect: () => navigate(`/admin/proizvodi/${p.id}`) }];
     if (canEdit) items.push({ label: t('duplicate'), icon: Copy, onSelect: () => duplicate(p) });
-    if (p.status === 'active') items.push({ label: t('viewOnSite'), icon: ExternalLink, onSelect: () => window.open(href(`/proizvod/${p.slug}`), '_blank', 'noopener') });
+    if (p.status === 'active') items.push({ label: t('viewOnSite'), icon: ExternalLink, onSelect: () => window.open(href(`/produkt/${p.slug}`), '_blank', 'noopener') });
     if (p.status !== 'active') items.push({ label: t('publish'), icon: Eye, onSelect: () => one(p, 'active'), disabled: !canPublish, hint: t('noPermPublish'), divider: true });
     if (p.status === 'active') items.push({ label: t('toDraft'), icon: CircleDashed, onSelect: () => one(p, 'draft'), disabled: !canEdit, hint: t('noPerm'), divider: true });
     if (p.status === 'archived') items.push({ label: t('restore'), icon: ArchiveRestore, onSelect: () => one(p, 'draft'), disabled: !canArchive, hint: t('noPerm') });

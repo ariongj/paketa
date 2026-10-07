@@ -1,10 +1,10 @@
 import type { Lang, Unit } from './types';
 
 const LOCALE: Record<Lang, string> = { me: 'de-DE', sq: 'de-DE', en: 'en-IE' };
-const DATE_LOCALE: Record<Lang, string> = { me: 'sr-Latn-ME', sq: 'sq-AL', en: 'en-GB' };
+const DATE_LOCALE: Record<Lang, string> = { me: 'sr-Latn-RS', sq: 'sq-AL', en: 'en-GB' };
 
-/** 1.249,00 € (ME/SQ) — €1,249.00 (EN) */
-export function money(value: number, lang: Lang = 'me', opts: { decimals?: boolean } = {}) {
+/** 1.249,00 € (SQ/SR) — €1,249.00 (EN) */
+export function money(value: number, lang: Lang = 'sq', opts: { decimals?: boolean } = {}) {
   const decimals = opts.decimals ?? true;
   return new Intl.NumberFormat(LOCALE[lang], {
     style: 'currency',
@@ -14,8 +14,21 @@ export function money(value: number, lang: Lang = 'me', opts: { decimals?: boole
   }).format(value);
 }
 
+/**
+ * Per-piece price with sub-cent precision (packaging is priced in fractions of a cent):
+ * 0,05 € · 0,004 € · 0,015 €. Always 2–4 decimals.
+ */
+export function moneyPiece(value: number, lang: Lang = 'sq') {
+  return new Intl.NumberFormat(LOCALE[lang], {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: value > 0 && value < 0.01 ? 4 : 3,
+  }).format(value);
+}
+
 /** Compact money for charts/KPIs: 12,4k € */
-export function moneyCompact(value: number, lang: Lang = 'me') {
+export function moneyCompact(value: number, lang: Lang = 'sq') {
   if (Math.abs(value) < 10000) return money(value, lang, { decimals: false });
   return new Intl.NumberFormat(LOCALE[lang], {
     style: 'currency',
@@ -25,11 +38,11 @@ export function moneyCompact(value: number, lang: Lang = 'me') {
   }).format(value);
 }
 
-export function num(value: number, lang: Lang = 'me', maxDecimals = 2) {
+export function num(value: number, lang: Lang = 'sq', maxDecimals = 2) {
   return new Intl.NumberFormat(LOCALE[lang], { maximumFractionDigits: maxDecimals }).format(value);
 }
 
-export function date(iso: string | Date, lang: Lang = 'me', opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' }) {
+export function date(iso: string | Date, lang: Lang = 'sq', opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' }) {
   const d = typeof iso === 'string' ? new Date(iso) : iso;
   try {
     return new Intl.DateTimeFormat(DATE_LOCALE[lang], opts).format(d);
@@ -38,7 +51,7 @@ export function date(iso: string | Date, lang: Lang = 'me', opts: Intl.DateTimeF
   }
 }
 
-export function dateTime(iso: string, lang: Lang = 'me') {
+export function dateTime(iso: string, lang: Lang = 'sq') {
   return date(iso, lang, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
@@ -48,7 +61,7 @@ const REL: Record<Lang, { now: string; min: string; h: string; d: string; ago: (
   en: { now: 'just now', min: 'min', h: 'h', d: 'd', ago: (s) => `${s} ago` },
 };
 
-export function timeAgo(iso: string, lang: Lang = 'me') {
+export function timeAgo(iso: string, lang: Lang = 'sq') {
   const r = REL[lang];
   const diff = (Date.now() - new Date(iso).getTime()) / 1000;
   if (diff < 60) return r.now;
@@ -58,17 +71,36 @@ export function timeAgo(iso: string, lang: Lang = 'me') {
   return date(iso, lang);
 }
 
+/** Selling unit of a cart line: pack ("pako"), single piece, set, metre. */
 const UNIT_LABEL: Record<Lang, Record<Unit, string>> = {
-  me: { kom: 'kom', m2: 'm²', m: 'm', set: 'set' },
-  sq: { kom: 'copë', m2: 'm²', m: 'm', set: 'set' },
-  en: { kom: 'pc', m2: 'm²', m: 'm', set: 'set' },
+  me: { kom: 'kom', pack: 'pak.', m: 'm', set: 'set' },
+  sq: { kom: 'copë', pack: 'pako', m: 'm', set: 'set' },
+  en: { kom: 'pc', pack: 'pack', m: 'm', set: 'set' },
 };
 
-export function unitLabel(unit: Unit, lang: Lang = 'me') {
+const PIECES: Record<Lang, string> = { me: 'kom', sq: 'copë', en: 'pcs' };
+const CARTON: Record<Lang, [string, string]> = { me: ['karton', 'kartona'], sq: ['karton', 'kartonë'], en: ['carton', 'cartons'] };
+
+export function unitLabel(unit: Unit, lang: Lang = 'sq') {
   return UNIT_LABEL[lang][unit];
 }
 
-/** "/ m²" style suffix for prices */
-export function perUnit(unit: Unit, lang: Lang = 'me') {
+/** "/ pako" style suffix for prices */
+export function perUnit(unit: Unit, lang: Lang = 'sq') {
   return `/ ${unitLabel(unit, lang)}`;
+}
+
+/** "copë" / "pcs" / "kom" — the piece word used with pack sizes. */
+export function piecesLabel(lang: Lang = 'sq') {
+  return PIECES[lang];
+}
+
+/** "1.000 copë" */
+export function pieces(n: number, lang: Lang = 'sq') {
+  return `${num(n, lang, 0)} ${PIECES[lang]}`;
+}
+
+/** "karton" / "kartonë" */
+export function cartonLabel(n: number, lang: Lang = 'sq') {
+  return CARTON[lang][n === 1 ? 0 : 1];
 }

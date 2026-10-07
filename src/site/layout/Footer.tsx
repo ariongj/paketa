@@ -219,13 +219,13 @@ function DefaultColumns() {
             <ul className="space-y-2.5 text-[14.5px]">
               {cats.map((c) => (
                 <li key={c.id}>
-                  <Link to={`/proizvodi/${c.slug}`} className="link-u text-paper/80 hover:text-white">
+                  <Link to={`/produktet/${c.slug}`} className="link-u text-paper/80 hover:text-white">
                     {l(c.name)}
                   </Link>
                 </li>
               ))}
               <li>
-                <Link to="/proizvodi?akcija=1" className="link-u font-semibold text-brand-200 hover:text-white">
+                <Link to="/produktet?akcija=1" className="link-u font-semibold text-brand-200 hover:text-white">
                   {t('sale')}
                 </Link>
               </li>
@@ -236,11 +236,11 @@ function DefaultColumns() {
             <h3 className="mb-4 text-[11px] font-bold uppercase tracking-[0.2em] text-paper/45">{t('footer_company')}</h3>
             <ul className="space-y-2.5 text-[14.5px]">
               {[
-                ['/o-nama', t('nav_about')],
-                ['/usluge', t('nav_services')],
-                ['/projekti', t('nav_projects')],
-                ['/savjeti', t('nav_blog')],
-                ['/kontakt', t('nav_contact')],
+                ['/rreth-nesh', t('nav_about')],
+                ['/sherbimet', t('nav_services')],
+                ['/referencat', t('nav_projects')],
+                ['/blog', t('nav_blog')],
+                ['/kontakti', t('nav_contact')],
               ].map(([to, label]) => (
                 <li key={to}>
                   <Link to={to} className="link-u text-paper/80 hover:text-white">
@@ -253,7 +253,7 @@ function DefaultColumns() {
             <ul className="space-y-2.5 text-[14.5px]">
               {pages.map((p) => (
                 <li key={p.id}>
-                  <Link to={`/stranica/${p.slug}`} className="link-u text-paper/80 hover:text-white">
+                  <Link to={`/faqe/${p.slug}`} className="link-u text-paper/80 hover:text-white">
                     {l(p.title)}
                   </Link>
                 </li>

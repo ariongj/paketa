@@ -40,7 +40,7 @@ export function BuyBox({ cfg, category, onAdd, onQuote, ctaRef }: { cfg: Configu
     <div>
       <div className="flex items-center justify-between gap-4">
         {category ? (
-          <Link to={`/proizvodi/${category.slug}`} className="eyebrow hover:text-brand-800">
+          <Link to={`/produktet/${category.slug}`} className="eyebrow hover:text-brand-800">
             {l(category.name)}
           </Link>
         ) : (

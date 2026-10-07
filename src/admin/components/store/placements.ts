@@ -22,7 +22,7 @@ export const KIND_POSITIONS: Record<PlacementKind, PlacementPosition[]> = {
 export const POSITION_PATH: Record<PlacementPosition, string> = {
   'home-hero': '/',
   'home-banner': '/',
-  catalog: '/proizvodi',
+  catalog: '/produktet',
   bar: '/',
 };
 
@@ -125,27 +125,27 @@ export function resolveHref(href: string, ctx: LinkCtx, lang: Lang): { type: Lin
     const o = ctx.offers.find((x) => x.slug === slug);
     if (o) return { type: 'offer', label: lt(o.name, lang) };
   }
-  if ((slug = slugAfter(h, '/kolekcija/'))) {
+  if ((slug = slugAfter(h, '/koleksioni/'))) {
     const c = ctx.collections.find((x) => x.slug === slug);
     if (c) return { type: 'collection', label: lt(c.title, lang) };
   }
-  if ((slug = slugAfter(h, '/proizvodi/'))) {
+  if ((slug = slugAfter(h, '/produktet/'))) {
     const c = ctx.categories.find((x) => x.slug === slug);
     if (c) return { type: 'category', label: lt(c.name, lang) };
   }
-  if ((slug = slugAfter(h, '/proizvod/'))) {
+  if ((slug = slugAfter(h, '/produkt/'))) {
     const p = ctx.products.find((x) => x.slug === slug);
     if (p) return { type: 'product', label: lt(p.name, lang) };
   }
-  if ((slug = slugAfter(h, '/stranica/'))) {
+  if ((slug = slugAfter(h, '/faqe/'))) {
     const p = ctx.pages.find((x) => x.slug === slug);
     if (p) return { type: 'page', label: lt(p.title, lang) };
   }
   // fixed storefront pages
   const path = h.split(/[?#]/)[0] || '/';
   if (h === '/#mjerenje') return { type: 'page', label: SE[lang].dest_measure };
-  if (path === '/proizvodi' && !h.includes('#')) return { type: 'category', label: site[lang].allProducts };
-  const fixed: Record<string, 'nav_services' | 'nav_contact' | 'nav_projects' | 'nav_about' | 'nav_blog'> = { '/usluge': 'nav_services', '/kontakt': 'nav_contact', '/projekti': 'nav_projects', '/o-nama': 'nav_about', '/savjeti': 'nav_blog' };
+  if (path === '/produktet' && !h.includes('#')) return { type: 'category', label: site[lang].allProducts };
+  const fixed: Record<string, 'nav_services' | 'nav_contact' | 'nav_projects' | 'nav_about' | 'nav_blog'> = { '/sherbimet': 'nav_services', '/kontakti': 'nav_contact', '/referencat': 'nav_projects', '/rreth-nesh': 'nav_about', '/blog': 'nav_blog' };
   if (fixed[path]) return { type: 'page', label: site[lang][fixed[path]] };
   return { type: 'url', label: h };
 }

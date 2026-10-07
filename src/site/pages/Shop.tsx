@@ -153,7 +153,7 @@ function ShopView({ slug }: { slug?: string }) {
           title={t('notFoundTitle')}
           text={t('notFoundText')}
           action={
-            <ButtonLink to="/proizvodi" variant="dark" iconRight={<ArrowRight className="h-4 w-4" />}>
+            <ButtonLink to="/produktet" variant="dark" iconRight={<ArrowRight className="h-4 w-4" />}>
               {ts('allProducts')}
             </ButtonLink>
           }

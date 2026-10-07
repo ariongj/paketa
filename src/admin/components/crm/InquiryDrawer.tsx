@@ -418,7 +418,7 @@ function Body({ inquiry: q, product, index, duplicateOf, onClose, onOpenInquiry 
           {(product || q.service || q.preferredDate || q.city) && (
             <div className="divide-y divide-line/70 border-t border-line/70 bg-canvas/30">
               {product && (
-                <a href={href(`/proizvod/${product.slug}`)} target="_blank" rel="noreferrer" className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-canvas">
+                <a href={href(`/produkt/${product.slug}`)} target="_blank" rel="noreferrer" className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-canvas">
                   <Thumb src={product.images[0]} className="h-10 w-10 rounded-md" />
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-1.5 text-[11.5px] text-muted">

@@ -48,10 +48,12 @@ export function paymentOf(o: Pick<Order, 'payment' | 'refunds' | 'total'>): Paym
   return 'pending';
 }
 
-/** Units a line represents: m² for packaged products, otherwise the quantity. */
-export const orderLineUnits = (l: OrderLine) => (l.unit === 'm2' && l.packSize ? r2(l.qty * l.packSize) : l.qty);
+/** Priced units of an order line (prices are per selling unit). */
+export const orderLineUnits = (l: OrderLine) => l.qty;
+/** Pieces an order line represents (packs × pack size). */
+export const orderLinePieces = (l: OrderLine) => (l.unit === 'pack' && l.packSize ? l.qty * l.packSize : l.qty);
 
-/** Installation amount of a line (EUR). */
+/** Logo-print add-on amount of a line (EUR). */
 export const orderLineInstallation = (l: OrderLine) => (l.installation && l.installationPrice ? r2(l.installationPrice * orderLineUnits(l)) : 0);
 
 /**

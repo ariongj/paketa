@@ -94,7 +94,7 @@ export default function NotFound() {
             <ButtonLink to="/" size="lg" icon={<Home className="h-4 w-4" />}>
               {t('home')}
             </ButtonLink>
-            <ButtonLink to="/proizvodi" size="lg" variant="outline" iconRight={<ArrowRight className="h-4 w-4" />}>
+            <ButtonLink to="/produktet" size="lg" variant="outline" iconRight={<ArrowRight className="h-4 w-4" />}>
               {t('products')}
             </ButtonLink>
           </div>
@@ -104,7 +104,7 @@ export default function NotFound() {
             onSubmit={(e) => {
               e.preventDefault();
               const v = q.trim();
-              navigate(v ? `/pretraga?q=${encodeURIComponent(v)}` : '/pretraga');
+              navigate(v ? `/kerko?q=${encodeURIComponent(v)}` : '/kerko');
             }}
             className="mt-6 flex w-full max-w-md animate-fade-up items-center gap-2 rounded-full border border-line bg-white p-1.5 pl-5 shadow-[0_14px_40px_-28px_rgba(28,26,23,0.5)] transition-colors [animation-delay:260ms] focus-within:border-ink/30"
           >

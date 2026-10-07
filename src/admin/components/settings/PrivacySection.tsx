@@ -172,7 +172,7 @@ export function PrivacySection({ s, set, readOnly }: SecProps) {
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1.5 pl-7 sm:pl-0">
-                  <a href={href(`/stranica/${p.slug}`)} target="_blank" rel="noreferrer" className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12.5px] font-semibold text-ink-soft hover:bg-ink/[0.05] hover:text-ink">
+                  <a href={href(`/faqe/${p.slug}`)} target="_blank" rel="noreferrer" className="inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[12.5px] font-semibold text-ink-soft hover:bg-ink/[0.05] hover:text-ink">
                     {t('view')} <ExternalLink className="h-3 w-3" />
                   </a>
                   {allow('content', 'edit') && (

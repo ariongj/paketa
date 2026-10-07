@@ -2,10 +2,14 @@ import { useCallback } from 'react';
 import { useUi } from '@/store/ui';
 import type { L10n, Lang } from '@/lib/types';
 
+/**
+ * Paketoje: Albanian is the default; the internal `me` key holds Serbian (Latin) for customers in
+ * North Mitrovica, Montenegro and the region — the key name is kept so the platform code stays shared.
+ */
 export const LANGS: { code: Lang; label: string; short: string; htmlLang: string }[] = [
-  { code: 'me', label: 'Crnogorski', short: 'ME', htmlLang: 'sr-Latn-ME' },
   { code: 'sq', label: 'Shqip', short: 'SQ', htmlLang: 'sq' },
   { code: 'en', label: 'English', short: 'EN', htmlLang: 'en' },
+  { code: 'me', label: 'Srpski', short: 'SR', htmlLang: 'sr-Latn' },
 ];
 
 export type Scope = 'site' | 'admin';
@@ -42,15 +46,16 @@ export function useDict<T extends Record<string, string>>(
 ) {
   const lang = useLang(scope);
   return useCallback(
-    (key: keyof T & string, vars?: Vars) => interpolate((dict[lang][key] ?? dict.me[key] ?? key) as string, vars),
+    (key: keyof T & string, vars?: Vars) => interpolate((dict[lang][key] ?? dict.sq[key] ?? dict.me[key] ?? key) as string, vars),
     [dict, lang],
   );
 }
 
-/** Pick the right language from a localized value (falls back to Montenegrin). */
+/** Pick the right language from a localized value (falls back to Albanian, then English, then Serbian). */
 export function lt(v: L10n | null | undefined, lang: Lang): string {
   if (!v) return '';
-  return v[lang]?.trim() ? v[lang] : v.me;
+  if (v[lang]?.trim()) return v[lang];
+  return v.sq?.trim() ? v.sq : v.en?.trim() ? v.en : v.me;
 }
 
 export function useL(scope: Scope = 'site') {

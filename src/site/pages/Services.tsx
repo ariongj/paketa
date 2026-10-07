@@ -237,7 +237,7 @@ export default function Services() {
                     {rel.map((c) => (
                       <Link
                         key={c.id}
-                        to={`/proizvodi/${c.slug}`}
+                        to={`/produktet/${c.slug}`}
                         className="group inline-flex items-center gap-2 rounded-full border border-line bg-white py-1 pl-1 pr-3.5 text-[13.5px] font-semibold text-ink transition hover:border-ink/30"
                       >
                         <Img src={c.image} small alt="" className="h-8 w-8 rounded-full object-cover" />

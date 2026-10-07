@@ -74,7 +74,7 @@ export function SeoCard({
               <span className="flex items-center gap-1.5">
                 <Link2 className="h-3.5 w-3.5" />
                 <span>
-                  <span className="max-sm:hidden">{domain}</span>/proizvod/
+                  <span className="max-sm:hidden">{domain}</span>/produkt/
                 </span>
               </span>
             }

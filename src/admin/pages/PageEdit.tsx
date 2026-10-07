@@ -196,7 +196,7 @@ function PageEditor({ id }: { id: string }) {
     );
   }
 
-  const url = `/stranica/${draft.slug || '…'}`;
+  const url = `/faqe/${draft.slug || '…'}`;
   const vis = visibilityOf(draft);
   const state = contentState(draft, draft.publishedAt);
   const excerpt = draft.excerpt ?? emptyL10n();
@@ -276,7 +276,7 @@ function PageEditor({ id }: { id: string }) {
             readOnly={readOnly}
             slugField={
               <SlugField
-                prefix="/stranica/"
+                prefix="/faqe/"
                 value={draft.slug}
                 onChange={(slug) => {
                   setSlugAuto(false);

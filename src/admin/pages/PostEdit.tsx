@@ -212,7 +212,7 @@ function PostEditor({ id }: { id: string }) {
     );
   }
 
-  const url = `/savjeti/${draft.slug || '…'}`;
+  const url = `/blog/${draft.slug || '…'}`;
 
   return (
     <div className="pb-24">
@@ -312,7 +312,7 @@ function PostEditor({ id }: { id: string }) {
             readOnly={readOnly}
             slugField={
               <SlugField
-                prefix="/savjeti/"
+                prefix="/blog/"
                 value={draft.slug}
                 onChange={(slug) => {
                   setSlugAuto(false);

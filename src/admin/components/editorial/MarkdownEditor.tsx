@@ -84,7 +84,7 @@ export function MarkdownEditor({
     const { s, e } = selection();
     const sel = text.slice(s, e);
     const inner = sel || t('ph_link');
-    const url = '/kontakt';
+    const url = '/kontakti';
     const md = `[${inner}](${url})`;
     const next = text.slice(0, s) + md + text.slice(e);
     // With a selection, jump to the URL; otherwise select the placeholder text.
@@ -190,7 +190,7 @@ export function MarkdownEditor({
     [`- ${t('cs_example_item')}`, t('cs_ul')],
     [`1. ${t('cs_example_item')}`, t('cs_ol')],
     [`> ${t('cs_example_quote')}`, t('cs_quote')],
-    [`[${t('cs_example_link')}](/kontakt)`, t('cs_link')],
+    [`[${t('cs_example_link')}](/kontakti)`, t('cs_link')],
     ['↵ ↵', t('cs_para')],
   ];
 

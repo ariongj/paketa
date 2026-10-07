@@ -619,16 +619,16 @@ function Destination({ label, value, onChange, ctx }: { label: string; value: st
   const resolved = resolveHref(value, ctx, lang);
   const groups: { label: string; items: { href: string; label: string }[] }[] = [
     { label: t('dest_offers'), items: sortOffers(ctx.offers).filter((o) => offerState(o) !== 'expired').map((o) => ({ href: `/oferta/${o.slug}`, label: lt(o.name, lang) })) },
-    { label: t('dest_collections'), items: ctx.collections.map((c) => ({ href: `/kolekcija/${c.slug}`, label: `${lt(c.title, lang)}${c.published ? '' : ` ${t('unpublished')}`}` })) },
-    { label: t('dest_categories'), items: [...ctx.categories].sort((a, b) => a.order - b.order).map((c) => ({ href: `/proizvodi/${c.slug}`, label: lt(c.name, lang) })) },
-    { label: t('dest_pages'), items: ctx.pages.filter((p) => p.published).map((p) => ({ href: `/stranica/${p.slug}`, label: lt(p.title, lang) })) },
+    { label: t('dest_collections'), items: ctx.collections.map((c) => ({ href: `/koleksioni/${c.slug}`, label: `${lt(c.title, lang)}${c.published ? '' : ` ${t('unpublished')}`}` })) },
+    { label: t('dest_categories'), items: [...ctx.categories].sort((a, b) => a.order - b.order).map((c) => ({ href: `/produktet/${c.slug}`, label: lt(c.name, lang) })) },
+    { label: t('dest_pages'), items: ctx.pages.filter((p) => p.published).map((p) => ({ href: `/faqe/${p.slug}`, label: lt(p.title, lang) })) },
     {
       label: t('dest_other'),
       items: [
-        { href: '/proizvodi', label: t('dest_all') },
+        { href: '/produktet', label: t('dest_all') },
         { href: '/#mjerenje', label: t('dest_measure') },
-        { href: '/usluge', label: t('dest_services') },
-        { href: '/kontakt', label: t('dest_contact') },
+        { href: '/sherbimet', label: t('dest_services') },
+        { href: '/kontakti', label: t('dest_contact') },
       ],
     },
   ];

@@ -1,34 +1,48 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------ */
-/*  Design tokens — warm "home" palette built around the SELCA roof red */
-/*  Brand scale is overridable at runtime from Admin → Postavke.        */
+/*  Design tokens — Paketoje "it's packaging": forest green + lime +    */
+/*  pink from the logo, on kraft-tinted neutrals. The brand scale is    */
+/*  overridable at runtime from CMS → Konfigurimet (brandScale()).      */
 /* ------------------------------------------------------------------ */
 @theme {
   --font-sans: "Manrope Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Fraunces Variable", ui-serif, Georgia, "Times New Roman", serif;
+  --font-display: "Bricolage Grotesque Variable", "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
 
-  --color-brand-50: #fbf3f2;
-  --color-brand-100: #f6e2df;
-  --color-brand-200: #ecc3bd;
-  --color-brand-300: #dc988f;
-  --color-brand-400: #c4655c;
-  --color-brand-500: #ad4440;
-  --color-brand-600: #9a2e2e;
-  --color-brand-700: #7f2426;
-  --color-brand-800: #661f21;
-  --color-brand-900: #4d1819;
+  /* brandScale('#00723a') — logo green */
+  --color-brand-50: #f1f9f5;
+  --color-brand-100: #ddf3e8;
+  --color-brand-200: #b9e9d2;
+  --color-brand-300: #7eddae;
+  --color-brand-400: #00ce69;
+  --color-brand-500: #009b4f;
+  --color-brand-600: #00723a;
+  --color-brand-700: #004e28;
+  --color-brand-800: #003018;
+  --color-brand-900: #00140a;
 
-  --color-ink: #1c1a17;
-  --color-ink-soft: #3a3631;
-  --color-muted: #6f675e;
-  --color-paper: #f7f3ee;
-  --color-sand: #efe7dc;
-  --color-sand-2: #e6dccd;
-  --color-line: #e3d9cc;
-  --color-oak: #a4774c;
-  --color-sage: #6f7f69;
-  --color-canvas: #f3f0eb;
+  /* logo accents */
+  --color-lime: #c1ff72;
+  --color-lime-soft: #e6ffc4;
+  --color-lime-ink: #3d6b00;
+  --color-pink: #ff66c4;
+  --color-pink-soft: #ffe0f3;
+  --color-pink-ink: #b8217f;
+  /* the bright header green of the current paketoje.com */
+  --color-signal: #00bf63;
+
+  --color-ink: #0f1d16;
+  --color-ink-soft: #2c3a33;
+  --color-muted: #5f6d66;
+  --color-paper: #f6f4ee;
+  --color-sand: #eee9dd;
+  --color-sand-2: #e3dbc8;
+  --color-line: #e2ddd0;
+  /* kraft paper */
+  --color-oak: #b48a58;
+  --color-kraft: #c9a26f;
+  --color-sage: #6c8f7a;
+  --color-canvas: #f2f0ea;
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -108,9 +122,11 @@
   .eyebrow {
     @apply text-[0.7rem] font-bold uppercase tracking-[0.22em] text-brand-600;
   }
+  /* Big headings: Bricolage Grotesque, heavy and tight */
   .display {
-    @apply font-display font-normal tracking-[-0.02em];
+    @apply font-display font-bold tracking-[-0.035em];
     font-optical-sizing: auto;
+    font-variation-settings: "wdth" 92;
   }
   .card {
     @apply rounded-2xl border border-line bg-white;
@@ -126,18 +142,18 @@
     background-size: 100% 1px;
   }
   .skeleton {
-    background: linear-gradient(90deg, #ece5db 0px, #f6f1ea 120px, #ece5db 240px);
+    background: linear-gradient(90deg, #ebe6da 0px, #f6f3ec 120px, #ebe6da 240px);
     background-size: 800px 100%;
     @apply animate-shimmer;
   }
-  .prose-cms h2 { @apply mt-10 mb-3 font-display text-2xl tracking-tight text-ink; }
+  .prose-cms h2 { @apply mt-10 mb-3 font-display text-2xl font-bold tracking-tight text-ink; }
   .prose-cms h3 { @apply mt-8 mb-2 text-lg font-bold text-ink; }
   .prose-cms p { @apply my-4 leading-relaxed text-ink-soft; }
   .prose-cms ul { @apply my-4 list-disc space-y-1.5 pl-5 text-ink-soft; }
   .prose-cms ol { @apply my-4 list-decimal space-y-1.5 pl-5 text-ink-soft; }
   .prose-cms a { @apply font-semibold text-brand-700 underline underline-offset-4; }
   .prose-cms strong { @apply font-bold text-ink; }
-  .prose-cms blockquote { @apply my-6 border-l-2 border-brand-600 pl-5 font-display text-xl italic text-ink; }
+  .prose-cms blockquote { @apply my-6 border-l-4 border-lime pl-5 font-display text-xl font-semibold text-ink; }
 }
 
 @layer utilities {

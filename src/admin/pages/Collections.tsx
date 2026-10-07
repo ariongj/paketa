@@ -121,7 +121,7 @@ export default function Collections() {
   };
   const menuFor = (c: Collection): MenuItem[] => [
     { label: t('edit'), icon: Pencil, onSelect: () => navigate(`/admin/kolekcije/${c.id}`) },
-    { label: c.published ? t('viewOnSite') : t('previewOnSite'), icon: ExternalLink, onSelect: () => window.open(href(`/kolekcija/${c.slug}${c.published ? '' : '?preview=1'}`), '_blank', 'noopener') },
+    { label: c.published ? t('viewOnSite') : t('previewOnSite'), icon: ExternalLink, onSelect: () => window.open(href(`/koleksioni/${c.slug}${c.published ? '' : '?preview=1'}`), '_blank', 'noopener') },
     { label: t('duplicate'), icon: Copy, onSelect: () => duplicate(c), disabled: !canEdit, hint: t('noPerm') },
     { label: t('delete'), icon: Trash2, onSelect: () => del(c), danger: true, divider: true, disabled: !canDelete, hint: t('noPerm') },
   ];
@@ -193,7 +193,7 @@ export default function Collections() {
                           <Link to={`/admin/kolekcije/${c.id}`} onClick={(e) => e.stopPropagation()} className="block truncate font-semibold text-ink group-hover:underline group-hover:underline-offset-2">
                             {l(c.title)}
                           </Link>
-                          <span className="block truncate font-mono text-[12px] text-muted">/kolekcija/{c.slug}</span>
+                          <span className="block truncate font-mono text-[12px] text-muted">/koleksioni/{c.slug}</span>
                         </span>
                       </span>
                     </Td>

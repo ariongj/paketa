@@ -126,7 +126,7 @@ export default function Wishlist() {
                 <Button variant="ghost" onClick={clearAll} icon={<Trash2 className="h-4 w-4" />} className="text-ink-soft hover:text-brand-700 max-md:-ml-4">
                   {t('clearAll')}
                 </Button>
-                <ButtonLink to="/proizvodi" variant="outline" iconRight={<ArrowRight className="h-4 w-4" />}>
+                <ButtonLink to="/produktet" variant="outline" iconRight={<ArrowRight className="h-4 w-4" />}>
                   {t('continue')}
                 </ButtonLink>
               </div>
@@ -147,7 +147,7 @@ export default function Wishlist() {
               <Accent text={t('emptyTitle')} />
             </h2>
             <p className="mt-4 text-[16px] leading-relaxed text-muted">{t('emptyText')}</p>
-            <ButtonLink to="/proizvodi" size="lg" className="mt-8" iconRight={<ArrowRight className="h-4 w-4" />}>
+            <ButtonLink to="/produktet" size="lg" className="mt-8" iconRight={<ArrowRight className="h-4 w-4" />}>
               {t('emptyCta')}
             </ButtonLink>
           </div>

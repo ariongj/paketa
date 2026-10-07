@@ -59,17 +59,17 @@ function useMainNav(): { items: NavItem[]; fallback: boolean } {
       fallback: true,
       items: [
         {
-          ...link('nav-products', '/proizvodi', t('nav_products')),
+          ...link('nav-products', '/produktet', t('nav_products')),
           children: [
-            ...cats.map((c): NavItem => ({ id: c.id, label: l(c.name), to: `/proizvodi/${c.slug}`, external: false, type: 'category', image: c.image, sub: l(c.tagline), children: [] })),
-            link('nav-sale', '/proizvodi?akcija=1', t('sale')),
+            ...cats.map((c): NavItem => ({ id: c.id, label: l(c.name), to: `/produktet/${c.slug}`, external: false, type: 'category', image: c.image, sub: l(c.tagline), children: [] })),
+            link('nav-sale', '/produktet?akcija=1', t('sale')),
           ],
         },
-        link('nav-services', '/usluge', t('nav_services')),
-        link('nav-projects', '/projekti', t('nav_projects')),
-        link('nav-about', '/o-nama', t('nav_about')),
-        link('nav-blog', '/savjeti', t('nav_blog')),
-        link('nav-contact', '/kontakt', t('nav_contact')),
+        link('nav-services', '/sherbimet', t('nav_services')),
+        link('nav-projects', '/referencat', t('nav_projects')),
+        link('nav-about', '/rreth-nesh', t('nav_about')),
+        link('nav-blog', '/blog', t('nav_blog')),
+        link('nav-contact', '/kontakti', t('nav_contact')),
       ],
     };
   }, [nodes, cats, l, t]);
@@ -80,7 +80,7 @@ const pathOf = (to: string) => to.split(/[?#]/)[0];
 /** Highlight a dropdown parent while the shopper is inside its section. */
 function inSection(n: NavItem, pathname: string) {
   const shop = n.children.some((c) => c.type === 'category' || c.type === 'product' || c.type === 'collection');
-  if (shop && (pathname.startsWith('/proizvod') || pathname.startsWith('/kolekcija'))) return true;
+  if (shop && (pathname.startsWith('/produkt') || pathname.startsWith('/koleksioni'))) return true;
   return [n, ...n.children].some((x) => {
     const p = pathOf(x.to);
     return !x.external && p.length > 1 && (pathname === p || pathname.startsWith(`${p}/`));
@@ -295,7 +295,7 @@ export function Header({ transparentTop = false }: { transparentTop?: boolean })
             <button className={iconBtn} onClick={() => setSearchOpen(true)} aria-label={t('searchPlaceholder')}>
               <Search className="h-[19px] w-[19px]" />
             </button>
-            <Link to="/lista-zelja" className={cn(iconBtn, 'hidden sm:grid')} aria-label={t('wishlist')}>
+            <Link to="/te-preferuarat" className={cn(iconBtn, 'hidden sm:grid')} aria-label={t('wishlist')}>
               <Heart className="h-[19px] w-[19px]" />
               {wishCount > 0 && <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-brand-600 px-1 text-[10px] font-bold text-white">{wishCount}</span>}
             </Link>
@@ -338,7 +338,7 @@ function MobileMenu({ open, onClose, nav, fallback }: { open: boolean; onClose: 
     { key: 'home', to: '/', label: t('home'), external: false, sub: [] },
     ...nav.map((n) =>
       n === shop
-        ? { key: n.id, to: n.to || '/proizvodi', label: n.to ? t('allProducts') : n.label, external: n.external, sub: fallback ? [] : n.children.filter((c) => !isTile(c)) }
+        ? { key: n.id, to: n.to || '/produktet', label: n.to ? t('allProducts') : n.label, external: n.external, sub: fallback ? [] : n.children.filter((c) => !isTile(c)) }
         : { key: n.id, to: n.to, label: n.label, external: n.external, sub: n.children },
     ),
   ];

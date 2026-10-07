@@ -257,7 +257,7 @@ export default function Categories() {
                             {l(c.name)}
                           </button>
                           <a
-                            href={href(`/proizvodi/${c.slug}`)}
+                            href={href(`/produktet/${c.slug}`)}
                             target="_blank"
                             rel="noreferrer"
                             title={t('openOnSite')}

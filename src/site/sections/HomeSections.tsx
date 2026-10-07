@@ -150,7 +150,7 @@ export function CategoriesSection({ data }: { data: DataOf<'categories'> }) {
             title={l(data.title)}
             subtitle={l(data.subtitle)}
             action={
-              <ButtonLink to="/proizvodi" variant="outline" iconRight={<ArrowRight className="h-4 w-4" />}>
+              <ButtonLink to="/produktet" variant="outline" iconRight={<ArrowRight className="h-4 w-4" />}>
                 {h('allProducts')}
               </ButtonLink>
             }
@@ -161,7 +161,7 @@ export function CategoriesSection({ data }: { data: DataOf<'categories'> }) {
             const n = products.filter((p) => p.categoryId === c.id).length;
             return (
               <Reveal key={c.id} delay={(i % 3) * 90} className={cn(i % 3 === 1 && 'lg:translate-y-14')}>
-                <Link to={`/proizvodi/${c.slug}`} className="group relative block aspect-[4/5] overflow-hidden rounded-3xl bg-ink">
+                <Link to={`/produktet/${c.slug}`} className="group relative block aspect-[4/5] overflow-hidden rounded-3xl bg-ink">
                   <Img src={c.image} alt={l(c.name)} className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.4s] ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-[1.07]" />
                   <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/15 to-transparent" />
                   <div className="absolute left-5 top-5 rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold tracking-[0.18em] text-white backdrop-blur-md">{String(i + 1).padStart(2, '0')}</div>
@@ -374,7 +374,7 @@ export function ServicesSection({ data }: { data: DataOf<'services'> }) {
             title={l(data.title)}
             subtitle={l(data.subtitle)}
             action={
-              <ButtonLink to="/usluge" variant="outline" iconRight={<ArrowRight className="h-4 w-4" />}>
+              <ButtonLink to="/sherbimet" variant="outline" iconRight={<ArrowRight className="h-4 w-4" />}>
                 {h('learnMore')}
               </ButtonLink>
             }
@@ -452,7 +452,7 @@ export function ProjectsSection({ data }: { data: DataOf<'projects'> }) {
         </Reveal>
         <Scroller className="mt-10 lg:mt-24 [&_button]:border-white/20 [&_button]:bg-transparent [&_button]:text-white [&_button:hover]:bg-white [&_button:hover]:text-ink">
           {projects.map((p) => (
-            <Link key={p.id} to="/projekti" className="group relative block aspect-[4/5] w-[78%] shrink-0 snap-start overflow-hidden rounded-3xl bg-ink-soft sm:aspect-[4/3] sm:w-[62%] lg:w-[46%]">
+            <Link key={p.id} to="/referencat" className="group relative block aspect-[4/5] w-[78%] shrink-0 snap-start overflow-hidden rounded-3xl bg-ink-soft sm:aspect-[4/3] sm:w-[62%] lg:w-[46%]">
               <Img src={p.image} alt={l(p.title)} className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.4s] group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-ink/10 to-transparent" />
               <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8">
@@ -472,7 +472,7 @@ export function ProjectsSection({ data }: { data: DataOf<'projects'> }) {
           ))}
         </Scroller>
         <div className="mt-10">
-          <ButtonLink to="/projekti" variant="outlineLight" iconRight={<ArrowRight className="h-4 w-4" />}>
+          <ButtonLink to="/referencat" variant="outlineLight" iconRight={<ArrowRight className="h-4 w-4" />}>
             {h('allProjects')}
           </ButtonLink>
         </div>
@@ -525,7 +525,7 @@ export function BlogSection({ data }: { data: DataOf<'blog'> }) {
             eyebrow={l(data.eyebrow)}
             title={l(data.title)}
             action={
-              <ButtonLink to="/savjeti" variant="outline" iconRight={<ArrowRight className="h-4 w-4" />}>
+              <ButtonLink to="/blog" variant="outline" iconRight={<ArrowRight className="h-4 w-4" />}>
                 {h('allPosts')}
               </ButtonLink>
             }
@@ -534,7 +534,7 @@ export function BlogSection({ data }: { data: DataOf<'blog'> }) {
         <div className="mt-12 grid gap-8 md:grid-cols-3">
           {posts.map((p, i) => (
             <Reveal key={p.id} delay={i * 90}>
-              <Link to={`/savjeti/${p.slug}`} className="group block">
+              <Link to={`/blog/${p.slug}`} className="group block">
                 <div className="aspect-[4/3] overflow-hidden rounded-3xl bg-sand">
                   <Img src={p.cover} small alt="" className="h-full w-full object-cover transition-transform duration-[1.2s] group-hover:scale-105" />
                 </div>
@@ -576,7 +576,7 @@ export function FaqSection({ data }: { data: DataOf<'faq'> }) {
               <a href={`tel:${settings.phone.replace(/\s/g, '')}`} className="inline-flex h-11 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-paper hover:bg-ink-soft">
                 <Phone className="h-4 w-4" /> {settings.phone}
               </a>
-              <ButtonLink to="/kontakt" variant="outline">
+              <ButtonLink to="/kontakti" variant="outline">
                 {t('nav_contact')}
               </ButtonLink>
             </div>

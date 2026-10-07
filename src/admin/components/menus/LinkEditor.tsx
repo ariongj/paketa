@@ -35,19 +35,19 @@ interface Opt {
 }
 
 const MAX_OPTS = 40;
-const QUICK_PATHS = ['/proizvodi', '/proizvodi?akcija=1', '/usluge', '/projekti', '/o-nama', '/savjeti', '/kontakt', '/#mjerenje'];
+const QUICK_PATHS = ['/produktet', '/produktet?akcija=1', '/sherbimet', '/referencat', '/rreth-nesh', '/blog', '/kontakti', '/#mjerenje'];
 
 function optionsFor(type: MenuItemType, src: LinkSources): Opt[] {
   const res = (id: string) => resolveLink({ type, target: id }, src);
   switch (type) {
     case 'page':
-      return (src.pages as PageX[]).map((p) => ({ id: p.id, title: p.title, sub: `/stranica/${p.slug}`, image: p.cover, res: res(p.id) }));
+      return (src.pages as PageX[]).map((p) => ({ id: p.id, title: p.title, sub: `/faqe/${p.slug}`, image: p.cover, res: res(p.id) }));
     case 'product':
-      return src.products.map((p) => ({ id: p.id, title: p.name, sub: `${p.sku} · /proizvod/${p.slug}`, image: p.images[0], res: res(p.id) }));
+      return src.products.map((p) => ({ id: p.id, title: p.name, sub: `${p.sku} · /produkt/${p.slug}`, image: p.images[0], res: res(p.id) }));
     case 'collection':
-      return src.collections.map((c) => ({ id: c.id, title: c.title, sub: `/kolekcija/${c.slug}`, image: c.image, res: res(c.id) }));
+      return src.collections.map((c) => ({ id: c.id, title: c.title, sub: `/koleksioni/${c.slug}`, image: c.image, res: res(c.id) }));
     case 'category':
-      return [...src.categories].sort((a, b) => a.order - b.order).map((c) => ({ id: c.id, title: c.name, sub: `/proizvodi/${c.slug}`, image: c.image, res: res(c.id) }));
+      return [...src.categories].sort((a, b) => a.order - b.order).map((c) => ({ id: c.id, title: c.name, sub: `/produktet/${c.slug}`, image: c.image, res: res(c.id) }));
     case 'offer':
       return src.offers.map((o) => ({ id: o.id, title: o.name, sub: `/oferta/${o.slug}`, image: o.image, res: res(o.id) }));
     default:

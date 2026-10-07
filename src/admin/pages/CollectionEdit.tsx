@@ -247,7 +247,7 @@ function Editor({ source }: { source?: Collection }) {
       return { ...f, kind };
     });
 
-  const siteUrl = href(`/kolekcija/${original.slug}${original.published ? '' : '?preview=1'}`);
+  const siteUrl = href(`/koleksioni/${original.slug}${original.published ? '' : '?preview=1'}`);
   const menu: MenuItem[] = isNew
     ? []
     : [
@@ -451,7 +451,7 @@ function Editor({ source }: { source?: Collection }) {
                         <span className="flex items-center gap-1.5">
                           <Link2 className="h-3.5 w-3.5" />
                           <span>
-                            <span className="max-sm:hidden">{domain}</span>/kolekcija/
+                            <span className="max-sm:hidden">{domain}</span>/koleksioni/
                           </span>
                         </span>
                       }

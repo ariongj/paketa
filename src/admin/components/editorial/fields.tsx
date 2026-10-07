@@ -192,7 +192,7 @@ export function EditorActions({
   deleteTitle,
   canSave = true,
 }: {
-  /** Storefront path, e.g. "/stranica/dostava" (the base path is added here) */
+  /** Storefront path, e.g. "/faqe/dostava" (the base path is added here) */
   href: string;
   isNew: boolean;
   dirty: boolean;

@@ -69,7 +69,7 @@ export function CheckoutSteps({ current, className }: { current: 0 | 1 | 2 | 3 |
               {i > 0 && <li aria-hidden className={cn('h-px w-3 shrink sm:w-8', i <= current ? 'bg-ink/50' : 'bg-ink/15')} />}
               <li aria-current={active ? 'step' : undefined} className="flex shrink-0 items-center gap-1.5 sm:gap-2">
                 {done && i === 0 ? (
-                  <Link to="/korpa" className="flex items-center gap-1.5 hover:opacity-75 sm:gap-2">
+                  <Link to="/shporta" className="flex items-center gap-1.5 hover:opacity-75 sm:gap-2">
                     {dot}
                     {text}
                   </Link>

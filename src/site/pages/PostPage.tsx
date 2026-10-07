@@ -182,7 +182,7 @@ export default function PostPage() {
         text={t('nf_text')}
         actions={
           <>
-            <ButtonLink to="/savjeti" variant="dark" iconRight={<ArrowRight className="h-4 w-4" />}>
+            <ButtonLink to="/blog" variant="dark" iconRight={<ArrowRight className="h-4 w-4" />}>
               {t('allPosts')}
             </ButtonLink>
             <ButtonLink to="/" variant="outline">
@@ -222,12 +222,12 @@ export default function PostPage() {
           <div className="container-x">
             <div className="mx-auto max-w-[880px] text-center">
               <div className="flex justify-center">
-                <Breadcrumbs items={[{ label: t('blog'), to: '/savjeti' }, { label: l(post.tag) }]} />
+                <Breadcrumbs items={[{ label: t('blog'), to: '/blog' }, { label: l(post.tag) }]} />
               </div>
               <h1 className="display mt-8 animate-fade-up text-[38px] leading-[1.05] text-ink sm:text-[56px] lg:text-[64px]">{title}</h1>
               <p className="mx-auto mt-5 max-w-2xl animate-fade-up text-[17px] leading-relaxed text-muted [animation-delay:80ms] sm:text-[19px]">{l(post.excerpt)}</p>
               <div className="mt-8 flex animate-fade-up flex-wrap items-center justify-center gap-x-4 gap-y-3 text-[13.5px] font-semibold text-muted [animation-delay:160ms]">
-                <Link to={`/savjeti?tag=${tagKey(post)}`} className="rounded-full bg-brand-50 px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.16em] text-brand-700 transition-colors hover:bg-brand-100">
+                <Link to={`/blog?tag=${tagKey(post)}`} className="rounded-full bg-brand-50 px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.16em] text-brand-700 transition-colors hover:bg-brand-100">
                   {l(post.tag)}
                 </Link>
                 <span className="h-1 w-1 rounded-full bg-muted/40" />
@@ -315,7 +315,7 @@ export default function PostPage() {
                 eyebrow={t('related_eyebrow')}
                 title={t('related_title')}
                 action={
-                  <ButtonLink to="/savjeti" variant="outline" iconRight={<ArrowRight className="h-4 w-4" />}>
+                  <ButtonLink to="/blog" variant="outline" iconRight={<ArrowRight className="h-4 w-4" />}>
                     {t('allPosts')}
                   </ButtonLink>
                 }

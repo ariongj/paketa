@@ -143,7 +143,7 @@ export function CtaBand({ image, className }: { image: string; className?: strin
                 <ButtonLink to={measureHref} size="lg" iconRight={<ArrowRight className="h-4 w-4" />}>
                   {t('bookFree')}
                 </ButtonLink>
-                <ButtonLink to="/kontakt" size="lg" variant="outlineLight">
+                <ButtonLink to="/kontakti" size="lg" variant="outlineLight">
                   {ts('nav_contact')}
                 </ButtonLink>
               </div>

@@ -1,7 +1,7 @@
 import { defineDict } from '@/i18n';
 import type { Lang } from '@/lib/types';
 
-/** Storefront collection page (/kolekcija/:slug) — ME / SQ / EN. */
+/** Storefront collection page (/koleksioni/:slug) — ME / SQ / EN. */
 export const CT = defineDict({
   me: {
     eyebrow: 'Kolekcija',

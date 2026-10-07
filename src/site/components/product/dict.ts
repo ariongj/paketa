@@ -2,7 +2,7 @@ import { defineDict } from '@/i18n';
 import type { Lang } from '@/lib/types';
 import { money } from '@/lib/format';
 
-/** Strings for the storefront product page (/proizvod/:slug). */
+/** Strings for the storefront product page (/produkt/:slug). */
 export const PD = defineDict({
   me: {
     notFoundTitle: 'Proizvod nije pronađen',

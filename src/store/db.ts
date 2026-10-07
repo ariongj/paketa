@@ -221,7 +221,7 @@ function buildOrder(s: Db, input: PlaceOrderInput, extra: { customLines?: DraftO
     delivery: input.delivery,
     city: input.customer.city,
   });
-  const prefix = s.settings.orderPrefix || 'SC-';
+  const prefix = s.settings.orderPrefix || 'PK-';
   const maxNum = s.orders.reduce((m, o) => Math.max(m, Number(o.number.replace(/\D/g, '')) || 0), 1000);
   const now = new Date().toISOString();
   const by = extra.by ?? 'web';
@@ -238,6 +238,7 @@ function buildOrder(s: Db, input: PlaceOrderInput, extra: { customLines?: DraftO
     installation: l.item.installation,
     installationPrice: l.installationUnitPrice,
     lineTotal: l.lineTotal,
+    tierPct: l.tierPct || undefined,
     discount: l.discount,
     allocations: l.allocations,
   }));
@@ -614,7 +615,7 @@ export const useDb = create<DbStore>()(
         };
         const { order, patch } = buildOrder(
           s,
-          { customer, items: d.items, delivery: d.delivery, payment: d.payment ?? 'bank', codes: d.discountCodes, lang: d.lang ?? 'me' },
+          { customer, items: d.items, delivery: d.delivery, payment: d.payment ?? 'bank', codes: d.discountCodes, lang: d.lang ?? 'sq' },
           { customLines: d.customLines, draftId: d.id, by, status: 'confirmed' },
         );
         const withTags: Order = { ...order, tags: d.tags, timeline: [...order.timeline, { at: order.createdAt, status: 'confirmed', note: d.number, by: 'admin' }] };
@@ -720,7 +721,7 @@ export const useDb = create<DbStore>()(
       },
     }),
     {
-      name: 'selca-db',
+      name: 'paketoje-db',
       version: DB_VERSION,
       storage: createJSONStorage(() => safeStorage),
       partialize: (s) => Object.fromEntries(DATA_KEYS.map((k) => [k, s[k]])) as unknown as DbStore,

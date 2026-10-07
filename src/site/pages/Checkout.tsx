@@ -403,7 +403,7 @@ export default function Checkout() {
     placed.current = true;
     saveDraft(null);
     clearCart();
-    navigate('/narudzba/' + order.id);
+    navigate('/porosia/' + order.id);
   };
 
   const onSubmit = (e: FormEvent) => {
@@ -429,7 +429,7 @@ export default function Checkout() {
   };
 
   if (!totals.lines.length) {
-    return placed.current ? <div className="min-h-[60vh]" /> : <Navigate to="/korpa" replace />;
+    return placed.current ? <div className="min-h-[60vh]" /> : <Navigate to="/shporta" replace />;
   }
 
   /* ---------- delivery card copy ---------- */
@@ -466,7 +466,7 @@ export default function Checkout() {
       {/* Checkout bar */}
       <div className="border-b border-line bg-white/55">
         <div className="container-x flex h-[60px] items-center justify-between gap-4">
-          <Link to="/korpa" className="group hidden items-center gap-2 text-[13.5px] font-semibold text-ink-soft hover:text-ink md:inline-flex">
+          <Link to="/shporta" className="group hidden items-center gap-2 text-[13.5px] font-semibold text-ink-soft hover:text-ink md:inline-flex">
             <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
             {t('backToCart')}
           </Link>
@@ -698,7 +698,7 @@ export default function Checkout() {
                     label={
                       <>
                         {t('termsPre')}
-                        <Link to="/stranica/uslovi-kupovine" target="_blank" className="text-brand-700 underline decoration-brand-700/30 underline-offset-[3px] hover:decoration-brand-700">
+                        <Link to="/faqe/uslovi-kupovine" target="_blank" className="text-brand-700 underline decoration-brand-700/30 underline-offset-[3px] hover:decoration-brand-700">
                           {t('termsLink')}
                         </Link>
                       </>
@@ -725,7 +725,7 @@ export default function Checkout() {
                 <h2 className="text-[15px] font-bold text-ink">
                   {t('yourOrder')} <span className="font-medium text-muted">· {items(totals.count)}</span>
                 </h2>
-                <Link to="/korpa" className="text-[13px] font-semibold text-brand-700 hover:underline">
+                <Link to="/shporta" className="text-[13px] font-semibold text-brand-700 hover:underline">
                   {t('edit')}
                 </Link>
               </div>

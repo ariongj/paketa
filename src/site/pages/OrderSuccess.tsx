@@ -183,7 +183,7 @@ function NotFoundState() {
           <ButtonLink to="/" icon={<Home className="h-4 w-4" />}>
             {t('home')}
           </ButtonLink>
-          <ButtonLink to="/kontakt" variant="outline">
+          <ButtonLink to="/kontakti" variant="outline">
             {t('contactUs')}
           </ButtonLink>
         </div>
@@ -401,7 +401,7 @@ function Success({ order }: { order: Order }) {
           )}
 
           <div className="flex flex-wrap gap-3 pt-2">
-            <ButtonLink to="/proizvodi" size="lg" iconRight={<ArrowRight className="h-4 w-4" />}>
+            <ButtonLink to="/produktet" size="lg" iconRight={<ArrowRight className="h-4 w-4" />}>
               {t('continue')}
             </ButtonLink>
             <ButtonLink to="/" size="lg" variant="outline" icon={<Home className="h-4 w-4" />}>

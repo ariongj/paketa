@@ -206,7 +206,7 @@ export default function Posts() {
     <ActionMenu
       label={ta('actions')}
       items={[
-        { label: te('viewOnSite'), icon: ExternalLink, onSelect: () => window.open(href(`/savjeti/${p.slug}`), '_blank', 'noopener') },
+        { label: te('viewOnSite'), icon: ExternalLink, onSelect: () => window.open(href(`/blog/${p.slug}`), '_blank', 'noopener') },
         { label: ta('edit'), icon: Pencil, onSelect: () => navigate(`/admin/savjeti/${p.id}`) },
         { label: t('duplicate'), icon: Copy, onSelect: () => duplicate(p), disabled: !canEdit },
         { label: ta('delete'), icon: Trash2, onSelect: () => remove(p), danger: true, divider: true, disabled: !canDelete, title: canDelete ? undefined : tc('noDeletePerm') },

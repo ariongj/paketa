@@ -195,7 +195,7 @@ export function CategoryEditor({ open, category, onClose }: { open: boolean; cat
             >
               <span className="flex h-full shrink-0 items-center gap-1.5 border-r border-line bg-canvas/70 px-3 font-mono text-[12.5px] text-muted">
                 <Link2 className="h-3.5 w-3.5" />
-                /proizvodi/
+                /produktet/
               </span>
               <input
                 id={slugId}

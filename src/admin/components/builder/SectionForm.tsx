@@ -75,8 +75,8 @@ function HeroForm({ data, set }: { data: DataOf<'hero'>; set: SetData<'hero'> })
       eyebrow: emptyL10n(),
       title: { me: B.me.newSlideTitle, sq: B.sq.newSlideTitle, en: B.en.newSlideTitle },
       subtitle: emptyL10n(),
-      primary: first ? structuredClone(first.primary) : { label: emptyL10n(), href: '/proizvodi' },
-      secondary: first ? structuredClone(first.secondary) : { label: emptyL10n(), href: '/kontakt' },
+      primary: first ? structuredClone(first.primary) : { label: emptyL10n(), href: '/produktet' },
+      secondary: first ? structuredClone(first.secondary) : { label: emptyL10n(), href: '/kontakti' },
     };
   };
   return (

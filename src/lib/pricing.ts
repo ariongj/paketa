@@ -1,16 +1,45 @@
-import type { AppliedDiscount, CartItem, Collection, Coupon, DeliveryMethod, Discount, Lang, Product, Settings } from './types';
+import type { AppliedDiscount, CartItem, Collection, Coupon, DeliveryMethod, Discount, Lang, PriceTier, Product, Settings } from './types';
 import { lt } from '@/i18n';
 import { round2 } from './utils';
 import { applyDiscounts, discountState, normalizeCode, type DiscountCustomer, type RejectedDiscount, type RejectReason } from './discounts';
 import { collectionIdsFor } from './collections';
 
-/** Waste allowance added by the m² calculator. */
-export const WASTE = 0.1;
+/** Packs needed for a number of pieces ("I need 1.200 cups" → 24 packs of 50). */
+export function packsForPieces(pieces: number, packSize: number) {
+  if (!pieces || pieces <= 0 || !packSize) return 0;
+  return Math.ceil(pieces / packSize - 1e-9);
+}
 
-/** Number of packs needed to cover an area (incl. waste allowance). */
-export function packsForArea(area: number, packSize: number, waste = WASTE) {
-  if (!area || area <= 0 || !packSize) return 0;
-  return Math.ceil((area * (1 + waste)) / packSize - 1e-9);
+/** Pieces in one selling unit: packSize for packs, 1 otherwise. */
+export function piecesPerUnit(p: Product) {
+  return p.unit === 'pack' && p.packSize ? p.packSize : 1;
+}
+
+/** Total pieces represented by a quantity of selling units. */
+export function piecesFor(p: Product, qty: number) {
+  return qty * piecesPerUnit(p);
+}
+
+/** Price of a single piece (unit price / pieces per unit) — may be a fraction of a cent. */
+export function piecePrice(p: Product, options: Record<string, string> = {}, qty = 1) {
+  return unitPrice(p, options, qty) / piecesPerUnit(p);
+}
+
+/** Volume tiers sorted ascending; invalid rows dropped. */
+export function tiersOf(p: Product): PriceTier[] {
+  return (p.tiers ?? []).filter((t) => t.minQty > 1 && t.pct > 0 && t.pct < 100).slice().sort((a, b) => a.minQty - b.minQty);
+}
+
+/** Volume discount (%) for a line of `qty` units — the highest tier reached, 0 if none. */
+export function tierPct(p: Product, qty: number) {
+  let pct = 0;
+  for (const t of tiersOf(p)) if (qty >= t.minQty) pct = t.pct;
+  return pct;
+}
+
+/** The next tier above `qty` (for "add 3 more packs to save 5 %" hints). */
+export function nextTier(p: Product, qty: number): PriceTier | null {
+  return tiersOf(p).find((t) => t.minQty > qty) ?? null;
 }
 
 export function basePrice(p: Product) {
@@ -34,18 +63,23 @@ export function optionsDelta(p: Product, options: Record<string, string>) {
   return delta;
 }
 
-/** Unit price (VAT incl.) for the chosen options — per piece, per m² or per metre. */
-export function unitPrice(p: Product, options: Record<string, string> = {}) {
-  return round2(basePrice(p) + optionsDelta(p, options));
+/**
+ * Unit price (VAT incl.) for the chosen options — per pack, piece, set or metre.
+ * With `qty`, the product's volume tier for that line quantity is applied.
+ */
+export function unitPrice(p: Product, options: Record<string, string> = {}, qty = 1) {
+  const pct = tierPct(p, qty);
+  const base = basePrice(p) + optionsDelta(p, options);
+  return round2(pct ? base * (1 - pct / 100) : base);
 }
 
 export function regularUnitPrice(p: Product, options: Record<string, string> = {}) {
   return round2(p.price + optionsDelta(p, options));
 }
 
-/** Units the line represents: m² for packaged products, otherwise the quantity itself. */
-export function qtyUnits(p: Product, qty: number) {
-  return p.unit === 'm2' && p.packSize ? round2(qty * p.packSize) : qty;
+/** Priced units the line represents — prices are per selling unit, so this is the quantity itself. */
+export function qtyUnits(_p: Product, qty: number) {
+  return qty;
 }
 
 export function optionsLabel(p: Product, options: Record<string, string>, lang: Lang) {
@@ -71,6 +105,8 @@ export interface PricedLine {
   regularUnitPrice: number;
   units: number;
   lineTotal: number;
+  /** Volume-tier discount (%) applied to unitPrice, 0 if none */
+  tierPct: number;
   installationUnitPrice: number;
   installationTotal: number;
   optionsLabel: string;
@@ -149,7 +185,7 @@ export function zoneForCity(settings: Settings, city?: string) {
 }
 
 export function allCities(settings: Settings) {
-  return settings.shippingZones.flatMap((z) => z.cities).sort((a, b) => a.localeCompare(b, 'sr'));
+  return settings.shippingZones.flatMap((z) => z.cities).sort((a, b) => a.localeCompare(b, 'sq'));
 }
 
 /** The live automatic free-shipping rule (lowest amount threshold wins), if any. */
@@ -169,11 +205,15 @@ export interface Totals {
   shipping: number;
   /** true when no city chosen yet and shipping is an estimate ("from") */
   shippingEstimate: boolean;
+  /** 'installation' is no longer produced (Paketoje's logo print does not include delivery) — kept for older screens */
   freeShippingReason: 'threshold' | 'installation' | 'pickup' | null;
   freeShippingRemaining: number;
   total: number;
   vat: number;
+  /** true when any line has the custom logo print add-on */
   hasInstallation: boolean;
+  /** Total pieces in the cart (packs × pack size) */
+  pieces: number;
   /** Legacy: the first entered code, when it applied (Coupon-shaped view of the discount) */
   coupon: Coupon | null;
   /** Legacy: why the first entered code did not apply */
@@ -189,7 +229,7 @@ export interface Totals {
   productDiscount: number;
   orderDiscount: number;
   shippingDiscount: number;
-  /** Shipping fee before the shipping discount (0 for pickup / with installation) */
+  /** Shipping fee before the shipping discount (0 for pickup) */
   shippingBeforeDiscount: number;
   /** Minimum of the active automatic free-shipping rule (null = no such rule) */
   freeShippingThreshold: number | null;
@@ -221,7 +261,7 @@ export function priceCart(cart: CartItem[], products: Product[], settings: Setti
   for (const item of cart) {
     const product = products.find((p) => p.id === item.productId);
     if (!product) continue;
-    const up = unitPrice(product, item.options);
+    const up = unitPrice(product, item.options, item.qty);
     const units = qtyUnits(product, item.qty);
     const instUnit = item.installation && product.installation?.available ? product.installation.price : 0;
     lines.push({
@@ -231,6 +271,7 @@ export function priceCart(cart: CartItem[], products: Product[], settings: Setti
       regularUnitPrice: regularUnitPrice(product, item.options),
       units,
       lineTotal: round2(up * units),
+      tierPct: tierPct(product, item.qty),
       installationUnitPrice: instUnit,
       installationTotal: round2(instUnit * units),
       optionsLabel: optionsLabel(product, item.options, opts.lang),
@@ -244,7 +285,7 @@ export function priceCart(cart: CartItem[], products: Product[], settings: Setti
   let fee = 0;
   let shippingEstimate = false;
   const zone = zoneForCity(settings, opts.city);
-  if (lines.length && opts.delivery !== 'pickup' && !hasInstallation) {
+  if (lines.length && opts.delivery !== 'pickup') {
     if (zone) fee = zone.fee;
     else {
       fee = settings.shippingZones.length ? Math.min(...settings.shippingZones.map((z) => z.fee)) : 0;
@@ -280,7 +321,6 @@ export function priceCart(cart: CartItem[], products: Product[], settings: Setti
   let freeShippingReason: Totals['freeShippingReason'] = null;
   if (lines.length) {
     if (opts.delivery === 'pickup') freeShippingReason = 'pickup';
-    else if (hasInstallation) freeShippingReason = 'installation';
     else if (fee > 0 && shipping === 0 && res.applied.some((a) => a.kind === 'shipping')) freeShippingReason = 'threshold';
   }
   const rule = activeShippingRule(discounts, opts.now);
@@ -304,7 +344,8 @@ export function priceCart(cart: CartItem[], products: Product[], settings: Setti
   const vat = round2(total - total / (1 + settings.vatRate / 100));
   return {
     lines: priced,
-    count: priced.reduce((s, l) => s + (l.product.unit === 'kom' || l.product.unit === 'set' ? l.item.qty : 1), 0),
+    count: priced.reduce((s, l) => s + (l.product.unit === 'm' ? 1 : l.item.qty), 0),
+    pieces: priced.reduce((s, l) => s + piecesFor(l.product, l.item.qty), 0),
     subtotal,
     installationTotal,
     discount,
@@ -328,3 +369,11 @@ export function priceCart(cart: CartItem[], products: Product[], settings: Setti
     couponMinimum,
   };
 }
+
+/**
+ * @deprecated m² helpers of the shared platform — Paketoje sells by pack. Kept only until every screen uses
+ * packsForPieces(); remove once nothing imports them.
+ */
+export const WASTE = 0;
+/** @deprecated use packsForPieces */
+export const packsForArea = (area: number, packSize: number, _waste = 0) => packsForPieces(area, packSize);

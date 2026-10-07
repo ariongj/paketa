@@ -104,10 +104,10 @@ export const MODEL_ICON: Record<string, ComponentType<{ className?: string }>> =
 export const modelIcon = (source: string) => MODEL_ICON[source] ?? Boxes;
 
 export const EDITORS: Record<string, { to: string; label: 'ed_projects' | 'ed_editor' | 'ed_locations'; usedOn: string[] }> = {
-  projects: { to: '/admin/projekti', label: 'ed_projects', usedOn: ['/projekti', '/'] },
+  projects: { to: '/admin/projekti', label: 'ed_projects', usedOn: ['/referencat', '/'] },
   'home.faq': { to: '/admin/prodavnica/editor', label: 'ed_editor', usedOn: ['/'] },
-  'home.services': { to: '/admin/prodavnica/editor', label: 'ed_editor', usedOn: ['/usluge', '/'] },
-  'settings.locations': { to: '/admin/konfiguracija/lokacionet', label: 'ed_locations', usedOn: ['/kontakt', '/placanje'] },
+  'home.services': { to: '/admin/prodavnica/editor', label: 'ed_editor', usedOn: ['/sherbimet', '/'] },
+  'settings.locations': { to: '/admin/konfiguracija/lokacionet', label: 'ed_locations', usedOn: ['/kontakti', '/pagesa'] },
 };
 
 export const DESCRIPTION_KEY: Record<string, 'md_projects' | 'md_faq' | 'md_services' | 'md_locations'> = {

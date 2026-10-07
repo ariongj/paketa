@@ -43,11 +43,13 @@ export function isHex(v: string) {
 export function brandScale(hex: string): Record<string, string> {
   const [h, s, l] = hexToHsl(hex);
   const sat = (d: number) => Math.max(0, Math.min(100, s + d));
+  // Tints of very saturated brand colours (e.g. Paketoje green) are capped so they read as soft, not neon.
+  const tint = (d: number, cap: number) => Math.min(sat(d), cap);
   return {
-    50: hslToHex(h, sat(-20), 97),
-    100: hslToHex(h, sat(-15), 93),
-    200: hslToHex(h, sat(-10), 85),
-    300: hslToHex(h, sat(-5), 73),
+    50: hslToHex(h, tint(-20, 42), 96),
+    100: hslToHex(h, tint(-15, 48), 91),
+    200: hslToHex(h, tint(-10, 52), 82),
+    300: hslToHex(h, tint(-5, 58), 68),
     400: hslToHex(h, s, Math.min(62, l + 18)),
     500: hslToHex(h, s, Math.min(52, l + 8)),
     600: hex,
@@ -57,7 +59,7 @@ export function brandScale(hex: string): Record<string, string> {
   };
 }
 
-export const DEFAULT_BRAND = '#9a2e2e';
+export const DEFAULT_BRAND = '#00723a';
 
 /* ------------------------------------------------------------------ */
 /* CMS v2: the admin is neutral — black, grey, white (proposal p.07).   */
@@ -65,7 +67,7 @@ export const DEFAULT_BRAND = '#9a2e2e';
 /* 700 = #000) and the warm tokens to neutral ones, so every            */
 /* `bg-brand-600` / `Button variant="primary"` renders black there.     */
 /* The storefront (and the builder's preview iframe, which is its own   */
-/* document) keeps the SELCA brand.                                     */
+/* document) keeps the Paketoje brand.                                  */
 /* ------------------------------------------------------------------ */
 export const NEUTRAL_SCALE: Record<string, string> = {
   50: '#f7f7f7',
@@ -106,14 +108,14 @@ function setThemeColor(color: string) {
 
 /**
  * Apply the store's brand colour to the document. While the neutral admin theme is on, the colour is only
- * remembered (and applied when leaving /admin) — the CMS never turns red.
+ * remembered (and applied when leaving /admin) — the CMS never turns green.
  */
 export function applyBrand(hex: string) {
   brandHex = isHex(hex) ? hex : DEFAULT_BRAND;
   if (!adminMode) setScale(brandScale(brandHex));
 }
 
-/** Switch the neutral CMS theme on (route starts with /admin) or off (storefront: SELCA brand restored). */
+/** Switch the neutral CMS theme on (route starts with /admin) or off (storefront: Paketoje brand restored). */
 export function setAdminTheme(on: boolean) {
   const root = document.documentElement;
   adminMode = on;
@@ -126,7 +128,7 @@ export function setAdminTheme(on: boolean) {
     for (const k of Object.keys(ADMIN_TOKENS)) root.style.removeProperty(k);
     delete root.dataset.admin;
     setScale(brandScale(brandHex));
-    setThemeColor('#F7F3EE');
+    setThemeColor('#F6F4EE');
   }
 }
 

@@ -1,8 +1,8 @@
 {
-  "name": "selca-web",
+  "name": "paketoje-web",
   "private": true,
-  "version": "0.1.0",
-  "description": "SELCA COMPANY d.o.o. — e-commerce + CMS demo (prodaja & ugradnja / shitje & montim)",
+  "version": "1.0.0",
+  "description": "Paketoje — e-commerce + CMS for food packaging (Mitrovicë, Kosovë)",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@fontsource-variable/fraunces": "^5.3.0",
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
     "@fontsource-variable/manrope": "^5.3.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.577.0",

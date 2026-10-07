@@ -105,14 +105,14 @@ function Root() {
   const brand = useDb((s) => s.settings.brandColor);
   const { pathname } = useLocation();
   const admin = pathname === '/admin' || pathname.startsWith('/admin/');
-  // Neutral CMS theme under /admin (PDF p.07); the storefront (and the builder's preview iframe) keeps the SELCA red.
+  // Neutral CMS theme under /admin (PDF p.07); the storefront (and the builder's preview iframe) keeps the Paketoje green.
   useLayoutEffect(() => setAdminTheme(admin), [admin]);
   useEffect(() => applyBrand(brand), [brand]);
   useEffect(() => startCrossTabSync(), []);
   useEffect(() => {
-    const fn = () => toast.error('Prostor za demo podatke je pun — obrišite neke otpremljene slike ili resetujte demo.');
-    window.addEventListener('selca:storage-full', fn);
-    return () => window.removeEventListener('selca:storage-full', fn);
+    const fn = () => toast.error('Hapësira për të dhënat demo është plot — fshini disa foto të ngarkuara ose rivendosni demon.');
+    window.addEventListener('paketoje:storage-full', fn);
+    return () => window.removeEventListener('paketoje:storage-full', fn);
   }, []);
   return (
     <>
@@ -206,23 +206,23 @@ const router = createBrowserRouter([
         element: <SiteLayout />,
         children: [
           { index: true, element: <Home /> },
-          { path: 'proizvodi', element: <Shop /> },
-          { path: 'proizvodi/:category', element: <Shop /> },
-          { path: 'proizvod/:slug', element: <ProductPage /> },
-          { path: 'kolekcija/:slug', element: <CollectionPage /> },
+          { path: 'produktet', element: <Shop /> },
+          { path: 'produktet/:category', element: <Shop /> },
+          { path: 'produkt/:slug', element: <ProductPage /> },
+          { path: 'koleksioni/:slug', element: <CollectionPage /> },
           { path: 'oferta/:slug', element: <OfferPage /> },
-          { path: 'korpa', element: <CartPage /> },
-          { path: 'placanje', element: <Checkout /> },
-          { path: 'narudzba/:id', element: <OrderSuccess /> },
-          { path: 'usluge', element: <Services /> },
-          { path: 'projekti', element: <Projects /> },
-          { path: 'o-nama', element: <About /> },
-          { path: 'kontakt', element: <Contact /> },
-          { path: 'savjeti', element: <Blog /> },
-          { path: 'savjeti/:slug', element: <PostPage /> },
-          { path: 'stranica/:slug', element: <CmsPageView /> },
-          { path: 'pretraga', element: <SearchPage /> },
-          { path: 'lista-zelja', element: <Wishlist /> },
+          { path: 'shporta', element: <CartPage /> },
+          { path: 'pagesa', element: <Checkout /> },
+          { path: 'porosia/:id', element: <OrderSuccess /> },
+          { path: 'sherbimet', element: <Services /> },
+          { path: 'referencat', element: <Projects /> },
+          { path: 'rreth-nesh', element: <About /> },
+          { path: 'kontakti', element: <Contact /> },
+          { path: 'blog', element: <Blog /> },
+          { path: 'blog/:slug', element: <PostPage /> },
+          { path: 'faqe/:slug', element: <CmsPageView /> },
+          { path: 'kerko', element: <SearchPage /> },
+          { path: 'te-preferuarat', element: <Wishlist /> },
           { path: '*', element: <NotFound /> },
         ],
       },

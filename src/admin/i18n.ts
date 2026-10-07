@@ -4,7 +4,7 @@ import { defineDict } from '@/i18n';
 export const adm = defineDict({
   me: {
     loginHero: 'Sve za vaš dom — sada u jednom panelu.',
-    loginHeroText: 'Proizvodi, narudžbe, upiti za mjerenje i sadržaj sajta na tri jezika.',
+    loginHeroText: 'Proizvodi, narudžbe, veleprodajni upiti, uzorci i sadržaj sajta na tri jezika.',
     // CMS v2 navigation (PDF p.06 / p.08) — also usable for breadcrumbs: ta('nav_orders')
     nav_overview: 'Pregled',
     nav_orders: 'Narudžbe',
@@ -47,7 +47,7 @@ export const adm = defineDict({
     // v1 labels (kept for older screens)
     nav_dashboard: 'Kontrolna tabla',
     nav_sales: 'Prodaja',
-    nav_inquiries: 'Upiti i mjerenja',
+    nav_inquiries: 'Upiti i uzorci',
     nav_coupons: 'Kuponi',
     nav_catalog: 'Katalog',
     nav_home: 'Početna stranica',
@@ -157,7 +157,7 @@ export const adm = defineDict({
   },
   sq: {
     loginHero: 'Çdo gjë për shtëpinë tuaj — tani në një panel.',
-    loginHeroText: 'Produktet, porositë, kërkesat për matje dhe përmbajtja e faqes në tre gjuhë.',
+    loginHeroText: 'Produktet, porositë, kërkesat për shumicë dhe mostra, dhe përmbajtja e faqes në tre gjuhë.',
     nav_overview: 'Përmbledhje',
     nav_orders: 'Porositë',
     nav_drafts: 'Draftet',
@@ -198,7 +198,7 @@ export const adm = defineDict({
     nav_moduleMap: 'Harta e moduleve',
     nav_dashboard: 'Paneli',
     nav_sales: 'Shitjet',
-    nav_inquiries: 'Kërkesat & matjet',
+    nav_inquiries: 'Kërkesat & mostrat',
     nav_coupons: 'Kuponët',
     nav_catalog: 'Katalogu',
     nav_home: 'Faqja kryesore',
@@ -308,7 +308,7 @@ export const adm = defineDict({
   },
   en: {
     loginHero: 'Everything for your home — now in one panel.',
-    loginHeroText: 'Products, orders, measurement requests and site content in three languages.',
+    loginHeroText: 'Products, orders, wholesale and sample requests, and site content in three languages.',
     nav_overview: 'Overview',
     nav_orders: 'Orders',
     nav_drafts: 'Drafts',
