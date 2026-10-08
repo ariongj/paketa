@@ -5,7 +5,7 @@ import { fileURLToPath, URL } from 'node:url';
 
 /**
  * Deployment base. Root deployments (Vercel, Netlify, dev server) use "/"; the GitHub Pages workflow builds
- * with BASE_PATH=/Paketoje/. Always normalised to "/x/".
+ * with BASE_PATH=/paketa/. Always normalised to "/x/".
  */
 function basePath(): string {
   const raw = (process.env.BASE_PATH ?? '/').trim();
@@ -17,7 +17,7 @@ const base = basePath();
 /**
  * Seeded data and JSX reference bundled pictures as absolute "/images/…" strings. Under a sub-path those
  * would 404, so at build time every string literal in src/**\/*.ts(x) that starts with "/images/" is
- * prefixed with the base ('/images/a.webp' → '/Paketoje/images/a.webp'). Checks like
+ * prefixed with the base ('/images/a.webp' → '/paketa/images/a.webp'). Checks like
  * `src.startsWith('/images/')` are rewritten the same way, so they keep matching. No-op for base "/".
  */
 function baseImages(prefix: string): Plugin {

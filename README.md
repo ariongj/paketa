@@ -71,7 +71,7 @@ Lifestyle photography is from Unsplash (see `CREDITS.md`) — replace with Paket
 Static single-page app:
 - **Vercel** — framework "Vite"; `vercel.json` rewrites all routes to `index.html`.
 - **Netlify** — build `npm run build`, publish `dist`; `public/_redirects` handles routing.
-- **GitHub Pages** — `.github/workflows/pages.yml` builds with `BASE_PATH=/Paketoje/` on push to `main`.
+- **GitHub Pages** — `.github/workflows/pages.yml` builds with `BASE_PATH=/paketa/` on push to `main` — live at https://ariongj.github.io/paketa/
 
 ## Tech
 
