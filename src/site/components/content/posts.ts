@@ -48,3 +48,6 @@ export async function copyText(text: string) {
     }
   }
 }
+
+/** Paketoje's real returns address (return policy: 5 days, unused, original packaging). */
+export const REFUND_EMAIL = 'refund@paketoje.com';

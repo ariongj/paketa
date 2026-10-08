@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 
 const T = defineDict({
   me: {
-    desc: 'Individualne ponude cijena za poslovne klijente — sa rokom važenja, uslovima i verzijama.',
+    desc: 'Ponude za veleprodaju i štampu logotipa — cijena po pakovanju, rok važenja, uslovi i verzije.',
     note: 'B2B ponuda je lični prijedlog cijene za jednog klijenta (slanje, prihvatanje i pretvaranje u narudžbu su posebne radnje). Promotivne kampanje koje se prikazuju na početnoj stranici vode se u modulu',
     promoLink: 'Rast → Ponude',
     newQuote: 'Nova ponuda',
@@ -46,11 +46,11 @@ const T = defineDict({
     emptyTitle: 'Nema ponuda za ove filtere',
     emptyText: 'Promijenite karticu ili pretragu.',
     noneTitle: 'Još nema B2B ponuda',
-    noneText: 'Kreirajte ponudu iz upita ili od nule — stavke iz kataloga ili slobodne stavke.',
+    noneText: 'Kreirajte ponudu iz upita ili od nule — npr. 5 kartona čaša 400 ml sa logom i poklopci po kartonskoj cijeni.',
     count: '{n} ponuda',
   },
   sq: {
-    desc: 'Oferta individuale çmimi për klientë biznesi — me afat vlefshmërie, kushte dhe versione.',
+    desc: 'Oferta për shumicë dhe printim me logo — çmimi për pako, afati i vlefshmërisë, kushtet dhe versionet.',
     note: 'Oferta B2B është propozim çmimi për një klient të vetëm (dërgimi, pranimi dhe konvertimi në porosi janë veprime të veçanta). Fushatat promocionale që shfaqen në homepage menaxhohen te',
     promoLink: 'Rritja → Ofertat',
     newQuote: 'Ofertë e re',
@@ -78,11 +78,11 @@ const T = defineDict({
     emptyTitle: 'Asnjë ofertë për këta filtra',
     emptyText: 'Ndryshoni skedën ose kërkimin.',
     noneTitle: 'Ende nuk ka oferta B2B',
-    noneText: 'Krijoni një ofertë nga një kërkesë ose nga e para — linja nga katalogu ose linja të lira.',
+    noneText: 'Krijoni një ofertë nga një kërkesë ose nga e para — p.sh. 5 kartonë gota 400 ml me logo dhe kapakë me çmim kartoni.',
     count: '{n} oferta',
   },
   en: {
-    desc: 'Individual price proposals for business customers — with validity, terms and versions.',
+    desc: 'Wholesale and logo-print quotes — per-pack prices, validity, terms and versions.',
     note: 'A B2B quote is a personal price proposal for one customer (sending, acceptance and conversion to an order are separate actions). Promotional campaigns shown on the homepage live in',
     promoLink: 'Growth → Offers',
     newQuote: 'New quote',
@@ -110,7 +110,7 @@ const T = defineDict({
     emptyTitle: 'No quotes match these filters',
     emptyText: 'Change the tab or the search.',
     noneTitle: 'No B2B quotes yet',
-    noneText: 'Create a quote from a request or from scratch — catalogue lines or custom lines.',
+    noneText: 'Create a quote from a request or from scratch — e.g. 5 cartons of 400 ml cups with logo plus lids at carton price.',
     count: '{n} quotes',
   },
 });

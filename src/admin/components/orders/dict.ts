@@ -1,4 +1,4 @@
-// Strings shared by the CMS orders area: Orders, OrderDetail, Draftet, Kthimet, Invoice.
+// Strings shared by the CMS orders area: Orders, OrderDetail, Draftet, Kthimet, Invoice (me = Serbian).
 // Albanian follows the CMS proposal wording (PDF pp.17–18).
 import { defineDict } from '@/i18n';
 
@@ -32,8 +32,8 @@ export const od = defineDict({
     channel_online: 'Online prodavnica',
     channel_draft: 'Ručna (nacrt)',
     // carriers
-    carrier_selca: 'SELCA vozilo',
     carrier_courier: 'Kurirska služba',
+    carrier_van: 'Naše dostavno vozilo',
     carrier_pickup: 'Lično preuzimanje',
     carrier_other: 'Drugo',
     // discount kinds
@@ -49,7 +49,7 @@ export const od = defineDict({
     rej_scheduled: 'Popust još nije počeo',
     rej_expired: 'Popust je istekao',
     rej_minimum_amount: 'Minimum nije dostignut — nedostaje {missing}',
-    rej_minimum_qty: 'Minimum nije dostignut — nedostaje još {missing} kom',
+    rej_minimum_qty: 'Minimum nije dostignut — nedostaje još {missing} pak.',
     rej_notCombinable: 'Ne kombinuje se sa „{other}“ — zadržana je povoljnija opcija',
     rej_notCombinablePlain: 'Ne kombinuje se sa primijenjenim popustom',
     rej_notEligible: 'Nijedna stavka ne ispunjava uslove',
@@ -67,7 +67,11 @@ export const od = defineDict({
     selected: '{n} izabrano',
     clearSelection: 'Poništi izbor',
     noPermission: 'Vaša uloga nema dozvolu za ovu radnju',
-    country: 'Crna Gora',
+    country: 'Kosovo',
+    tierBadge: 'Količinski −{pct}%',
+    tierTip: 'Količinska cijena za ovu stavku (cijena po pakovanju već umanjena)',
+    withLogo: 'Sa logotipom',
+    printStep: 'Štampa logotipa',
   },
   sq: {
     pay_pending: 'Në pritje',
@@ -92,8 +96,8 @@ export const od = defineDict({
     cancelled: 'E anuluar',
     channel_online: 'Online Store',
     channel_draft: 'Manuale (draft)',
-    carrier_selca: 'Automjeti i SELCA-s',
     carrier_courier: 'Shërbim korrieri',
+    carrier_van: 'Automjeti ynë i dërgesave',
     carrier_pickup: 'Marrje personale',
     carrier_other: 'Tjetër',
     kind_products: 'Ulje produkti',
@@ -107,7 +111,7 @@ export const od = defineDict({
     rej_scheduled: 'Zbritja ende nuk ka filluar',
     rej_expired: 'Zbritja ka skaduar',
     rej_minimum_amount: 'Pragu nuk arrihet — mungojnë {missing}',
-    rej_minimum_qty: 'Pragu nuk arrihet — mungojnë edhe {missing} copë',
+    rej_minimum_qty: 'Pragu nuk arrihet — mungojnë edhe {missing} pako',
     rej_notCombinable: 'Nuk kombinohet me „{other}“ — u ruajt opsioni më i leverdishëm',
     rej_notCombinablePlain: 'Nuk kombinohet me zbritjen e aplikuar',
     rej_notEligible: 'Asnjë artikull nuk i plotëson kushtet',
@@ -124,7 +128,11 @@ export const od = defineDict({
     selected: '{n} të zgjedhura',
     clearSelection: 'Hiq zgjedhjen',
     noPermission: 'Roli juaj nuk ka leje për këtë veprim',
-    country: 'Mali i Zi',
+    country: 'Kosovë',
+    tierBadge: 'Shumicë −{pct}%',
+    tierTip: 'Çmim shumice për këtë rresht (çmimi për pako është ulur tashmë)',
+    withLogo: 'Me logo',
+    printStep: 'Printimi me logo',
   },
   en: {
     pay_pending: 'Payment pending',
@@ -149,8 +157,8 @@ export const od = defineDict({
     cancelled: 'Cancelled',
     channel_online: 'Online Store',
     channel_draft: 'Manual (draft)',
-    carrier_selca: 'SELCA van',
     carrier_courier: 'Courier service',
+    carrier_van: 'Our delivery van',
     carrier_pickup: 'Customer pickup',
     carrier_other: 'Other',
     kind_products: 'Product discount',
@@ -164,7 +172,7 @@ export const od = defineDict({
     rej_scheduled: 'Discount has not started yet',
     rej_expired: 'Discount has expired',
     rej_minimum_amount: 'Minimum not reached — {missing} missing',
-    rej_minimum_qty: 'Minimum not reached — {missing} more item(s) needed',
+    rej_minimum_qty: 'Minimum not reached — {missing} more pack(s) needed',
     rej_notCombinable: 'Does not combine with “{other}” — the better deal was kept',
     rej_notCombinablePlain: 'Does not combine with the applied discount',
     rej_notEligible: 'No item meets the conditions',
@@ -181,6 +189,10 @@ export const od = defineDict({
     selected: '{n} selected',
     clearSelection: 'Clear selection',
     noPermission: 'Your role is not allowed to do this',
-    country: 'Montenegro',
+    country: 'Kosovo',
+    tierBadge: 'Volume −{pct}%',
+    tierTip: 'Volume price for this line (the pack price is already reduced)',
+    withLogo: 'With logo',
+    printStep: 'Logo printing',
   },
 });

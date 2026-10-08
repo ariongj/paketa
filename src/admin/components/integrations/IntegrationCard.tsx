@@ -7,7 +7,7 @@ import { timeAgo } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { StatusMark } from '@/admin/components/analytics/ui';
 import { fmtDayYear } from '@/admin/components/analytics/fmt';
-import { SEEDED_NOTES } from '@/admin/components/analytics/integrations';
+import { SEEDED_NOTES, isSeededNote } from '@/admin/components/analytics/integrations';
 import { KIND_META, STATUS_KEY, STATUS_MARK, providerName, rotatedAtOf, secretTailOf, type IntegrationY } from './model';
 import { useIT } from './i18n';
 
@@ -38,9 +38,9 @@ export function IntegrationCard({
   const meta = KIND_META[x.kind];
   const Icon = meta.icon;
   const on = x.status !== 'disconnected';
-  const provider = providerName(x);
-  // The stored note is Montenegrin only — the seeded ones have translations.
-  const note = x.note ? (SEEDED_NOTES[x.id] && SEEDED_NOTES[x.id].me === x.note ? l(SEEDED_NOTES[x.id]) : x.note) : on ? '' : t('notConfigured');
+  const provider = providerName(x, lang);
+  // The stored note is plain text — the seeded ones are shown in the panel language.
+  const note = x.note ? (isSeededNote(x.id, x.note) ? l(SEEDED_NOTES[x.id]) : x.note) : on ? '' : t('notConfigured');
   const scopes = meta.scopes.filter((s) => x.scopes?.includes(s.id));
 
   return (

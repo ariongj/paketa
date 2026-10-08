@@ -3,7 +3,7 @@ import { useUi } from '@/store/ui';
 import { cn } from '@/lib/utils';
 
 /**
- * ME / SQ / EN segmented switch for the CMS language (independent of the storefront language).
+ * SQ / EN / SR segmented switch for the CMS language (independent of the storefront language).
  * `full` stretches the three buttons over the available width (drawer, account menu).
  */
 export function AdminLangToggle({ tone = 'dark', full }: { tone?: 'dark' | 'light'; full?: boolean }) {

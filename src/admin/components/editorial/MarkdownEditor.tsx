@@ -6,8 +6,7 @@ import type { L10n, Lang } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { ed } from './i18n';
 import { countWords, readMinutesFor } from './hooks';
-
-const LANGS: Lang[] = ['me', 'sq', 'en'];
+import { ED_LANGS, LANG_SHORT } from './meta';
 type Mode = 'write' | 'split' | 'preview';
 type BlockKind = 'h2' | 'h3' | 'ul' | 'ol' | 'quote';
 
@@ -46,8 +45,9 @@ export function MarkdownEditor({
 
   const v = value ?? { me: '', sq: '', en: '' };
   const text = v[lang] ?? '';
-  const usingFallback = lang !== 'me' && !text.trim() && !!v.me.trim();
-  const previewSource = usingFallback ? v.me : text;
+  // the storefront falls back to Albanian (lt), so the preview does too
+  const usingFallback = lang !== 'sq' && !text.trim() && !!v.sq.trim();
+  const previewSource = usingFallback ? v.sq : text;
   const words = countWords(previewSource);
 
   const commit = (next: string, selStart?: number, selEnd?: number) => {
@@ -226,7 +226,7 @@ export function MarkdownEditor({
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line/70 bg-canvas/40 px-3 py-2 sm:px-4">
         <div className="flex rounded-lg bg-canvas p-0.5">
-          {LANGS.map((code) => {
+          {ED_LANGS.map((code) => {
             const missing = !v[code]?.trim();
             return (
               <button
@@ -239,7 +239,7 @@ export function MarkdownEditor({
                   lang === code ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink',
                 )}
               >
-                {code.toUpperCase()}
+                {LANG_SHORT[code]}
                 {missing && <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-amber-500" />}
               </button>
             );
@@ -262,10 +262,10 @@ export function MarkdownEditor({
             </span>
           ))}
         </div>
-        {lang !== 'me' && !text.trim() && v.me.trim() && (
+        {lang !== 'sq' && !text.trim() && v.sq.trim() && (
           <button
             type="button"
-            onClick={() => commit(v.me)}
+            onClick={() => commit(v.sq)}
             className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md px-2.5 text-[12px] font-semibold text-muted transition-colors hover:bg-white hover:text-ink"
           >
             <Copy className="h-3.5 w-3.5" /> {t('copyFromMe')}
@@ -284,7 +284,7 @@ export function MarkdownEditor({
               onChange={(e) => commit(e.target.value)}
               onKeyDown={onKeyDown}
               spellCheck={lang !== 'sq'}
-              placeholder={usingFallback ? v.me.slice(0, 220) + '…' : '## …'}
+              placeholder={usingFallback ? v.sq.slice(0, 220) + '…' : '## …'}
               className={cn(
                 'block w-full resize-y bg-white px-5 py-4 font-mono text-[13px] leading-[1.75] text-ink-soft outline-none placeholder:text-muted/45',
                 mode === 'split' && 'lg:h-full lg:resize-none',
@@ -299,7 +299,7 @@ export function MarkdownEditor({
               <div className="mb-4 flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-[0.18em] text-muted">
                   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
-                  {t('livePreview')} · {lang.toUpperCase()}
+                  {t('livePreview')} · {LANG_SHORT[lang]}
                 </span>
                 {usingFallback && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800 ring-1 ring-amber-600/20">

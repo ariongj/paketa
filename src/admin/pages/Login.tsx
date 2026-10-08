@@ -11,15 +11,17 @@ import { useUi } from '@/store/ui';
 import { useDb } from '@/store/db';
 import { sleep } from '@/lib/utils';
 
-// Demo credentials (local demo only — not a real auth system)
-const DEMO_PASSWORD = 'selca2026';
+// Demo credentials (local demo only — not a real auth system). The e-mail set in
+// Settings → Notifications (`settings.adminEmail`) is accepted as well.
+const DEMO_EMAIL = 'admin@paketoje.com';
+const DEMO_PASSWORD = 'paketoje2026';
 
 export default function Login() {
   const t = useDict(adm, 'admin');
   const authed = useUi((s) => s.adminAuthed);
   const login = useUi((s) => s.login);
   const adminEmail = useDb((s) => s.settings.adminEmail);
-  const [email, setEmail] = useState(adminEmail);
+  const [email, setEmail] = useState(DEMO_EMAIL);
   const [password, setPassword] = useState(DEMO_PASSWORD);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -31,7 +33,9 @@ export default function Login() {
     e.preventDefault();
     setBusy(true);
     await sleep(500);
-    if (email.trim().toLowerCase() === adminEmail.toLowerCase() && password === DEMO_PASSWORD) {
+    const typed = email.trim().toLowerCase();
+    const known = typed === DEMO_EMAIL || (!!adminEmail && typed === adminEmail.trim().toLowerCase());
+    if (known && password === DEMO_PASSWORD) {
       login();
       navigate('/admin');
     } else {
@@ -42,18 +46,23 @@ export default function Login() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="relative hidden overflow-hidden bg-ink lg:block">
-        <img src="/images/hero/arch.webp" alt="" className="absolute inset-0 h-full w-full object-cover opacity-60" />
-        <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/40 to-ink/10" />
+      <div className="relative hidden overflow-hidden bg-[#1a1a1a] lg:block">
+        <img src="/images/misc/kraft-cups.webp" alt="" className="absolute inset-0 h-full w-full object-cover opacity-55 grayscale-[35%]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a1a] via-[#1a1a1a]/45 to-[#1a1a1a]/30" />
         <div className="relative flex h-full flex-col justify-between p-12 text-white">
-          <Logo tone="light" className="h-14" />
+          <div className="flex items-center gap-3">
+            <Logo tone="light" className="h-12" />
+            <span className="h-6 w-px bg-white/25" aria-hidden />
+            <span className="text-[19px] font-extrabold tracking-tight text-white/90">CMS</span>
+          </div>
           <div>
-            <p className="display max-w-md text-4xl leading-tight">{t('loginHero')}</p>
-            <p className="mt-4 max-w-sm text-paper/70">{t('loginHeroText')}</p>
+            <p className="max-w-md text-[40px] font-extrabold leading-[1.08] tracking-tight">{t('loginHero')}</p>
+            <p className="mt-4 max-w-md text-[15px] leading-relaxed text-white/70">{t('loginHeroText')}</p>
+            <p className="mt-8 text-[12px] font-semibold uppercase tracking-[0.14em] text-white/45">Paketoje · Mitrovicë · it's packaging</p>
           </div>
         </div>
       </div>
-      <div className="relative flex flex-col bg-paper">
+      <div className="relative flex flex-col bg-canvas">
         <div className="flex items-center justify-between p-6">
           <Link to="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted hover:text-ink">
             <ArrowLeft className="h-4 w-4" /> {t('backToSite')}
@@ -62,8 +71,10 @@ export default function Login() {
         </div>
         <div className="flex flex-1 items-center justify-center px-6 pb-16">
           <form onSubmit={submit} className="w-full max-w-sm">
-            <div className="lg:hidden">
-              <Logo className="mb-10 h-12" />
+            <div className="mb-10 flex items-center gap-3 lg:hidden">
+              <Logo className="h-11" />
+              <span className="h-6 w-px bg-black/15" aria-hidden />
+              <span className="text-[18px] font-extrabold tracking-tight text-ink">CMS</span>
             </div>
             <h1 className="text-3xl font-extrabold tracking-tight">{t('loginTitle')}</h1>
             <p className="mt-2 text-muted">{t('loginText')}</p>
@@ -74,9 +85,15 @@ export default function Login() {
             <Button type="submit" size="lg" shape="rounded" className="mt-6 w-full" loading={busy}>
               {t('login')}
             </Button>
-            <p className="mt-4 flex items-start gap-2 rounded-xl bg-sand/70 p-3 text-[13px] text-ink-soft">
-              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" /> {t('demoHint')}
-            </p>
+            <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-black/[0.06] bg-white p-3 text-[13px] text-ink-soft">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-ink" />
+              <span className="min-w-0">
+                {t('demoHint')}
+                <span className="mt-1 block font-mono text-[12px] text-muted">
+                  {DEMO_EMAIL} · {DEMO_PASSWORD}
+                </span>
+              </span>
+            </div>
           </form>
         </div>
       </div>

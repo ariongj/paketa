@@ -18,12 +18,12 @@ import { Block, Choice, Gate, Note, Panel, Segmented, StateText, type StateTone 
 
 const P = defineDict({
   me: {
-    online: 'Online provajder',
-    online_h: 'Kartično plaćanje preko provajdera projekta. Aktiviranje i probno plaćanje su posebni koraci.',
-    provider: 'Provajder',
-    prov_pilot: 'Provajder projekta — određuje se za pilot',
-    prov_monri: 'Monri Payments',
-    prov_allsecure: 'AllSecure',
+    online: 'Kartice preko gateway-a banke',
+    online_h: 'Kartično plaćanje preko e-commerce gateway-a banke (3-D Secure). Ugovor sa bankom, aktiviranje i probno plaćanje su posebni koraci.',
+    provider: 'Gateway',
+    prov_pilot: 'Bira se pri puštanju u rad (demo simulator)',
+    prov_bank: 'E-commerce gateway banke (Raiffeisen, ProCredit, TEB…)',
+    prov_paysera: 'Paysera Checkout',
     env: 'Okruženje',
     env_test: 'Test okruženje',
     env_live: 'Produkcija',
@@ -39,14 +39,14 @@ const P = defineDict({
     st_connected: 'Povezano',
     st_test: 'U testu',
     st_disconnected: 'Nije povezano',
-    manual: 'Ručni načini',
-    manual_h: 'Plaćanje se evidentira ručno u narudžbi.',
+    manual: 'Pouzeće i uplata na račun',
+    manual_h: 'Najčešći načini plaćanja na Kosovu — uplata se evidentira ručno u narudžbi.',
     capture: 'Naplata',
     capture_h: 'Kada se iznos sa kartice zaista naplaćuje.',
     cap_auto: 'Automatski na checkout-u',
     cap_auto_d: 'Iznos se naplaćuje odmah po potvrdi plaćanja.',
     cap_manual: 'Ručno, nakon potvrde narudžbe',
-    cap_manual_d: 'Kartica se autorizuje, a naplata ide u roku od 7 dana — korisno za mjerenja i robu po narudžbi.',
+    cap_manual_d: 'Kartica se autorizuje, a naplata ide u roku od 7 dana — korisno za veleprodajne narudžbe koje se prvo potvrđuju (zalihe, kartoni).',
     refunds: 'Povrat novca',
     refunds_d: 'Povrat se radi iz narudžbe i zahtijeva dozvolu „Povrat“. Kartična plaćanja vraćaju se preko provajdera, ručna se evidentiraju.',
     refundYes: 'Vaša uloga može da vraća novac',
@@ -69,15 +69,15 @@ const P = defineDict({
     txEmpty: 'Još nema kartičnih plaćanja.',
     logsNote: 'Status i logovi integracije vidljivi su samo uz dozvolu.',
     integrations: 'Integracije',
-    pilotNote: 'Provajder, valuta, zone i fiskalna pravila određuju se za pilot projekat. Do tada se ne postavlja univerzalna taksa ili tarifa.',
+    pilotNote: 'Gateway, provizije banke i fiskalizacija (ATK) potvrđuju se prije puštanja u rad. Do tada se kartična plaćanja samo simuliraju.',
   },
   sq: {
-    online: 'Ofrues online',
-    online_h: 'Pagesa me kartelë përmes ofruesit të projektit. Aktivizimi dhe prova e pagesës janë hapa të veçantë.',
-    provider: 'Ofruesi',
-    prov_pilot: 'Ofruesi i projektit — caktohet për pilotin',
-    prov_monri: 'Monri Payments',
-    prov_allsecure: 'AllSecure',
+    online: 'Kartela përmes portës së bankës',
+    online_h: 'Pagesa me kartelë përmes portës e-commerce të bankës (3-D Secure). Kontrata me bankën, aktivizimi dhe pagesa prove janë hapa të veçantë.',
+    provider: 'Porta e pagesës',
+    prov_pilot: 'Zgjidhet para publikimit (simulator demo)',
+    prov_bank: 'Porta e-commerce e bankës (Raiffeisen, ProCredit, TEB…)',
+    prov_paysera: 'Paysera Checkout',
     env: 'Ambienti',
     env_test: 'Ambient prove',
     env_live: 'Live',
@@ -93,14 +93,14 @@ const P = defineDict({
     st_connected: 'E lidhur',
     st_test: 'Në provë',
     st_disconnected: 'E palidhur',
-    manual: 'Mënyra manuale',
-    manual_h: 'Pagesa regjistrohet manualisht te porosia.',
+    manual: 'Pagesa në dorëzim dhe transferta',
+    manual_h: 'Mënyrat më të zakonshme në Kosovë — pagesa regjistrohet manualisht te porosia.',
     capture: 'Arkëtimi',
     capture_h: 'Kur arkëtohet realisht shuma nga kartela.',
     cap_auto: 'Automatik në checkout',
     cap_auto_d: 'Shuma arkëtohet menjëherë pas konfirmimit të pagesës.',
     cap_manual: 'Manual, pas konfirmimit të porosisë',
-    cap_manual_d: 'Kartela autorizohet dhe arkëtimi bëhet brenda 7 ditëve — e dobishme për matje dhe mallra me porosi.',
+    cap_manual_d: 'Kartela autorizohet dhe arkëtimi bëhet brenda 7 ditëve — e dobishme për porositë me shumicë që konfirmohen më parë (stoku, kartonët).',
     refunds: 'Rimbursimi',
     refunds_d: 'Rimbursimi bëhet nga porosia dhe kërkon lejen „Rimburso“. Pagesat me kartelë kthehen përmes ofruesit, ato manuale regjistrohen.',
     refundYes: 'Roli juaj mund të rimbursojë',
@@ -123,15 +123,15 @@ const P = defineDict({
     txEmpty: 'Ende nuk ka pagesa me kartelë.',
     logsNote: 'Statusi dhe log-et e integrimit shihen vetëm me leje.',
     integrations: 'Integrime',
-    pilotNote: 'Ofruesi, valuta, zonat dhe politikat fiskale përcaktohen për projektin pilot. Deri atëherë nuk caktohet një taksë ose tarifë universale.',
+    pilotNote: 'Porta e pagesës, provizionet e bankës dhe fiskalizimi (ATK) konfirmohen para publikimit. Deri atëherë pagesat me kartelë vetëm simulohen.',
   },
   en: {
-    online: 'Online provider',
-    online_h: 'Card payments through the project’s provider. Activation and a test payment are separate steps.',
-    provider: 'Provider',
-    prov_pilot: 'Project provider — set for the pilot',
-    prov_monri: 'Monri Payments',
-    prov_allsecure: 'AllSecure',
+    online: 'Cards through the bank gateway',
+    online_h: 'Card payments through the bank’s e-commerce gateway (3-D Secure). The bank contract, activation and a test payment are separate steps.',
+    provider: 'Gateway',
+    prov_pilot: 'Chosen before go-live (demo simulator)',
+    prov_bank: 'Bank e-commerce gateway (Raiffeisen, ProCredit, TEB…)',
+    prov_paysera: 'Paysera Checkout',
     env: 'Environment',
     env_test: 'Test environment',
     env_live: 'Live',
@@ -147,14 +147,14 @@ const P = defineDict({
     st_connected: 'Connected',
     st_test: 'In test',
     st_disconnected: 'Not connected',
-    manual: 'Manual methods',
-    manual_h: 'The payment is recorded manually on the order.',
+    manual: 'Cash on delivery & bank transfer',
+    manual_h: 'The most common methods in Kosovo — the payment is recorded manually on the order.',
     capture: 'Capture',
     capture_h: 'When the card amount is actually collected.',
     cap_auto: 'Automatically at checkout',
     cap_auto_d: 'The amount is captured as soon as the payment is confirmed.',
     cap_manual: 'Manually, after the order is confirmed',
-    cap_manual_d: 'The card is authorised and captured within 7 days — useful for measurements and made-to-order goods.',
+    cap_manual_d: 'The card is authorised and captured within 7 days — useful for wholesale orders that are confirmed first (stock, cartons).',
     refunds: 'Refunds',
     refunds_d: 'Refunds are issued from the order and need the “Refund” permission. Card payments go back through the provider; manual ones are recorded.',
     refundYes: 'Your role can issue refunds',
@@ -177,7 +177,7 @@ const P = defineDict({
     txEmpty: 'No card payments yet.',
     logsNote: 'Integration status and logs are visible only with permission.',
     integrations: 'Integrations',
-    pilotNote: 'Provider, currency, zones and fiscal policies are set for the pilot project. Until then, no universal tax or fee is set.',
+    pilotNote: 'The gateway, bank fees and fiscalisation (ATK) are confirmed before go-live. Until then card payments are only simulated.',
   },
 });
 type PKey = keyof typeof P.me;
@@ -249,12 +249,29 @@ export function PaymentsSection({ s, set, setExt, readOnly }: SecProps) {
           </>
         }
       >
+        <Block title={t('manual')} hint={t('manual_h')}>
+          <div className="divide-y divide-line/70 rounded-lg border border-line">
+            {methods.map((r) => (
+              <div key={r.key} className="px-4 py-3.5">
+                <ToggleRow icon={r.icon} title={r.title} description={r.desc} checked={p[r.key]} disabled={p[r.key] && enabled === 1} onChange={(v) => set('payments', { ...p, [r.key]: v })} />
+                {r.key === 'bank' && p.bank && (
+                  <div className="mt-4 grid gap-x-4 gap-y-4 pl-0 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] sm:pl-14">
+                    <TextField label={tl('bankName')} value={s.bankName} onChange={(v) => set('bankName', v)} leading={<Landmark className="h-4 w-4" />} />
+                    <TextField label={tl('bankAccount')} value={s.bankAccount} onChange={(v) => set('bankAccount', v)} example inputClassName="font-mono text-[13.5px] tracking-wide" />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          {enabled === 1 && <p className="mt-2.5 text-[12.5px] text-muted">{tl('lastPayment')}</p>}
+        </Block>
+
         <Block title={t('online')} hint={t('online_h')}>
           <div className="grid gap-x-4 gap-y-4 sm:grid-cols-[minmax(0,1fr)_auto]">
             <div>
               <div className="mb-2 text-[12.5px] font-medium text-muted">{t('provider')}</div>
               <Select aria-label={t('provider')} value={ext.payProvider} onChange={(e) => setExt('payProvider', e.target.value as PayProvider)} className="h-10! rounded-lg! text-[14px]!">
-                {(['pilot', 'monri', 'allsecure'] as PayProvider[]).map((k) => (
+                {(['pilot', 'bank', 'paysera'] as PayProvider[]).map((k) => (
                   <option key={k} value={k}>
                     {t(`prov_${k}` as PKey)}
                   </option>
@@ -306,23 +323,6 @@ export function PaymentsSection({ s, set, setExt, readOnly }: SecProps) {
               )}
             </div>
           </div>
-        </Block>
-
-        <Block title={t('manual')} hint={t('manual_h')}>
-          <div className="divide-y divide-line/70 rounded-lg border border-line">
-            {methods.map((r) => (
-              <div key={r.key} className="px-4 py-3.5">
-                <ToggleRow icon={r.icon} title={r.title} description={r.desc} checked={p[r.key]} disabled={p[r.key] && enabled === 1} onChange={(v) => set('payments', { ...p, [r.key]: v })} />
-                {r.key === 'bank' && p.bank && (
-                  <div className="mt-4 grid gap-x-4 gap-y-4 pl-0 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] sm:pl-14">
-                    <TextField label={tl('bankName')} value={s.bankName} onChange={(v) => set('bankName', v)} leading={<Landmark className="h-4 w-4" />} />
-                    <TextField label={tl('bankAccount')} value={s.bankAccount} onChange={(v) => set('bankAccount', v)} example inputClassName="font-mono text-[13.5px] tracking-wide" />
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-          {enabled === 1 && <p className="mt-2.5 text-[12.5px] text-muted">{tl('lastPayment')}</p>}
         </Block>
 
         <Block title={t('capture')} hint={t('capture_h')}>

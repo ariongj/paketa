@@ -12,14 +12,14 @@ export function SuccessCheck() {
         [0, 1].map((i) => (
           <motion.span
             key={i}
-            className="absolute inset-0 rounded-full bg-emerald-600/25"
+            className="absolute inset-0 rounded-full bg-brand-600/25"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: [0.8, 1.9], opacity: [0.55, 0] }}
             transition={{ duration: 1.6, delay: 0.35 + i * 0.45, ease: 'easeOut' }}
           />
         ))}
       <motion.span
-        className="absolute inset-0 rounded-full bg-emerald-600 shadow-[0_18px_40px_-14px_rgb(5_150_105/0.75)]"
+        className="absolute inset-0 rounded-full bg-brand-600 shadow-[0_18px_40px_-14px_var(--color-brand-700)]"
         initial={reduce ? false : { scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 260, damping: 17, delay: 0.1 }}
@@ -37,7 +37,7 @@ function prand(i: number, salt: number) {
   return x - Math.floor(x);
 }
 
-const COLORS = ['var(--color-brand-600)', 'var(--color-brand-300)', 'var(--color-oak)', 'var(--color-sage)', '#e9c46a', 'var(--color-ink)'];
+const COLORS = ['var(--color-brand-600)', 'var(--color-lime)', 'var(--color-pink)', 'var(--color-kraft)', 'var(--color-signal)', 'var(--color-ink)'];
 
 /** One gentle burst of paper confetti from the centre of its (relative) parent. */
 export function Confetti({ count = 46, className }: { count?: number; className?: string }) {

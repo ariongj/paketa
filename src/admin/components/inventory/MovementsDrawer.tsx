@@ -14,10 +14,11 @@ import { isOpenOrder } from '@/lib/orders';
 import type { InventoryMovement } from '@/lib/types';
 import { date, dateTime, num } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { piecesNote, unitWord } from '@/admin/components/products/units';
 import { inv } from './dict';
-import { actorName, docTarget, isOpenPo, lineLeft, stockUnit } from './helpers';
+import { actorName, docTarget, isOpenPo, lineLeft, qtyOf, type UnitLike } from './helpers';
 import type { InvRow } from './useInventory';
-import { DeltaQty, Gate, ReasonLabel, StockStateTag } from './ui';
+import { DeltaQty, Gate, PiecesLine, ReasonLabel, StockStateTag, UnitQty } from './ui';
 
 type Dir = 'all' | 'in' | 'out';
 const PAGE = 40;
@@ -34,15 +35,27 @@ function Section({ title, aside, children }: { title: ReactNode; aside?: ReactNo
   );
 }
 
-function Level({ label, value, unit, strong, hint }: { label: string; value: number; unit: string; strong?: boolean; hint: string }) {
+function Level({ label, value, of, strong, hint }: { label: string; value: number; of: UnitLike; strong?: boolean; hint: string }) {
   const lang = useLang('admin');
+  const pcs = value ? piecesNote(of, value, lang) : '';
   return (
     <div className={cn('flex min-w-0 flex-col justify-between rounded-lg px-3 py-2.5', strong ? 'bg-ink text-white' : 'bg-white ring-1 ring-inset ring-line/80')} title={hint}>
       <div className={cn('text-[11.5px] font-semibold leading-tight', strong ? 'text-white/70' : 'text-muted')}>{label}</div>
       <div className="mt-1 text-[19px] font-bold leading-tight tabular-nums">
-        {num(value, lang)} <span className={cn('text-[11px] font-medium', strong ? 'text-white/60' : 'text-muted')}>{unit}</span>
+        {num(value, lang)} <span className={cn('text-[11px] font-medium', strong ? 'text-white/60' : 'text-muted')}>{unitWord(of.unit, value, lang)}</span>
       </div>
+      <div className={cn('mt-0.5 truncate text-[11px] leading-tight tabular-nums', strong ? 'text-white/60' : 'text-muted')}>{pcs || '\u00a0'}</div>
     </div>
+  );
+}
+
+/** Right-aligned "4 pako" with "200 copë" under it — reserved orders and incoming purchase orders. */
+function LineQty({ n, of, sign }: { n: number; of: UnitLike; sign?: boolean }) {
+  return (
+    <span className="flex shrink-0 flex-col items-end">
+      <UnitQty n={n} of={of} sign={sign} className="font-bold text-ink" />
+      <PiecesLine of={of} qty={n} />
+    </span>
   );
 }
 
@@ -141,8 +154,8 @@ export function MovementsDrawer({
   };
 
   const p = row?.p;
-  const unit = p ? stockUnit(p, lang) : '';
   const canAdjust = can('inventory', 'edit');
+  const sectionTotal = (n: number) => p && [qtyOf(p, n, lang), n ? piecesNote(p, n, lang) : ''].filter(Boolean).join(' · ');
 
   return (
     <Drawer
@@ -176,11 +189,11 @@ export function MovementsDrawer({
               {row.lv.tracked ? (
                 <>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-                    <Level label={t('col_onHand')} value={row.lv.onHand} unit={unit} hint={t('hint_onHand')} />
-                    <Level label={t('col_committed')} value={row.lv.committed} unit={unit} hint={t('hint_committed')} />
-                    <Level label={t('col_unavailable')} value={row.lv.unavailable} unit={unit} hint={t('hint_unavailable')} />
-                    <Level label={t('col_available')} value={row.lv.available} unit={unit} hint={t('hint_available')} strong />
-                    <Level label={t('col_incoming')} value={row.lv.incoming} unit={unit} hint={t('hint_incoming')} />
+                    <Level label={t('col_onHand')} value={row.lv.onHand} of={p} hint={t('hint_onHand')} />
+                    <Level label={t('col_committed')} value={row.lv.committed} of={p} hint={t('hint_committed')} />
+                    <Level label={t('col_unavailable')} value={row.lv.unavailable} of={p} hint={t('hint_unavailable')} />
+                    <Level label={t('col_available')} value={row.lv.available} of={p} hint={t('hint_available')} strong />
+                    <Level label={t('col_incoming')} value={row.lv.incoming} of={p} hint={t('hint_incoming')} />
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-[12px] text-muted">{t('formula')}</p>
@@ -210,7 +223,7 @@ export function MovementsDrawer({
             </section>
 
             {row.lv.tracked && (
-              <Section title={t('reservedBy')} aside={<span className="text-[12px] tabular-nums text-muted">{num(row.lv.committed, lang)} {unit}</span>}>
+              <Section title={t('reservedBy')} aside={<span className="text-[12px] tabular-nums text-muted">{sectionTotal(row.lv.committed)}</span>}>
                 {committedOrders.length === 0 ? (
                   <p className="text-[13px] text-muted">{t('noOpenOrders')}</p>
                 ) : (
@@ -229,9 +242,11 @@ export function MovementsDrawer({
                             {o.customer.firstName} {o.customer.lastName} · {date(o.createdAt, lang, { day: 'numeric', month: 'short' })}
                           </span>
                         </div>
-                        <div className="flex shrink-0 items-center gap-2.5">
+                        <div className="flex shrink-0 items-center gap-3">
                           <OrderStatusBadge status={o.status} />
-                          <span className="w-12 text-right font-bold tabular-nums">{num(qty, lang)}</span>
+                          <span className="min-w-[64px]">
+                            <LineQty n={qty} of={p} />
+                          </span>
                         </div>
                       </li>
                     ))}
@@ -241,7 +256,7 @@ export function MovementsDrawer({
             )}
 
             {incomingPos.length > 0 && (
-              <Section title={t('incomingFrom')} aside={<span className="text-[12px] tabular-nums text-muted">{num(row.lv.incoming, lang)} {unit}</span>}>
+              <Section title={t('incomingFrom')} aside={<span className="text-[12px] tabular-nums text-muted">{sectionTotal(row.lv.incoming)}</span>}>
                 <ul className="divide-y divide-line/60 rounded-lg ring-1 ring-line/80">
                   {incomingPos.map(({ po, left }) => (
                     <li key={po.id} className="flex items-center justify-between gap-3 bg-white px-3 py-2 text-[13px] first:rounded-t-lg last:rounded-b-lg">
@@ -258,7 +273,7 @@ export function MovementsDrawer({
                           {po.expectedAt && <> · {t('expectedOn', { d: date(po.expectedAt, lang, { day: 'numeric', month: 'short' }) })}</>}
                         </span>
                       </div>
-                      <span className="shrink-0 font-bold tabular-nums">+{num(left, lang)}</span>
+                      <LineQty n={left} of={p} sign />
                     </li>
                   ))}
                 </ul>
@@ -291,12 +306,11 @@ export function MovementsDrawer({
               <ol className="divide-y divide-line/60 rounded-xl bg-white ring-1 ring-line/80">
                 {list.slice(0, limit).map((m) => {
                   const prod = productById.get(m.productId);
-                  const u = prod ? stockUnit(prod, lang) : '';
                   return (
-                    <li key={m.id} className="grid grid-cols-[76px_1fr] gap-x-3 px-3.5 py-3 sm:grid-cols-[88px_1fr_auto]">
-                      <div className="pt-px">
-                        <DeltaQty delta={m.delta} className="text-[14px]" />
-                        <div className="mt-0.5 pl-[18px] text-[11px] text-muted">{u}</div>
+                    <li key={m.id} className="grid grid-cols-[92px_1fr] gap-x-3 px-3.5 py-3 sm:grid-cols-[104px_1fr_auto]">
+                      <div className="min-w-0 pt-px">
+                        <DeltaQty delta={m.delta} unit={prod ? unitWord(prod.unit, m.delta, lang) : undefined} className="text-[14px]" />
+                        <PiecesLine of={prod} qty={m.delta} className="mt-0.5 pl-[18px]" />
                       </div>
                       <div className="min-w-0">
                         {!row && prod && (

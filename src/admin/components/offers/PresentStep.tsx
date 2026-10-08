@@ -10,6 +10,7 @@ import { useL, useLang } from '@/i18n';
 import { brandVars } from '@/lib/color';
 import { basePrice } from '@/lib/pricing';
 import { money } from '@/lib/format';
+import { unitWord } from '@/admin/components/products/units';
 import { href } from '@/lib/paths';
 import { thumb } from '@/lib/utils';
 import type { Discount, PlacementKind, Placement, Product } from '@/lib/types';
@@ -78,7 +79,12 @@ export function PresentStep(p: PresentProps) {
               </div>
               <div className="px-2.5 py-2">
                 <div className="truncate text-[12px] font-semibold text-ink">{sample ? l(sample.name) : l(draft.name)}</div>
-                {sample && <div className="text-[12px] font-bold text-brand-700">{money(basePrice(sample), lang)}</div>}
+                {sample && (
+                  <div className="text-[12px] font-bold text-brand-700">
+                    {money(basePrice(sample), lang)}
+                    <span className="font-medium text-muted"> / {unitWord(sample.unit, 1, lang)}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -106,13 +112,13 @@ export function PresentStep(p: PresentProps) {
       >
         <div id="of-landing" className="scroll-mt-32" />
         <div className="mb-4 flex min-w-0 items-center gap-2 rounded-lg bg-canvas/70 px-3 py-2 font-mono text-[12.5px] text-ink-soft">
-          <span className="truncate">selca.me{url}</span>
+          <span className="truncate">paketoje.com{url}</span>
         </div>
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_260px]">
           <div className="space-y-4">
             <L10nInput label={t('f_landingTitle')} value={draft.landing.title} onChange={(title) => set({ landing: { ...draft.landing, title } })} hint={t('f_landingTitleHint')} />
             {l(draft.landing.title) && (
-              <div className="rounded-lg border border-line/70 px-3 py-2 text-[17px] font-semibold text-ink [&_em]:font-serif" style={brandVars(p.data.settings.brandColor)}>
+              <div className="rounded-lg border border-line/70 px-3 py-2 font-display text-[18px] font-bold tracking-tight text-ink" style={brandVars(p.data.settings.brandColor)}>
                 <Accent text={l(draft.landing.title)} />
               </div>
             )}

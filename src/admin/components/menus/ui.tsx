@@ -50,15 +50,15 @@ export function TypeIcon({ type, size = 'md', className }: { type: MenuItemType;
   );
 }
 
-/** Re-enables the warm SELCA storefront palette inside the neutral CMS (live previews). */
+/** Re-enables the Paketoje storefront palette (green-black ink on kraft paper) inside the neutral CMS (live previews). */
 export function storeVars(brandColor: string): CSSProperties {
   return {
     ...brandVars(brandColor),
-    '--color-ink': '#1c1a17',
-    '--color-ink-soft': '#3a3631',
-    '--color-muted': '#6f675e',
-    '--color-paper': '#f7f3ee',
-    '--color-sand': '#efe7dc',
-    '--color-line': '#e3d9cc',
+    '--color-ink': '#0f1d16',
+    '--color-ink-soft': '#2c3a33',
+    '--color-muted': '#5f6d66',
+    '--color-paper': '#f6f4ee',
+    '--color-sand': '#eee9dd',
+    '--color-line': '#e2ddd0',
   } as CSSProperties;
 }

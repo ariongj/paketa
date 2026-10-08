@@ -27,20 +27,20 @@ const L = defineDict({
     editLoc: 'Izmijeni lokaciju',
     newLoc: 'Nova lokacija',
     name: 'Naziv',
-    pickupLabel: 'Lično preuzimanje',
-    pickupHint: 'Kupci mogu ovdje preuzeti narudžbe.',
+    pickupLabel: 'Preuzimanje narudžbi',
+    pickupHint: 'Kupci mogu ovdje preuzeti narudžbe (npr. depo u Mitrovici).',
     defaultLabel: 'Podrazumijevana lokacija',
-    defaultHint: 'Koristi se za zalihe, fakture i nove termine.',
+    defaultHint: 'Koristi se za zalihe (pakovanja), fakture i nove termine.',
     apply: 'Primijeni',
     applyHint: 'Promjene se upisuju dugmetom „Sačuvaj“ na dnu ekrana.',
     removeLoc: 'Ukloni lokaciju',
     cantRemoveDefault: 'Podrazumijevana lokacija se ne može ukloniti',
     inUse: 'Lokacija ima predstojeće termine ({n}) — premjestite ih prije uklanjanja.',
-    note: 'Lokacije se koriste za zalihe, lično preuzimanje i termine (kalendar po osoblju ili lokaciji).',
+    note: 'Lokacije (depo, tačke preuzimanja) koriste se za zalihe, preuzimanje narudžbi i termine — npr. dostavu uzoraka ili B2B sastanke.',
     pickupOn: 'Da',
     pickupOff: 'Ne',
     count: 'Lokacija: {n}',
-    noPickup: 'Nijedna lokacija nema lično preuzimanje — ta opcija neće biti ponuđena na checkout-u.',
+    noPickup: 'Nijedna lokacija nema preuzimanje — opcija „Preuzimanje u depou“ neće biti ponuđena na checkout-u.',
   },
   sq: {
     addLoc: 'Shto lokacion',
@@ -53,20 +53,20 @@ const L = defineDict({
     editLoc: 'Ndrysho lokacionin',
     newLoc: 'Lokacion i ri',
     name: 'Emri',
-    pickupLabel: 'Marrje në dyqan',
-    pickupHint: 'Klientët mund t’i marrin porositë këtu.',
+    pickupLabel: 'Marrje e porosive',
+    pickupHint: 'Klientët mund t’i marrin porositë këtu (p.sh. depoja në Mitrovicë).',
     defaultLabel: 'Lokacioni parazgjedhur',
-    defaultHint: 'Përdoret për stokun, faturat dhe terminet e reja.',
+    defaultHint: 'Përdoret për stokun (pako), faturat dhe terminet e reja.',
     apply: 'Apliko',
     applyHint: 'Ndryshimet regjistrohen me butonin „Ruaj“ në fund të ekranit.',
     removeLoc: 'Hiq lokacionin',
     cantRemoveDefault: 'Lokacioni parazgjedhur nuk mund të hiqet',
     inUse: 'Lokacioni ka termine të ardhshme ({n}) — zhvendosini para heqjes.',
-    note: 'Lokacionet përdoren për stokun, marrjen në dyqan dhe terminet (kalendar sipas stafit ose lokacionit).',
+    note: 'Lokacionet (depoja, pikat e marrjes) përdoren për stokun, marrjen e porosive dhe terminet — p.sh. sjelljen e mostrave ose takimet B2B.',
     pickupOn: 'Po',
     pickupOff: 'Jo',
     count: 'Lokacione: {n}',
-    noPickup: 'Asnjë lokacion nuk ka marrje në dyqan — kjo mundësi nuk do të ofrohet në checkout.',
+    noPickup: 'Asnjë lokacion nuk ka marrje — opsioni „Marrje në depo“ nuk do të ofrohet në checkout.',
   },
   en: {
     addLoc: 'Add location',
@@ -79,20 +79,20 @@ const L = defineDict({
     editLoc: 'Edit location',
     newLoc: 'New location',
     name: 'Name',
-    pickupLabel: 'Store pickup',
-    pickupHint: 'Customers can pick up orders here.',
+    pickupLabel: 'Order pickup',
+    pickupHint: 'Customers can pick up orders here (e.g. the Mitrovica warehouse).',
     defaultLabel: 'Default location',
-    defaultHint: 'Used for stock, invoices and new appointments.',
+    defaultHint: 'Used for stock (packs), invoices and new appointments.',
     apply: 'Apply',
     applyHint: 'Changes are stored with “Save” at the bottom of the screen.',
     removeLoc: 'Remove location',
     cantRemoveDefault: 'The default location can’t be removed',
     inUse: 'This location has upcoming appointments ({n}) — move them before removing it.',
-    note: 'Locations are used for stock, store pickup and appointments (calendar by staff or location).',
+    note: 'Locations (warehouse, pickup points) are used for stock, order pickup and appointments — e.g. sample visits or B2B meetings.',
     pickupOn: 'Yes',
     pickupOff: 'No',
     count: 'Locations: {n}',
-    noPickup: 'No location offers store pickup — the option won’t be offered at checkout.',
+    noPickup: 'No location offers pickup — “Warehouse pickup” won’t be offered at checkout.',
   },
 });
 
@@ -127,9 +127,9 @@ function LocationModal({ open, loc, onClose, onApply }: { open: boolean; loc: St
       }
     >
       <div className="grid gap-5 px-6 py-5 sm:grid-cols-2">
-        <TextField className="sm:col-span-2" label={t('name')} value={d.name} onChange={(v) => setD({ ...d, name: v })} leading={<Store className="h-4 w-4" />} error={tried ? err.name : undefined} autoFocus placeholder="Salon Bar" />
-        <TextField label={tl('address')} value={d.address} onChange={(v) => setD({ ...d, address: v })} leading={<MapPin className="h-4 w-4" />} error={tried ? err.address : undefined} />
-        <TextField label={tl('city')} value={d.city} onChange={(v) => setD({ ...d, city: v })} error={tried ? err.city : undefined} />
+        <TextField className="sm:col-span-2" label={t('name')} value={d.name} onChange={(v) => setD({ ...d, name: v })} leading={<Store className="h-4 w-4" />} error={tried ? err.name : undefined} autoFocus placeholder="Pikë marrjeje Prishtinë" />
+        <TextField label={tl('address')} value={d.address} onChange={(v) => setD({ ...d, address: v })} leading={<MapPin className="h-4 w-4" />} error={tried ? err.address : undefined} placeholder="Sylyshaj, Suhodoll" />
+        <TextField label={tl('city')} value={d.city} onChange={(v) => setD({ ...d, city: v })} error={tried ? err.city : undefined} placeholder="Mitrovicë" />
         <div className="space-y-3 sm:col-span-2">
           <label className="flex items-center justify-between gap-3 rounded-lg border border-line px-3.5 py-3">
             <span>

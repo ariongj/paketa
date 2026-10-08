@@ -1,7 +1,7 @@
 // Pure overview maths (PDF p.08 + p.38): period windows, net sales, chart buckets, top products and the
 // "Kërkojnë vëmendje" queues. Everything is derived from raw store slices inside `useMemo` (see Dashboard.tsx).
 import type { Booking, Inquiry, Offer, Order, OrderStatus, Product, ReturnRequest, Unit } from '@/lib/types';
-import { fulfillmentOf, orderLineNet, orderLineUnits, paymentOf, refundedOf } from '@/lib/orders';
+import { fulfillmentOf, orderLineNet, orderLinePieces, orderLineUnits, paymentOf, refundedOf } from '@/lib/orders';
 import { offerState } from '@/lib/offers';
 
 export type Period = 'today' | '7' | '30' | '90';
@@ -10,10 +10,10 @@ export const isPeriod = (v: unknown): v is Period => PERIODS.includes(v as Perio
 export const periodDays = (p: Period) => (p === 'today' ? 1 : Number(p));
 
 /** Pipeline order of order statuses. */
-export const STATUS_ORDER: OrderStatus[] = ['new', 'confirmed', 'processing', 'shipped', 'installation', 'completed', 'cancelled'];
+export const STATUS_ORDER: OrderStatus[] = ['new', 'confirmed', 'processing', 'installation', 'shipped', 'completed', 'cancelled'];
 
-/** "Low stock" = tracked product with this many units or fewer — same rule as the products list filter (?zalihe=low). */
-export const LOW_STOCK = 5;
+/** "Low stock" = tracked product with this many packs or fewer — same rule as the products list filter (?zalihe=low). */
+export const LOW_STOCK = 10;
 /** Offers that end within this many days are flagged. */
 export const OFFER_WARN_DAYS = 14;
 
@@ -94,8 +94,10 @@ export interface TopProduct {
   name: string;
   image: string;
   unit: Unit;
-  /** pieces / metres / sets, or m² for m2 products */
+  /** selling units sold — packs for pack products */
   units: number;
+  /** pieces those units hold (packs × pieces per pack) */
+  pieces: number;
   net: number;
 }
 
@@ -122,8 +124,9 @@ export function windowStats(orders: Order[], inquiries: Inquiry[], r: Range): Wi
     net += netSales(o);
     o.items.forEach((l, i) => {
       if (!l.productId) return;
-      const row = top.get(l.productId) ?? { productId: l.productId, name: l.name, image: l.image, unit: l.unit, units: 0, net: 0 };
+      const row = top.get(l.productId) ?? { productId: l.productId, name: l.name, image: l.image, unit: l.unit, units: 0, pieces: 0, net: 0 };
       row.units += orderLineUnits(l);
+      row.pieces += orderLinePieces(l);
       row.net += orderLineNet(o, i);
       top.set(l.productId, row);
     });
@@ -132,7 +135,8 @@ export function windowStats(orders: Order[], inquiries: Inquiry[], r: Range): Wi
     net: r2(net),
     orders: count,
     byStatus,
-    top: [...top.values()].sort((a, b) => b.net - a.net).slice(0, 5),
+    // Top products by packs sold (net sales break ties)
+    top: [...top.values()].sort((a, b) => b.units - a.units || b.net - a.net).slice(0, 5),
     contacts: inquiries.filter((q) => inRange(q.createdAt, r)).length,
   };
 }

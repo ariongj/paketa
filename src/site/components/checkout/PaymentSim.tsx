@@ -46,7 +46,7 @@ export function PaymentSim({ phase, amount, merchant }: { phase: 'idle' | 'proce
       <div className="px-6 pb-8 pt-8 text-center sm:px-8">
         {phase === 'approved' ? (
           <motion.div key="ok" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-            <span className="mx-auto grid h-16 w-16 animate-pop place-items-center rounded-full bg-emerald-600 text-white shadow-[0_12px_30px_-12px_rgb(5_150_105/0.8)]">
+            <span className="mx-auto grid h-16 w-16 animate-pop place-items-center rounded-full bg-brand-600 text-white shadow-[0_12px_30px_-12px_var(--color-brand-700)]">
               <Check className="h-8 w-8" strokeWidth={3} />
             </span>
             <h3 className="mt-5 text-xl font-bold text-ink">{t('approved')}</h3>
@@ -79,7 +79,7 @@ export function PaymentSim({ phase, amount, merchant }: { phase: 'idle' | 'proce
           </div>
         </dl>
         <p className="mt-5 flex items-center justify-center gap-1.5 text-[11.5px] font-semibold text-muted">
-          <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" /> 3-D Secure · SSL
+          <ShieldCheck className="h-3.5 w-3.5 text-brand-600" /> 3-D Secure · SSL
         </p>
       </div>
     </Modal>

@@ -233,7 +233,7 @@ export default function Slides() {
   const Missing = ({ r }: { r: Row }) =>
     r.missing ? (
       <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-900 ring-1 ring-inset ring-amber-600/20">
-        <TriangleAlert className="h-3 w-3" /> {t('missingLang', { lang: lang.toUpperCase() })}
+        <TriangleAlert className="h-3 w-3" /> {t('missingLang', { lang: LANGS.find((x) => x.code === lang)?.short ?? lang.toUpperCase() })}
       </span>
     ) : null;
   const OrderButtons = ({ r, i, n }: { r: Row; i: number; n: number }) =>
@@ -306,7 +306,7 @@ export default function Slides() {
               </option>
             ))}
           </ChipSelect>
-          <ChipSelect label={t('f_lang')} display={lang.toUpperCase()} value={lang} onChange={(e) => setParam({ gjuha: e.target.value === adminLang ? null : e.target.value })}>
+          <ChipSelect label={t('f_lang')} display={LANGS.find((x) => x.code === lang)?.short ?? lang.toUpperCase()} value={lang} onChange={(e) => setParam({ gjuha: e.target.value === adminLang ? null : e.target.value })}>
             {LANGS.map((l) => (
               <option key={l.code} value={l.code}>
                 {l.short} — {l.label}

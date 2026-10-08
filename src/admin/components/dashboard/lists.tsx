@@ -4,7 +4,7 @@ import { ArrowRight, PackageCheck, ShoppingCart } from 'lucide-react';
 import { Card, Table, Td, Th, Thumb, Tr } from '@/admin/components/kit';
 import { useDict, useL, useLang } from '@/i18n';
 import { fulfillmentOf, paymentOf } from '@/lib/orders';
-import { money, num, timeAgo, unitLabel } from '@/lib/format';
+import { money, num, pieces, timeAgo, unitLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { Order, Product } from '@/lib/types';
 import type { TopProduct } from './data';
@@ -139,7 +139,7 @@ export function TopProducts({ rows, products, periodLabel, linkable, className }
   const l = useL('admin');
   const lang = useLang('admin');
   const byId = new Map(products.map((p) => [p.id, p]));
-  const max = rows[0]?.net || 1;
+  const max = Math.max(1, ...rows.map((r) => r.units));
   return (
     <Card
       className={className}
@@ -156,6 +156,7 @@ export function TopProducts({ rows, products, periodLabel, linkable, className }
             const p = byId.get(r.productId);
             const name = p ? l(p.name) : r.name;
             const units = `${num(r.units, lang, 1)} ${unitLabel(r.unit, lang)}`;
+            const pcs = r.unit === 'pack' && r.pieces > r.units ? pieces(r.pieces, lang) : '';
             const inner = (
               <>
                 <span className="w-4 shrink-0 text-center text-[12px] font-semibold tabular-nums text-muted">{i + 1}</span>
@@ -169,10 +170,11 @@ export function TopProducts({ rows, products, periodLabel, linkable, className }
                   </span>
                   <span className="mt-1.5 flex items-center gap-3">
                     <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#efefef]">
-                      <span className="block h-full rounded-full bg-ink" style={{ width: `${Math.max(3, (r.net / max) * 100)}%` }} />
+                      <span className="block h-full rounded-full bg-ink" style={{ width: `${Math.max(3, (r.units / max) * 100)}%` }} />
                     </span>
-                    <span className="shrink-0 whitespace-nowrap text-right text-[12px] tabular-nums text-muted">
-                      {units} {t('sold')}
+                    <span className="shrink-0 whitespace-nowrap text-right text-[12px] tabular-nums text-muted" title={pcs || undefined}>
+                      <span className="font-semibold text-ink-soft">{units}</span> {t('sold')}
+                      {pcs && <span className="hidden sm:inline"> · {pcs}</span>}
                     </span>
                   </span>
                 </span>

@@ -26,9 +26,9 @@ import { slugify, uid } from '@/lib/utils';
 const T = defineDict({
   me: {
     newPage: 'Nova stranica',
-    newPageText: 'Informativna stranica — dostava, uslovi, reklamacije, privatnost…',
+    newPageText: 'Informativna stranica — dostava, uslovi kupovine, povrat robe, privatnost…',
     title: 'Naslov stranice',
-    titlePh: 'npr. Dostava i ugradnja',
+    titlePh: 'npr. Dostava i preuzimanje u depou',
     body: 'Sadržaj stranice',
     saved: 'Stranica je sačuvana',
     created: 'Stranica je kreirana',
@@ -42,9 +42,9 @@ const T = defineDict({
   },
   sq: {
     newPage: 'Faqe e re',
-    newPageText: 'Faqe informative — dërgesa, kushtet, reklamacionet, privatësia…',
+    newPageText: 'Faqe informative — dërgesa, kushtet e blerjes, kthimi i mallit, privatësia…',
     title: 'Titulli i faqes',
-    titlePh: 'p.sh. Dërgesa dhe montimi',
+    titlePh: 'p.sh. Dërgesa dhe marrja në depo',
     body: 'Përmbajtja e faqes',
     saved: 'Faqja u ruajt',
     created: 'Faqja u krijua',
@@ -60,7 +60,7 @@ const T = defineDict({
     newPage: 'New page',
     newPageText: 'Information page — delivery, terms, returns, privacy…',
     title: 'Page title',
-    titlePh: 'e.g. Delivery & installation',
+    titlePh: 'e.g. Delivery & warehouse pickup',
     body: 'Page content',
     saved: 'Page saved',
     created: 'Page created',
@@ -129,24 +129,24 @@ function PageEditor({ id }: { id: string }) {
 
   const slugTaken = useMemo(() => !!draft.slug && pages.some((p) => p.id !== draft.id && p.slug === draft.slug), [pages, draft.slug, draft.id]);
   const errors = {
-    title: !draft.title.me.trim() ? te('titleRequired') : undefined,
+    title: !draft.title.sq.trim() ? te('titleRequired') : undefined,
     slug: !draft.slug.trim() ? te('slugRequired') : slugTaken ? te('slugTaken') : undefined,
   };
 
   const authors = useMemo(
-    () => Array.from(new Set(['SELCA tim', ...staff.filter((s) => s.active).map((s) => s.name), ...posts.map((p) => p.author), ...pages.map((p) => p.author ?? '')].filter(Boolean))),
+    () => Array.from(new Set(['Ekipi Paketoje', ...staff.filter((s) => s.active).map((s) => s.name), ...posts.map((p) => p.author), ...pages.map((p) => p.author ?? '')].filter(Boolean))),
     [staff, posts, pages],
   );
   const tagSuggestions = useMemo(() => Array.from(new Set(pages.flatMap((p) => p.tags ?? []))), [pages]);
   const refs = useMemo(() => (isNew ? [] : menuRefs(menus, 'page', [draft.id, source?.slug ?? draft.slug])), [isNew, menus, draft.id, draft.slug, source?.slug]);
   const footer = menus.find((m) => m.handle === 'footer');
 
-  const setTitle = (title: PageX['title']) => patch(slugAuto ? { title, slug: slugify(title.me) } : { title });
+  const setTitle = (title: PageX['title']) => patch(slugAuto ? { title, slug: slugify(title.sq) } : { title });
 
   const save = () => {
     if (readOnly || (!dirty && !isNew)) return;
     const clean: PageX = { ...draft, slug: slugify(draft.slug), publishedAt: draft.publishedAt ?? new Date().toISOString() };
-    if (!clean.title.me.trim() || !clean.slug || slugTaken) {
+    if (!clean.title.sq.trim() || !clean.slug || slugTaken) {
       setShowErrors(true);
       toast.error(te('fixErrors'));
       return;
@@ -260,7 +260,7 @@ function PageEditor({ id }: { id: string }) {
               onChange={(body) => patch({ body })}
               rows={16}
               previewHeader={(lng) => {
-                const title = draft.title[lng]?.trim() || draft.title.me;
+                const title = draft.title[lng]?.trim() || draft.title.sq;
                 return title ? <h1 className="display mb-2 text-[2rem] leading-tight text-ink sm:text-[2.4rem]">{title}</h1> : null;
               }}
             />
@@ -271,8 +271,8 @@ function PageEditor({ id }: { id: string }) {
             onChange={(seo) => patch({ seo })}
             fallbackTitle={l(draft.title) || t('newPage')}
             fallbackDescription={l(excerpt) || mdSummary(l(draft.body))}
-            domain={adminEmail.split('@')[1] || 'selca.me'}
-            path={['stranica', draft.slug]}
+            domain={adminEmail.split('@')[1] || 'paketoje.com'}
+            path={['faqe', draft.slug]}
             readOnly={readOnly}
             slugField={
               <SlugField
@@ -284,10 +284,10 @@ function PageEditor({ id }: { id: string }) {
                 }}
                 onBlur={() => patch({ slug: slugify(draft.slug) })}
                 auto={slugAuto}
-                canRegenerate={!readOnly && !!draft.title.me.trim() && draft.slug !== slugify(draft.title.me)}
+                canRegenerate={!readOnly && !!draft.title.sq.trim() && draft.slug !== slugify(draft.title.sq)}
                 onRegenerate={() => {
                   setSlugAuto(true);
-                  patch({ slug: slugify(draft.title.me) });
+                  patch({ slug: slugify(draft.title.sq) });
                 }}
                 error={slugTaken || showErrors ? errors.slug : undefined}
               />

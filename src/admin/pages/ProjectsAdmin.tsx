@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { Database, Eye, Hammer, ImageOff, MapPin, Pencil, Plus, Star, StarOff, Trash2 } from 'lucide-react';
+import { Database, Eye, ImageOff, MapPin, Pencil, Plus, Stamp, Star, StarOff, Trash2 } from 'lucide-react';
 import { PageHeader, FilterPills, SearchInput, confirmDialog } from '@/admin/components/kit';
 import { L10nInput } from '@/admin/components/L10nInput';
 import { ImageField } from '@/admin/components/media';
@@ -24,121 +24,124 @@ import { cn, uid } from '@/lib/utils';
 
 const T = defineDict({
   me: {
-    description: 'Portfolio završenih projekata — unosi modela „Projekti“. Izdvojeni (★) se prikazuju na početnoj, svi na stranici „Realizacije“.',
-    newProject: 'Novi projekat',
+    title: 'Reference',
+    description: 'Primjeri pakovanja sa logom za lokale — unosi modela „Reference“. Izdvojene (★) se prikazuju na početnoj, sve na stranici /referencat.',
+    newProject: 'Nova referenca',
     model: 'Model sadržaja',
     featured: 'Na početnoj',
     featuredBadge: 'Na početnoj',
     featureAdd: 'Izdvoji na početnoj',
     featureRemove: 'Ukloni sa početne',
-    nowFeatured: 'Projekat je izdvojen na početnoj',
-    nowUnfeatured: 'Projekat više nije na početnoj',
+    nowFeatured: 'Referenca je izdvojena na početnoj',
+    nowUnfeatured: 'Referenca više nije na početnoj',
     searchPh: 'Pretraži po nazivu ili gradu…',
-    empty: 'Još nema realizacija',
-    emptyText: 'Dodajte prvi završeni projekat sa fotografijom — to je najbolja preporuka za nove kupce.',
-    noMatch: 'Nijedan projekat ne odgovara filteru.',
-    addCard: 'Dodaj realizaciju',
-    addCardText: 'Fotografija, lokacija i kratak opis',
-    editTitle: 'Uredi projekat',
-    newTitle: 'Novi projekat',
-    modalText: 'Prikazuje se u portfoliju na sajtu, na sva tri jezika.',
-    fTitle: 'Naziv projekta',
-    fTitlePh: 'npr. Vila sa bazenom — ALU stolarija',
+    empty: 'Još nema referenci',
+    emptyText: 'Dodajte prvi primjer sa fotografijom — npr. čaše sa logom za kafić ili kutije za burger restoran.',
+    noMatch: 'Nijedna referenca ne odgovara filteru.',
+    addCard: 'Dodaj referencu',
+    addCardText: 'Fotografija, vrsta lokala i kratak opis',
+    editTitle: 'Uredi referencu',
+    newTitle: 'Nova referenca',
+    modalText: 'Prikazuje se na stranici „Reference“ na sajtu, na sva tri jezika.',
+    fTitle: 'Naziv reference',
+    fTitlePh: 'npr. Kafić u centru — čaše 400 ml sa logom',
     fSummary: 'Kratak opis',
-    fSummaryHint: 'Jedna do dvije rečenice — šta je urađeno i od kojih materijala.',
+    fSummaryHint: 'Jedna do dvije rečenice — koji proizvodi, kakva štampa i koliko komada.',
     fLocation: 'Lokacija',
-    fLocationPh: 'npr. Budva',
+    fLocationPh: 'npr. Priština',
     fYear: 'Godina',
     fImage: 'Fotografija',
     fImageHint: 'Najbolje pejzažna fotografija, najmanje 1200 px širine.',
     fFeatured: 'Izdvoji na početnoj',
-    fFeaturedHint: 'Prikazuje se u sekciji „Realizacije“ na početnoj.',
-    saved: 'Projekat je sačuvan',
-    created: 'Projekat je dodat u portfolio',
-    deleteTitle: 'Obrisati projekat „{name}“?',
-    deleteText: 'Projekat će biti uklonjen iz portfolija na sajtu.',
+    fFeaturedHint: 'Prikazuje se u sekciji „Reference“ na početnoj.',
+    saved: 'Referenca je sačuvana',
+    created: 'Referenca je dodata',
+    deleteTitle: 'Obrisati referencu „{name}“?',
+    deleteText: 'Referenca će biti uklonjena sa sajta.',
     locationRequired: 'Unesite lokaciju.',
     yearInvalid: 'Unesite ispravnu godinu.',
     imageRequired: 'Izaberite fotografiju.',
-    stats: '{n} projekata · {f} na početnoj · {c} gradova',
+    stats: '{n} referenci · {f} na početnoj · {c} gradova',
   },
   sq: {
-    description: 'Portofoli i projekteve të përfunduara — regjistrimet e modelit „Projektet“. Të veçuarit (★) shfaqen në ballinë, të gjithë në faqen „Realizimet“.',
-    newProject: 'Projekt i ri',
+    title: 'Referencat',
+    description: 'Shembuj paketimesh me logo për lokale — regjistrimet e modelit „Referencat“. Të veçuarat (★) shfaqen në ballinë, të gjitha në faqen /referencat.',
+    newProject: 'Referencë e re',
     model: 'Modeli i përmbajtjes',
     featured: 'Në ballinë',
     featuredBadge: 'Në ballinë',
     featureAdd: 'Veço në ballinë',
     featureRemove: 'Hiq nga ballina',
-    nowFeatured: 'Projekti u veçua në ballinë',
-    nowUnfeatured: 'Projekti nuk është më në ballinë',
+    nowFeatured: 'Referenca u veçua në ballinë',
+    nowUnfeatured: 'Referenca nuk është më në ballinë',
     searchPh: 'Kërko sipas emrit ose qytetit…',
-    empty: 'Ende nuk ka realizime',
-    emptyText: 'Shtoni projektin e parë të përfunduar me foto — është rekomandimi më i mirë për klientët e rinj.',
-    noMatch: 'Asnjë projekt nuk përputhet me filtrin.',
-    addCard: 'Shto realizim',
-    addCardText: 'Foto, vendndodhja dhe përshkrim i shkurtër',
-    editTitle: 'Ndrysho projektin',
-    newTitle: 'Projekt i ri',
-    modalText: 'Shfaqet në portofolin e faqes, në të tri gjuhët.',
-    fTitle: 'Emri i projektit',
-    fTitlePh: 'p.sh. Vilë me pishinë — dogramë alumini',
+    empty: 'Ende nuk ka referenca',
+    emptyText: 'Shtoni shembullin e parë me foto — p.sh. gota me logo për një kafiteri ose kuti burgeri për një restorant.',
+    noMatch: 'Asnjë referencë nuk përputhet me filtrin.',
+    addCard: 'Shto referencë',
+    addCardText: 'Foto, lloji i lokalit dhe përshkrim i shkurtër',
+    editTitle: 'Ndrysho referencën',
+    newTitle: 'Referencë e re',
+    modalText: 'Shfaqet në faqen „Referencat“ në website, në të tri gjuhët.',
+    fTitle: 'Emri i referencës',
+    fTitlePh: 'p.sh. Kafiteri në qendër — gota 400 ml me logo',
     fSummary: 'Përshkrim i shkurtër',
-    fSummaryHint: 'Një deri në dy fjali — çfarë u bë dhe me cilat materiale.',
+    fSummaryHint: 'Një deri në dy fjali — cilat produkte, çfarë printimi dhe sa copë.',
     fLocation: 'Vendndodhja',
-    fLocationPh: 'p.sh. Ulqin',
+    fLocationPh: 'p.sh. Prishtinë',
     fYear: 'Viti',
     fImage: 'Fotografia',
     fImageHint: 'Më mirë foto horizontale, të paktën 1200 px e gjerë.',
     fFeatured: 'Veço në ballinë',
-    fFeaturedHint: 'Shfaqet në seksionin „Realizimet“ në ballinë.',
-    saved: 'Projekti u ruajt',
-    created: 'Projekti u shtua në portofol',
-    deleteTitle: 'Të fshihet projekti „{name}“?',
-    deleteText: 'Projekti do të hiqet nga portofoli në faqe.',
+    fFeaturedHint: 'Shfaqet në seksionin „Referencat“ në ballinë.',
+    saved: 'Referenca u ruajt',
+    created: 'Referenca u shtua',
+    deleteTitle: 'Të fshihet referenca „{name}“?',
+    deleteText: 'Referenca do të hiqet nga faqja.',
     locationRequired: 'Shkruani vendndodhjen.',
     yearInvalid: 'Shkruani një vit të saktë.',
     imageRequired: 'Zgjidhni një fotografi.',
-    stats: '{n} projekte · {f} në ballinë · {c} qytete',
+    stats: '{n} referenca · {f} në ballinë · {c} qytete',
   },
   en: {
-    description: 'Portfolio of completed projects — entries of the “Projects” model. Featured ones (★) appear on the homepage, all of them on the “Projects” page.',
-    newProject: 'New project',
+    title: 'References',
+    description: 'Examples of custom-branded packaging for venues — entries of the “References” model. Featured ones (★) appear on the homepage, all of them on /referencat.',
+    newProject: 'New reference',
     model: 'Content model',
     featured: 'On homepage',
     featuredBadge: 'On homepage',
     featureAdd: 'Feature on homepage',
     featureRemove: 'Remove from homepage',
-    nowFeatured: 'Project featured on the homepage',
-    nowUnfeatured: 'Project removed from the homepage',
+    nowFeatured: 'Reference featured on the homepage',
+    nowUnfeatured: 'Reference removed from the homepage',
     searchPh: 'Search by name or city…',
-    empty: 'No projects yet',
-    emptyText: 'Add your first completed project with a photo — it is the best recommendation for new customers.',
-    noMatch: 'No project matches the filter.',
-    addCard: 'Add a project',
-    addCardText: 'Photo, location and a short description',
-    editTitle: 'Edit project',
-    newTitle: 'New project',
-    modalText: 'Shown in the portfolio on the site, in all three languages.',
-    fTitle: 'Project name',
-    fTitlePh: 'e.g. Villa with pool — aluminium glazing',
+    empty: 'No references yet',
+    emptyText: 'Add your first example with a photo — e.g. logo cups for a café or burger boxes for a restaurant.',
+    noMatch: 'No reference matches the filter.',
+    addCard: 'Add a reference',
+    addCardText: 'Photo, venue type and a short description',
+    editTitle: 'Edit reference',
+    newTitle: 'New reference',
+    modalText: 'Shown on the “References” page of the site, in all three languages.',
+    fTitle: 'Reference name',
+    fTitlePh: 'e.g. City-centre café — 400 ml cups with logo',
     fSummary: 'Short description',
-    fSummaryHint: 'One or two sentences — what was done and with which materials.',
+    fSummaryHint: 'One or two sentences — which products, what print, how many pieces.',
     fLocation: 'Location',
-    fLocationPh: 'e.g. Budva',
+    fLocationPh: 'e.g. Prishtina',
     fYear: 'Year',
     fImage: 'Photo',
     fImageHint: 'Ideally a landscape photo, at least 1200 px wide.',
     fFeatured: 'Feature on homepage',
-    fFeaturedHint: 'Shown in the “Projects” section on the homepage.',
-    saved: 'Project saved',
-    created: 'Project added to the portfolio',
-    deleteTitle: 'Delete the project “{name}”?',
-    deleteText: 'The project will be removed from the portfolio on the site.',
+    fFeaturedHint: 'Shown in the “References” section on the homepage.',
+    saved: 'Reference saved',
+    created: 'Reference added',
+    deleteTitle: 'Delete the reference “{name}”?',
+    deleteText: 'The reference will be removed from the site.',
     locationRequired: 'Enter a location.',
     yearInvalid: 'Enter a valid year.',
     imageRequired: 'Choose a photo.',
-    stats: '{n} projects · {f} on homepage · {c} cities',
+    stats: '{n} references · {f} on homepage · {c} cities',
   },
 });
 
@@ -153,7 +156,7 @@ const blankProject = (): Project => ({
   featured: false,
 });
 
-const tagKey = (tag: L10n) => tag.me.trim().toLowerCase();
+const tagKey = (tag: L10n) => (tag.sq.trim() || tag.me.trim()).toLowerCase();
 
 export default function ProjectsAdmin() {
   const t = useDict(T, 'admin');
@@ -197,7 +200,7 @@ export default function ProjectsAdmin() {
     if (deepId || deepNew) setParams({}, { replace: true });
   };
 
-  /** Every tag used across the portfolio (deduplicated on the Montenegrin label). */
+  /** Every tag used across the references (deduplicated on the Albanian label). */
   const allTags = useMemo(() => {
     const map = new Map<string, { tag: L10n; count: number }>();
     projects.forEach((p) =>
@@ -223,7 +226,7 @@ export default function ProjectsAdmin() {
         if (filter === 'featured' && !p.featured) return false;
         if (filter.startsWith('tag:') && !p.tags.some((tag) => tagKey(tag) === filter.slice(4))) return false;
         if (!needle) return true;
-        return fold(`${p.title.me} ${p.title.sq} ${p.title.en} ${p.location} ${p.year}`).includes(needle);
+        return fold(`${p.title.sq} ${p.title.en} ${p.title.me} ${p.location} ${p.year}`).includes(needle);
       });
   }, [projects, q, filter]);
 
@@ -252,8 +255,8 @@ export default function ProjectsAdmin() {
   return (
     <div>
       <PageHeader
-        breadcrumbs={[ta('nav_content'), ta('nav_projects')]}
-        title={ta('nav_projects')}
+        breadcrumbs={[ta('nav_content'), t('title')]}
+        title={t('title')}
         description={t('description')}
         actions={
           <>
@@ -303,7 +306,7 @@ export default function ProjectsAdmin() {
       {projects.length === 0 ? (
         <div className="rounded-xl border border-line/80 bg-white">
           <EmptyState
-            icon={<Hammer className="h-6 w-6" />}
+            icon={<Stamp className="h-6 w-6" />}
             title={t('empty')}
             text={t('emptyText')}
             action={
@@ -317,7 +320,7 @@ export default function ProjectsAdmin() {
         </div>
       ) : list.length === 0 ? (
         <div className="rounded-xl border border-line/80 bg-white">
-          <EmptyState icon={<Hammer className="h-6 w-6" />} title={ta('noResults')} text={t('noMatch')} />
+          <EmptyState icon={<Stamp className="h-6 w-6" />} title={ta('noResults')} text={t('noMatch')} />
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
@@ -472,7 +475,7 @@ function ProjectModal({
   const currentYear = new Date().getFullYear();
   const errors = d
     ? {
-        title: !d.title.me.trim() ? te('titleRequired') : undefined,
+        title: !d.title.sq.trim() ? te('titleRequired') : undefined,
         location: !d.location.trim() ? t('locationRequired') : undefined,
         year: !d.year || d.year < 1990 || d.year > currentYear + 1 ? t('yearInvalid') : undefined,
         image: !d.image ? t('imageRequired') : undefined,
@@ -538,7 +541,7 @@ function ProjectModal({
                 label={t('fLocation')}
                 required
                 value={d.location}
-                list="selca-cities"
+                list="pk-cities"
                 placeholder={t('fLocationPh')}
                 leading={<MapPin className="h-4 w-4" />}
                 onChange={(e) => patch({ location: e.target.value })}
@@ -555,7 +558,7 @@ function ProjectModal({
                 onChange={(e) => patch({ year: Number(e.target.value) })}
                 error={showErrors ? errors.year : undefined}
               />
-              <datalist id="selca-cities">
+              <datalist id="pk-cities">
                 {cityList.map((c) => (
                   <option key={c} value={c} />
                 ))}

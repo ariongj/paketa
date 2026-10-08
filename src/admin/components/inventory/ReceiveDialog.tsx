@@ -14,9 +14,9 @@ import { num } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { adm } from '@/admin/i18n';
 import { inv } from './dict';
-import { lineLeft, stockUnit } from './helpers';
+import { lineLeft, qtyOf, sumQty, sumUnitsText } from './helpers';
 import { useInventoryRows } from './useInventory';
-import { IntField, ReceiveBar } from './ui';
+import { IntField, PiecesLine, ReceiveBar, UnitQty } from './ui';
 
 type Entry = { now: number | null; rej: number | null };
 
@@ -77,8 +77,11 @@ export function ReceiveDialog({ po, onClose }: { po: PurchaseOrder | undefined; 
     const rejBefore = rejectedOf();
     const added = receivePurchaseOrder(snap.id, payload);
     const rejected = rejectedOf() - rejBefore;
-    if (added > 0) toast.success(t('rc_done', { n: num(added, lang) }), { description: rejected ? t('ed_rejectedN', { n: rejected }) : snap.number });
-    else if (rejected > 0) toast.success(t('ed_rejectedN', { n: rejected }), { description: snap.number });
+    // units word only when every line on the document uses the same unit (packs)
+    const docUnit = sumQty(snap.lines.map((x) => ({ of: productById.get(x.productId), qty: 0 }))).unit;
+    const unitsOf = (n: number) => sumUnitsText({ qty: n, unit: docUnit, pieces: 0 }, lang);
+    if (added > 0) toast.success(t('rc_done', { n: unitsOf(added) }), { description: rejected ? t('ed_rejectedN', { n: unitsOf(rejected) }) : snap.number });
+    else if (rejected > 0) toast.success(t('ed_rejectedN', { n: unitsOf(rejected) }), { description: snap.number });
     else toast.info(t('rc_nothing'), { description: snap.number });
     close();
   };
@@ -130,7 +133,6 @@ export function ReceiveDialog({ po, onClose }: { po: PurchaseOrder | undefined; 
                 </li>
                 {lines.map(({ x, left, now, over }) => {
                   const p = productById.get(x.productId);
-                  const u = p ? stockUnit(p, lang) : '';
                   const done = left === 0;
                   return (
                     <li key={x.productId} className={cn('grid grid-cols-2 items-center gap-3 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_84px_104px_104px]', done && 'bg-canvas/40')}>
@@ -140,9 +142,9 @@ export function ReceiveDialog({ po, onClose }: { po: PurchaseOrder | undefined; 
                           <div className="truncate text-[13.5px] font-semibold text-ink">{p ? l(p.name) : x.productId}</div>
                           <div className="mt-0.5 flex items-center gap-2 text-[11.5px] text-muted">
                             <span className="font-mono">{p?.sku}</span>
-                            <span>
-                              {t('ed_progress', { r: num(x.received, lang), o: num(x.ordered, lang) })}
-                              {x.rejected > 0 && ` · ${t('ed_rejectedN', { n: x.rejected })}`}
+                            <span className="truncate">
+                              {t('ed_progress', { r: num(x.received, lang), o: qtyOf(p, x.ordered, lang) })}
+                              {x.rejected > 0 && ` · ${t('ed_rejectedN', { n: qtyOf(p, x.rejected, lang) })}`}
                             </span>
                           </div>
                           <ReceiveBar className="mt-1.5 max-w-[220px]" ordered={x.ordered} received={x.received + (done ? 0 : now)} rejected={x.rejected} />
@@ -150,9 +152,8 @@ export function ReceiveDialog({ po, onClose }: { po: PurchaseOrder | undefined; 
                       </div>
                       <div className="text-[13px] sm:text-right">
                         <span className="text-muted sm:hidden">{t('rc_remaining')}: </span>
-                        <span className={cn('font-semibold tabular-nums', done && 'text-muted')}>
-                          {num(left, lang)} <span className="text-[11px] font-medium text-muted">{u}</span>
-                        </span>
+                        <UnitQty n={left} of={p} className={cn('font-semibold', done && 'text-muted')} unitClassName="text-[11px]" />
+                        <PiecesLine of={p} qty={left} className="max-sm:ml-1 max-sm:inline" />
                       </div>
                       {done ? (
                         <div className="flex items-center justify-end gap-1 text-[12px] font-semibold text-emerald-700 sm:col-span-2">
@@ -166,13 +167,13 @@ export function ReceiveDialog({ po, onClose }: { po: PurchaseOrder | undefined; 
                               <span className="mb-1 block text-[11.5px] font-semibold text-muted sm:hidden">{t('rc_acceptNow')}</span>
                               <IntField size="sm" value={entries[x.productId]?.now ?? null} onChange={(v) => set(x.productId, { now: v })} min={0} max={left} invalid={over} aria-label={t('rc_acceptNow')} />
                               <div className={cn('mt-1 text-right text-[11px]', over ? 'font-medium text-red-700' : 'text-muted')}>
-                                {over ? t('rc_tooMany', { n: left }) : t('rc_stockAfter', { n: num((onHandById.get(x.productId) ?? 0) + now, lang) })}
+                                {over ? t('rc_tooMany', { n: qtyOf(p, left, lang) }) : t('rc_stockAfter', { n: qtyOf(p, (onHandById.get(x.productId) ?? 0) + now, lang) })}
                               </div>
                             </div>
                             <div>
                               <span className="mb-1 block text-[11.5px] font-semibold text-muted sm:hidden">{t('rc_rejectNow')}</span>
                               <IntField size="sm" value={entries[x.productId]?.rej ?? null} onChange={(v) => set(x.productId, { rej: v })} min={0} max={left} invalid={over} aria-label={t('rc_rejectNow')} />
-                              <div className="mt-1 text-right text-[11px] text-muted">{t('ed_rejectedN', { n: num(x.rejected + (entries[x.productId]?.rej ?? 0), lang) })}</div>
+                              <div className="mt-1 text-right text-[11px] text-muted">{t('ed_rejectedN', { n: qtyOf(p, x.rejected + (entries[x.productId]?.rej ?? 0), lang) })}</div>
                             </div>
                           </div>
                         </>
@@ -198,8 +199,8 @@ export function ReceiveDialog({ po, onClose }: { po: PurchaseOrder | undefined; 
                         <li key={x.productId} className="flex flex-wrap items-center justify-between gap-x-3">
                           <span className="min-w-0 truncate text-ink-soft">{p ? l(p.name) : x.productId}</span>
                           <span className="flex gap-2 text-[12.5px] font-semibold tabular-nums">
-                            {after > 0 && <span className="text-ink">{t('ed_missing', { n: after })}</span>}
-                            {rej > 0 && <span className="text-red-700">{t('ed_rejectedN', { n: rej })}</span>}
+                            {after > 0 && <span className="text-ink">{t('ed_missing', { n: qtyOf(p, after, lang) })}</span>}
+                            {rej > 0 && <span className="text-red-700">{t('ed_rejectedN', { n: qtyOf(p, rej, lang) })}</span>}
                           </span>
                         </li>
                       );

@@ -6,17 +6,18 @@ import { useDict, useL } from '@/i18n';
 import type { L10n, Lang } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { ed } from './i18n';
+import { LANG_SHORT } from './meta';
 
 const LANGS: { code: Lang; ph: string }[] = [
-  { code: 'me', ph: 'npr. Prozori' },
-  { code: 'sq', ph: 'p.sh. Dritare' },
-  { code: 'en', ph: 'e.g. Windows' },
+  { code: 'sq', ph: 'p.sh. Kafiteri' },
+  { code: 'en', ph: 'e.g. Café' },
+  { code: 'me', ph: 'npr. Kafić' },
 ];
 
 const empty = (): L10n => ({ me: '', sq: '', en: '' });
-const key = (t: L10n) => t.me.trim().toLowerCase();
+const key = (t: L10n) => (t.sq.trim() || t.me.trim()).toLowerCase();
 
-/** Localized tag chips: add (ME/SQ/EN at once), click to edit, × to remove, plus quick picks. */
+/** Localized tag chips: add (SQ/EN/SR at once), click to edit, × to remove, plus quick picks. */
 export function TagsEditor({ value, onChange, suggestions = [] }: { value: L10n[]; onChange: (v: L10n[]) => void; suggestions?: L10n[] }) {
   const t = useDict(ed, 'admin');
   const l = useL('admin');
@@ -25,7 +26,7 @@ export function TagsEditor({ value, onChange, suggestions = [] }: { value: L10n[
 
   const used = new Set(value.map(key));
   const quick = suggestions.filter((s) => !used.has(key(s)));
-  const canSubmit = !!form.me.trim() && (editing !== null || !used.has(key(form)));
+  const canSubmit = !!form.sq.trim() && (editing !== null || !used.has(key(form)));
 
   const submit = () => {
     if (!canSubmit) return;
@@ -57,10 +58,10 @@ export function TagsEditor({ value, onChange, suggestions = [] }: { value: L10n[
         {value.length ? (
           <div className="flex flex-wrap gap-1.5">
             {value.map((tag, i) => {
-              const incomplete = !tag.sq.trim() || !tag.en.trim();
+              const incomplete = !tag.en.trim() || !tag.me.trim();
               return (
                 <span
-                  key={`${tag.me}-${i}`}
+                  key={`${key(tag)}-${i}`}
                   className={cn(
                     'inline-flex items-center rounded-full text-[12.5px] font-semibold ring-1 transition-colors',
                     editing === i ? 'bg-ink text-paper ring-ink' : 'bg-sand text-ink-soft ring-transparent hover:ring-ink/20',
@@ -72,7 +73,7 @@ export function TagsEditor({ value, onChange, suggestions = [] }: { value: L10n[
                       setEditing(i);
                       setForm({ ...tag });
                     }}
-                    title={`ME: ${tag.me}\nSQ: ${tag.sq || '—'}\nEN: ${tag.en || '—'}`}
+                    title={`SQ: ${tag.sq || '—'}\nEN: ${tag.en || '—'}\nSR: ${tag.me || '—'}`}
                     className="relative py-1 pl-3 pr-1.5"
                   >
                     {l(tag)}
@@ -104,7 +105,7 @@ export function TagsEditor({ value, onChange, suggestions = [] }: { value: L10n[
         <div className="grid gap-2 sm:grid-cols-[repeat(3,minmax(0,1fr))_auto]">
           {LANGS.map(({ code, ph }) => (
             <label key={code} className="flex h-9 items-center overflow-hidden rounded-lg border border-line bg-white transition focus-within:border-ink/40 focus-within:ring-4 focus-within:ring-ink/5">
-              <span className="grid h-full w-9 shrink-0 place-items-center border-r border-line bg-canvas/70 text-[10.5px] font-extrabold tracking-wide text-muted">{code.toUpperCase()}</span>
+              <span className="grid h-full w-9 shrink-0 place-items-center border-r border-line bg-canvas/70 text-[10.5px] font-extrabold tracking-wide text-muted">{LANG_SHORT[code]}</span>
               <input
                 value={form[code]}
                 onChange={(e) => setForm((f) => ({ ...f, [code]: e.target.value }))}

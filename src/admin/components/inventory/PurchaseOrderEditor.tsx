@@ -16,13 +16,26 @@ import { date, dateTime, money, num } from '@/lib/format';
 import { fold } from '@/lib/search';
 import { cn, uid } from '@/lib/utils';
 import { inv } from './dict';
-import { LOW_STOCK, PO_STATUSES, actorName, fromDateInput, isOverdue, lineLeft, nextPoNumber, poLeft, stockUnit, toDateInput } from './helpers';
+import { LOW_STOCK, PO_STATUSES, actorName, fromDateInput, isOverdue, lineLeft, nextPoNumber, qtyOf, sumPiecesText, sumQty, sumText, sumUnitsText, toDateInput, type QtySum } from './helpers';
 import { useInventoryRows } from './useInventory';
 import { ProductPicker } from './ProductPicker';
 import { ReceiveDialog } from './ReceiveDialog';
-import { FieldLabel, Gate, IconBtn, IntField, MoneyField, PO_STATUS_META, PoStatusTag, ReceiveBar, SelectField, Tag, TextField, controlClass } from './ui';
+import { FieldLabel, Gate, IconBtn, IntField, MoneyField, PO_STATUS_META, PiecesLine, PoStatusTag, ReceiveBar, SelectField, Tag, TextField, UnitQty, controlClass } from './ui';
+import { isPack, packSizeText, piecePriceText, piecesPer, piecesText, unitWord } from '@/admin/components/products/units';
 
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+
+/** "120 pako" with "· 6.000 copë" in muted type (summary card, totals). */
+function SumQty({ s }: { s: QtySum }) {
+  const lang = useLang('admin');
+  const pcs = sumPiecesText(s, lang);
+  return (
+    <>
+      {sumUnitsText(s, lang)}
+      {pcs && <span className="font-normal text-muted"> · {pcs}</span>}
+    </>
+  );
+}
 
 function KVRow({ label, children, strong }: { label: ReactNode; children: ReactNode; strong?: boolean }) {
   return (
@@ -170,7 +183,8 @@ export function PurchaseOrderEditor({ id }: { id: string }) {
   };
   const closePo = async () => {
     if (!saved) return;
-    const ok = await confirmDialog({ title: t('ed_closeTitle'), text: t('ed_closeText', { n: num(poLeft(saved), lang) }), confirmLabel: t('ed_close'), danger: false });
+    const left = sumQty(saved.lines.map((x) => ({ of: rowById.get(x.productId)?.p, qty: lineLeft(x) })));
+    const ok = await confirmDialog({ title: t('ed_closeTitle'), text: t('ed_closeText', { n: sumText(left, lang) }), confirmLabel: t('ed_close'), danger: false });
     if (!ok) return;
     upsert('purchaseOrders', { ...saved, status: 'closed' });
     toast.success(t('ed_closed'), { description: saved.number });
@@ -192,6 +206,11 @@ export function PurchaseOrderEditor({ id }: { id: string }) {
     value: Math.round(draft.lines.reduce((s, x) => s + x.ordered * x.cost, 0) * 100) / 100,
     receivedValue: Math.round(draft.lines.reduce((s, x) => s + x.received * x.cost, 0) * 100) / 100,
   };
+  // the same totals with units (packs) and the pieces they hold
+  const sumOf = (pick: (x: PurchaseOrderLine) => number) => sumQty(draft.lines.map((x) => ({ of: rowById.get(x.productId)?.p, qty: pick(x) })));
+  const sums = { ordered: sumOf((x) => x.ordered), received: sumOf((x) => x.received), rejected: sumOf((x) => x.rejected) };
+  const allPacks = draft.lines.length > 0 && draft.lines.every((x) => rowById.get(x.productId)?.p.unit === 'pack');
+  const costLabel = allPacks || !draft.lines.length ? t('ed_cost') : t('ed_costUnit');
   const receipts = isNew ? [] : movements.filter((m) => m.ref === draft.number && m.reason === 'received').sort((a, b) => b.at.localeCompare(a.at));
   const differences = draft.lines
     .map((x) => ({ x, left: lineLeft(x) }))
@@ -256,11 +275,8 @@ export function PurchaseOrderEditor({ id }: { id: string }) {
           <div className="truncate font-semibold text-ink">{p ? l(p.name) : x.productId}</div>
           <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[12px] text-muted">
             <span className="font-mono">{p?.sku}</span>
-            {r && (
-              <span>
-                {t('ed_available', { n: num(r.lv.available, lang) })} {stockUnit(r.p, lang)}
-              </span>
-            )}
+            {p && packSizeText(p, lang) && <span className="whitespace-nowrap">{packSizeText(p, lang)}</span>}
+            {r && <span className="whitespace-nowrap">{t('ed_available', { n: qtyOf(r.p, r.lv.available, lang) })}</span>}
           </div>
         </div>
       </div>
@@ -292,19 +308,40 @@ export function PurchaseOrderEditor({ id }: { id: string }) {
       </IconBtn>
     );
   };
-  const progressCell = (x: PurchaseOrderLine) => (
-    <div className="min-w-[92px]">
-      <div className="text-[13px] tabular-nums">
-        <span className="font-semibold text-ink">{num(x.received, lang)}</span>
-        <span className="text-muted"> / {num(x.ordered, lang)}</span>
+  const progressCell = (x: PurchaseOrderLine) => {
+    const p = rowById.get(x.productId)?.p;
+    return (
+      <div className="min-w-[108px]">
+        <div className="whitespace-nowrap text-[13px] tabular-nums">
+          <span className="font-semibold text-ink">{num(x.received, lang)}</span>
+          <span className="text-muted"> / {num(x.ordered, lang)}</span>
+          {p && <span className="ml-1 text-[11.5px] text-muted">{unitWord(p.unit, x.ordered, lang)}</span>}
+        </div>
+        <ReceiveBar className="mt-1" ordered={x.ordered} received={x.received} rejected={x.rejected} />
+        {p && isPack(p) && (
+          <div className="mt-1 whitespace-nowrap text-[11px] tabular-nums text-muted">
+            {num(x.received * piecesPer(p), lang, 0)} / {piecesText(x.ordered * piecesPer(p), lang)}
+          </div>
+        )}
       </div>
-      <ReceiveBar className="mt-1" ordered={x.ordered} received={x.received} rejected={x.rejected} />
-    </div>
-  );
-
-  const unitOf = (pid: string) => {
-    const p = rowById.get(pid)?.p;
-    return p ? stockUnit(p, lang) : '';
+    );
+  };
+  /** Unit word of the ordered quantity + the pieces it holds, next to the quantity input. */
+  const unitCell = (x: PurchaseOrderLine, className?: string) => {
+    const p = rowById.get(x.productId)?.p;
+    if (!p) return null;
+    return (
+      <span className={cn('text-left leading-tight', className)}>
+        <span className="block text-[11.5px] text-muted">{unitWord(p.unit, x.ordered, lang)}</span>
+        <PiecesLine of={p} qty={x.ordered} />
+      </span>
+    );
+  };
+  /** Per-piece cost under the cost field ("0,036 €/copë"). */
+  const pieceCost = (x: PurchaseOrderLine) => {
+    const p = rowById.get(x.productId)?.p;
+    const s = p ? piecePriceText(p, x.cost, lang) : '';
+    return s ? <div className="mt-1 text-right text-[11px] tabular-nums text-muted">{s}</div> : null;
   };
 
   return (
@@ -409,8 +446,8 @@ export function PurchaseOrderEditor({ id }: { id: string }) {
                 <>
                   <ReceiveBar ordered={totals.ordered} received={totals.received} rejected={totals.rejected} />
                   <p className="mt-1.5 text-[12.5px] text-ink-soft">
-                    {t('ed_progress', { r: num(totals.received, lang), o: num(totals.ordered, lang) })}
-                    {totals.rejected > 0 && <span className="text-muted"> · {t('ed_rejectedN', { n: totals.rejected })}</span>}
+                    {t('ed_progress', { r: num(totals.received, lang), o: sumUnitsText(sums.ordered, lang) })}
+                    {totals.rejected > 0 && <span className="text-muted"> · {t('ed_rejectedN', { n: sumUnitsText(sums.rejected, lang) })}</span>}
                   </p>
                 </>
               ) : (
@@ -429,7 +466,7 @@ export function PurchaseOrderEditor({ id }: { id: string }) {
           <Card
             padded={false}
             title={t('ed_products')}
-            description={draft.lines.length ? `${t('po_lines', { n: draft.lines.length })} · ${num(totals.ordered, lang)} ${t('ed_unitsTotal').toLowerCase()}` : undefined}
+            description={draft.lines.length ? `${t('po_lines', { n: draft.lines.length })} · ${sumText(sums.ordered, lang)}` : undefined}
           >
             {!readOnly && (
               <div className="space-y-2.5 border-b border-line/70 p-4 sm:px-5">
@@ -464,7 +501,7 @@ export function PurchaseOrderEditor({ id }: { id: string }) {
                       <Th className="text-right">{t('ed_ordered')}</Th>
                       {showProgress && <Th>{t('ed_received')}</Th>}
                       {showProgress && <Th className="text-right">{t('ed_rejected')}</Th>}
-                      {canCost && <Th className="text-right">{t('ed_cost')}</Th>}
+                      {canCost && <Th className="text-right">{costLabel}</Th>}
                       {canCost && <Th className="text-right">{t('ed_lineTotal')}</Th>}
                       {!readOnly && <Th className="w-[1%]" />}
                     </tr>
@@ -474,19 +511,29 @@ export function PurchaseOrderEditor({ id }: { id: string }) {
                       <tr key={x.productId}>
                         <Td className="max-w-[300px]">{productCell(x)}</Td>
                         <Td className="text-right">
-                          <div className="flex items-center justify-end gap-1.5">
+                          <div className="flex items-center justify-end gap-2">
                             {orderedInput(x)}
-                            <span className="w-8 text-left text-[11.5px] text-muted">{unitOf(x.productId)}</span>
+                            {unitCell(x, 'w-[68px]')}
                           </div>
                         </Td>
                         {showProgress && <Td>{progressCell(x)}</Td>}
                         {showProgress && (
-                          <Td className={cn('text-right tabular-nums', x.rejected ? 'font-semibold text-red-700' : 'text-muted/60')}>{num(x.rejected, lang)}</Td>
+                          <Td className="text-right">
+                            {x.rejected ? (
+                              <span className="inline-flex flex-col items-end">
+                                <span className="font-semibold tabular-nums text-red-700">{num(x.rejected, lang)}</span>
+                                <PiecesLine of={rowById.get(x.productId)?.p} qty={x.rejected} />
+                              </span>
+                            ) : (
+                              <span className="tabular-nums text-muted/60">0</span>
+                            )}
+                          </Td>
                         )}
                         {canCost && (
                           <Td className="text-right">
                             <div className="ml-auto w-[104px]">
-                              <MoneyField value={x.cost} onChange={(v) => setLine(x.productId, { cost: v })} disabled={readOnly} aria-label={t('ed_cost')} />
+                              <MoneyField value={x.cost} onChange={(v) => setLine(x.productId, { cost: v })} disabled={readOnly} aria-label={costLabel} />
+                              {pieceCost(x)}
                             </div>
                           </Td>
                         )}
@@ -508,22 +555,23 @@ export function PurchaseOrderEditor({ id }: { id: string }) {
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <FieldLabel>{t('ed_ordered')}</FieldLabel>
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-2">
                             {orderedInput(x)}
-                            <span className="text-[11.5px] text-muted">{unitOf(x.productId)}</span>
+                            {unitCell(x)}
                           </div>
                         </div>
                         {canCost && (
                           <div>
-                            <FieldLabel aside={money(x.ordered * x.cost, lang)}>{t('ed_cost')}</FieldLabel>
-                            <MoneyField value={x.cost} onChange={(v) => setLine(x.productId, { cost: v })} disabled={readOnly} aria-label={t('ed_cost')} />
+                            <FieldLabel aside={money(x.ordered * x.cost, lang)}>{costLabel}</FieldLabel>
+                            <MoneyField value={x.cost} onChange={(v) => setLine(x.productId, { cost: v })} disabled={readOnly} aria-label={costLabel} />
+                            {pieceCost(x)}
                           </div>
                         )}
                       </div>
                       {showProgress && (
                         <div className="flex items-center gap-3 text-[12.5px]">
                           <div className="flex-1">{progressCell(x)}</div>
-                          {x.rejected > 0 && <span className="font-semibold text-red-700">{t('ed_rejectedN', { n: x.rejected })}</span>}
+                          {x.rejected > 0 && <span className="font-semibold text-red-700">{t('ed_rejectedN', { n: qtyOf(rowById.get(x.productId)?.p, x.rejected, lang) })}</span>}
                         </div>
                       )}
                     </li>
@@ -532,7 +580,10 @@ export function PurchaseOrderEditor({ id }: { id: string }) {
 
                 <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line/70 bg-canvas/40 px-5 py-3 text-[13px]">
                   <span className="text-muted">
-                    {t('ed_unitsTotal')}: <span className="font-semibold tabular-nums text-ink">{num(totals.ordered, lang)}</span>
+                    {t('ed_unitsTotal')}:{' '}
+                    <span className="font-semibold tabular-nums text-ink">
+                      <SumQty s={sums.ordered} />
+                    </span>
                   </span>
                   {canCost ? (
                     <span className="text-muted">
@@ -568,12 +619,12 @@ export function PurchaseOrderEditor({ id }: { id: string }) {
                         <span className="flex flex-wrap gap-1.5">
                           {x.rejected > 0 && (
                             <Tag icon={X} tone="red">
-                              {t('ed_rejectedN', { n: x.rejected })}
+                              {t('ed_rejectedN', { n: qtyOf(p, x.rejected, lang) })}
                             </Tag>
                           )}
                           {left > 0 && (
                             <Tag icon={status === 'closed' ? CircleAlert : PO_STATUS_META.partial.icon} tone={status === 'closed' ? 'neutral' : 'amber'}>
-                              {status === 'closed' ? t('ed_notReceived', { n: left }) : t('ed_missing', { n: left })}
+                              {status === 'closed' ? t('ed_notReceived', { n: qtyOf(p, left, lang) }) : t('ed_missing', { n: qtyOf(p, left, lang) })}
                             </Tag>
                           )}
                         </span>
@@ -586,9 +637,19 @@ export function PurchaseOrderEditor({ id }: { id: string }) {
           )}
           {draft.lines.length > 0 && (
             <Card title={canCost ? t('ed_summary') : t('ed_unitsTotal')}>
-              <KVRow label={t('ed_ordered')}>{num(totals.ordered, lang)}</KVRow>
-              {showProgress && <KVRow label={t('ed_received')}>{num(totals.received, lang)}</KVRow>}
-              {showProgress && totals.rejected > 0 && <KVRow label={t('ed_rejected')}>{num(totals.rejected, lang)}</KVRow>}
+              <KVRow label={t('ed_ordered')}>
+                <SumQty s={sums.ordered} />
+              </KVRow>
+              {showProgress && (
+                <KVRow label={t('ed_received')}>
+                  <SumQty s={sums.received} />
+                </KVRow>
+              )}
+              {showProgress && totals.rejected > 0 && (
+                <KVRow label={t('ed_rejected')}>
+                  <SumQty s={sums.rejected} />
+                </KVRow>
+              )}
               {canCost ? (
                 <>
                   {showProgress && <KVRow label={t('ed_receivedValue')}>{money(totals.receivedValue, lang)}</KVRow>}
@@ -621,10 +682,13 @@ export function PurchaseOrderEditor({ id }: { id: string }) {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-baseline justify-between gap-2">
                             <span className="truncate font-medium text-ink">{p ? l(p.name) : m.productId}</span>
-                            <span className="shrink-0 font-bold tabular-nums text-emerald-700">+{num(m.delta, lang)}</span>
+                            <UnitQty n={m.delta} of={p} sign className="shrink-0 font-bold text-emerald-700" unitClassName="text-emerald-700/70" />
                           </div>
-                          <div className="mt-0.5 text-[12px] text-muted">
-                            {actorName(m.by, staff, t('mv_web'))} · {dateTime(m.at, lang)}
+                          <div className="mt-0.5 flex items-baseline justify-between gap-2 text-[12px] text-muted">
+                            <span className="min-w-0 truncate">
+                              {actorName(m.by, staff, t('mv_web'))} · {dateTime(m.at, lang)}
+                            </span>
+                            <PiecesLine of={p} qty={m.delta} className="shrink-0" />
                           </div>
                         </div>
                       </li>
@@ -643,11 +707,15 @@ export function PurchaseOrderEditor({ id }: { id: string }) {
   );
 }
 
-/** Default order quantity: a pallet-ish amount for packs/metres, otherwise refill to twice the low-stock line. */
+/**
+ * Default order quantity: refill to twice the low-stock line, rounded up to whole cartons when the
+ * product ships in cartons (suppliers deliver packaging by the carton) — at least one carton.
+ */
 function suggestedQty(p: Product, available: number) {
-  if (p.unit === 'm2') return 20;
   if (p.unit === 'm') return 10;
-  return Math.max(2, LOW_STOCK * 2 - available);
+  const need = Math.max(1, LOW_STOCK * 2 - available);
+  const carton = p.cartonPacks && p.cartonPacks > 0 ? p.cartonPacks : 0;
+  return carton ? Math.max(1, Math.ceil(need / carton)) * carton : need;
 }
 
 function pickProgress(l?: PurchaseOrderLine) {

@@ -1,18 +1,19 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { toast } from 'sonner';
-import { ArrowUpRight, CheckCircle2, FileText, Lock, PackagePlus, Plus, RotateCcw, Send, ShoppingBag, Trash2, X, XCircle } from 'lucide-react';
+import { ArrowUpRight, CheckCircle2, FileText, Lock, PackagePlus, Plus, RotateCcw, Send, ShoppingBag, Stamp, Trash2, X, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/misc';
 import { Card, PageHeader, SaveBar, Thumb, confirmDialog } from '@/admin/components/kit';
 import { L10nInput } from '@/admin/components/L10nInput';
 import { adm } from '@/admin/i18n';
 import { defineDict, lt, useDict, useL, useLang } from '@/i18n';
+import { common } from '@/i18n/common';
 import { useDb } from '@/store/db';
 import { useCan, useCurrentStaff, useSettings } from '@/store/hooks';
-import { basePrice } from '@/lib/pricing';
-import { date, dateTime, money, unitLabel } from '@/lib/format';
-import type { L10n, Quote } from '@/lib/types';
+import { unitPrice } from '@/lib/pricing';
+import { cartonLabel, date, dateTime, money, moneyPiece, num, pieces, piecesLabel, unitLabel } from '@/lib/format';
+import type { L10n, Lang, Product, Quote } from '@/lib/types';
 import { cn, round2, uid } from '@/lib/utils';
 import { cx } from './i18n';
 import { CInput, CSelect, Chip } from './fields';
@@ -31,13 +32,17 @@ const T = defineDict({
     custom: 'Slobodna stavka',
     fromCatalog: 'Iz kataloga',
     addCustom: 'Slobodna stavka',
-    linesEmpty: 'Dodajte proizvode iz kataloga ili slobodnu stavku (montaža, demontaža, prevoz…).',
+    linesEmpty: 'Dodajte proizvode iz kataloga (cijena po pakovanju) ili slobodnu stavku — dizajn, kliše za štampu, prevoz…',
     itemPh: 'Opis stavke',
     subtotal: 'Ukupno bez PDV-a',
+    piecesTotal: 'Ukupno komada',
+    addPrint: 'Štampa logotipa',
+    addPrintHint: 'Dodaje stavku štampe logotipa: {price} po pakovanju, min. 1 karton, 7–10 radnih dana.',
+    cartons: '{n} {label}',
     vat: 'PDV {rate}% (uključen)',
     total: 'Ukupno',
     terms: 'Uslovi',
-    termsHint: 'Rok isporuke, avans, garancija — prikazuje se klijentu uz ponudu.',
+    termsHint: 'Rok isporuke, rok za štampu, plaćanje — prikazuje se klijentu uz ponudu.',
     customer: 'Klijent',
     name: 'Kontakt osoba',
     company: 'Firma',
@@ -110,13 +115,17 @@ const T = defineDict({
     custom: 'Linjë e lirë',
     fromCatalog: 'Nga katalogu',
     addCustom: 'Linjë e lirë',
-    linesEmpty: 'Shtoni produkte nga katalogu ose një linjë të lirë (montim, çmontim, transport…).',
+    linesEmpty: 'Shtoni produkte nga katalogu (çmimi për pako) ose një linjë të lirë — dizajn, klishe printimi, transport…',
     itemPh: 'Përshkrimi i linjës',
     subtotal: 'Totali pa TVSH',
+    piecesTotal: 'Gjithsej copë',
+    addPrint: 'Printim me logo',
+    addPrintHint: 'Shton linjën e printimit me logo: {price} për pako, min. 1 karton, 7–10 ditë pune.',
+    cartons: '{n} {label}',
     vat: 'TVSH {rate}% (e përfshirë)',
     total: 'Totali',
     terms: 'Kushtet',
-    termsHint: 'Afati i dërgesës, avansi, garancia — i shfaqen klientit bashkë me ofertën.',
+    termsHint: 'Afati i dërgesës, afati i printimit, pagesa — i shfaqen klientit bashkë me ofertën.',
     customer: 'Klienti',
     name: 'Personi i kontaktit',
     company: 'Kompania',
@@ -189,13 +198,17 @@ const T = defineDict({
     custom: 'Custom line',
     fromCatalog: 'From catalogue',
     addCustom: 'Custom line',
-    linesEmpty: 'Add products from the catalogue or a custom line (fitting, removal, transport…).',
+    linesEmpty: 'Add products from the catalogue (priced per pack) or a custom line — design, print plate, transport…',
     itemPh: 'Line description',
     subtotal: 'Total excl. VAT',
+    piecesTotal: 'Total pieces',
+    addPrint: 'Logo print',
+    addPrintHint: 'Adds a logo-print line: {price} per pack, min. 1 carton, 7–10 working days.',
+    cartons: '{n} {label}',
     vat: 'VAT {rate}% (included)',
     total: 'Total',
     terms: 'Terms',
-    termsHint: 'Lead time, deposit, warranty — shown to the customer with the quote.',
+    termsHint: 'Delivery time, print lead time, payment — shown to the customer with the quote.',
     customer: 'Customer',
     name: 'Contact person',
     company: 'Company',
@@ -261,10 +274,16 @@ const T = defineDict({
 });
 
 const DEFAULT_TERMS: L10n = {
-  me: 'Cijene uključuju PDV 21%. Avans 40%, ostatak po ugradnji. Rok isporuke 3–4 sedmice od potvrde.',
-  sq: 'Çmimet përfshijnë TVSH 21%. Avans 40%, pjesa tjetër pas montimit. Afati i dërgesës 3–4 javë nga konfirmimi.',
-  en: 'Prices include 21% VAT. 40% deposit, balance on installation. Delivery 3–4 weeks from confirmation.',
+  me: 'Cijene su po pakovanju i uključuju PDV 18%. Ponuda važi do navedenog datuma.\nIsporuka: 1–3 radna dana za robu na stanju (Mitrovica 24 h); štampa logotipa 7–10 radnih dana nakon odobrenja dizajna, minimum 1 karton po artiklu.\nPlaćanje: virmanski na račun, po fakturi, u roku od 7 dana.',
+  sq: 'Çmimet janë për pako dhe përfshijnë TVSH 18%. Oferta vlen deri në datën e shënuar.\nDërgesa: 1–3 ditë pune për mallin në stok (Mitrovicë 24 orë); printimi me logo 7–10 ditë pune pas aprovimit të dizajnit, minimumi 1 karton për artikull.\nPagesa: me transfer bankar, sipas faturës, brenda 7 ditëve.',
+  en: 'Prices are per pack and include 18% VAT. This quote is valid until the date shown.\nDelivery: 1–3 working days for items in stock (Mitrovicë within 24 h); logo print 7–10 working days after design approval, minimum 1 carton per item.\nPayment: by bank transfer against invoice, within 7 days.',
 };
+
+/** B2B default for a catalogue line: a full carton for pack products, with the volume tier for that quantity. */
+function catalogLine(p: Product, lang: Lang): Quote['lines'][number] {
+  const qty = p.unit === 'pack' && p.cartonPacks ? p.cartonPacks : 1;
+  return { productId: p.id, title: lt(p.name, lang), qty, price: unitPrice(p, {}, qty) };
+}
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 type Line = Quote['lines'][number];
 /** Everything the customer sees — a change here bumps the version (the owner is internal). */
@@ -275,6 +294,7 @@ export function QuoteEditor({ id, inquiryId }: { id: string; inquiryId?: string 
   const t = useDict(T, 'admin');
   const tx = useDict(cx, 'admin');
   const ta = useDict(adm, 'admin');
+  const tc = useDict(common, 'admin');
   const l = useL('admin');
   const lang = useLang('admin');
   const navigate = useNavigate();
@@ -303,7 +323,7 @@ export function QuoteEditor({ id, inquiryId }: { id: string; inquiryId?: string 
       number: nextQuoteNumber(quotes),
       ...(inquiry ? { inquiryId: inquiry.id } : {}),
       customer: { name: inquiry?.name ?? '', company: inquiry?.company ?? '', email: inquiry?.email ?? '', phone: inquiry?.phone ?? '' },
-      lines: prod ? [{ productId: prod.id, title: lt(prod.name, lang), qty: 1, price: basePrice(prod) }] : [],
+      lines: prod ? [catalogLine(prod, lang)] : [],
       validUntil: isoDayFromNow(14),
       terms: lastTerms ?? DEFAULT_TERMS,
       version: 1,
@@ -347,6 +367,20 @@ export function QuoteEditor({ id, inquiryId }: { id: string; inquiryId?: string 
   const setCustomer = (k: keyof Quote['customer'], v: string) => setDraft((d) => ({ ...d, customer: { ...d.customer, [k]: v } }));
   const setLine = (i: number, p: Partial<Line>) => setDraft((d) => ({ ...d, lines: d.lines.map((x, k) => (k === i ? { ...x, ...p } : x)) }));
   const removeLine = (i: number) => setDraft((d) => ({ ...d, lines: d.lines.filter((_, k) => k !== i) }));
+  const printTitle = (p: Product) => `${tc('installation')} — ${l(p.name)}`;
+  const isPrintLine = (x: Line) => x.title.startsWith(`${tc('installation')} — `);
+  /** Logo print add-on as its own line right below the product (same qty, price per pack). */
+  const addPrint = (i: number, p: Product) =>
+    setDraft((d) => {
+      const base = d.lines[i];
+      const lines = [...d.lines];
+      lines.splice(i + 1, 0, { productId: p.id, title: printTitle(p), qty: base.qty, price: p.installation?.price ?? 0 });
+      return { ...d, lines };
+    });
+  const totalPieces = draft.lines.reduce((s, x) => {
+    const p = x.productId ? productById.get(x.productId) : undefined;
+    return p?.unit === 'pack' && p.packSize && !isPrintLine(x) ? s + x.qty * p.packSize : s;
+  }, 0);
 
   const validate = () => {
     const err: Record<string, string> = {};
@@ -590,7 +624,20 @@ export function QuoteEditor({ id, inquiryId }: { id: string; inquiryId?: string 
                                 className="h-8 w-full rounded-md border border-transparent bg-transparent px-1.5 text-[13.5px] font-semibold text-ink outline-none transition-colors hover:border-line focus:border-ink/40 focus:bg-white"
                               />
                             )}
-                            <div className="truncate px-1.5 text-[12px] text-muted">{p ? <span className="font-mono">{p.sku}</span> : t('custom')}{p && ` · ${unitLabel(p.unit, lang)}`}</div>
+                            <div className="truncate px-1.5 text-[12px] text-muted">
+                              {p ? <span className="font-mono">{p.sku}</span> : t('custom')}
+                              {p && (p.unit === 'pack' && p.packSize ? ` · ${num(p.packSize, lang, 0)} ${piecesLabel(lang)}/${unitLabel('pack', lang)} · ${moneyPiece(line.price / p.packSize, lang)}/${piecesLabel(lang)}` : ` · ${unitLabel(p.unit, lang)}`)}
+                            </div>
+                            {p?.installation?.available && !locked && !isPrintLine(line) && !draft.lines.some((x, k) => k !== i && x.productId === p.id && isPrintLine(x)) && (
+                              <button
+                                type="button"
+                                onClick={() => addPrint(i, p)}
+                                title={t('addPrintHint', { price: money(p.installation.price, lang) })}
+                                className="ml-1.5 mt-1 inline-flex h-6 items-center gap-1 rounded-md border border-dashed border-ink/25 px-2 text-[11.5px] font-semibold text-ink-soft transition-colors hover:border-ink/50 hover:text-ink"
+                              >
+                                <Stamp className="h-3 w-3" /> + {t('addPrint')} <span className="font-normal text-muted">{money(p.installation.price, lang)}/{unitLabel('pack', lang)}</span>
+                              </button>
+                            )}
                           </div>
                         </div>
                         <button type="button" onClick={() => removeLine(i)} disabled={locked} className="order-2 grid h-8 w-8 place-items-center justify-self-end rounded-md text-muted transition-colors hover:bg-ink/[0.06] hover:text-ink disabled:invisible md:order-none md:col-start-5 md:row-start-1" aria-label={t('remove')} title={t('remove')}>
@@ -602,6 +649,12 @@ export function QuoteEditor({ id, inquiryId }: { id: string; inquiryId?: string 
                           <div className="flex flex-col items-end justify-center">
                             <span className="text-[11px] text-muted md:hidden">{t('col_total')}</span>
                             <span className="text-[13.5px] font-semibold tabular-nums text-ink">{money(round2(line.qty * line.price), lang)}</span>
+                            {p?.unit === 'pack' && p.packSize && !isPrintLine(line) && line.qty > 0 && (
+                              <span className="text-[11.5px] tabular-nums text-muted">
+                                {pieces(line.qty * p.packSize, lang)}
+                                {p.cartonPacks && line.qty % p.cartonPacks === 0 && ` · ${t('cartons', { n: line.qty / p.cartonPacks, label: cartonLabel(line.qty / p.cartonPacks, lang) })}`}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </li>
@@ -612,6 +665,12 @@ export function QuoteEditor({ id, inquiryId }: { id: string; inquiryId?: string 
               </>
             )}
             <dl className="space-y-1 border-t border-line bg-canvas/30 px-5 py-3.5 text-[13px]">
+              {totalPieces > 0 && (
+                <div className="flex justify-between text-muted">
+                  <dt>{t('piecesTotal')}</dt>
+                  <dd className="tabular-nums">{pieces(totalPieces, lang)}</dd>
+                </div>
+              )}
               <div className="flex justify-between text-muted">
                 <dt>{t('subtotal')}</dt>
                 <dd className="tabular-nums">{money(totals.net, lang)}</dd>
@@ -641,7 +700,7 @@ export function QuoteEditor({ id, inquiryId }: { id: string; inquiryId?: string 
           {/* Customer */}
           <Card title={t('customer')}>
             <div className="space-y-3">
-              <CInput label={t('company')} value={draft.customer.company} onChange={(e) => setCustomer('company', e.target.value)} disabled={locked} placeholder="d.o.o." />
+              <CInput label={t('company')} value={draft.customer.company} onChange={(e) => setCustomer('company', e.target.value)} disabled={locked} placeholder="SH.P.K." />
               <CInput label={t('name')} required value={draft.customer.name} onChange={(e) => setCustomer('name', e.target.value)} disabled={locked} error={errors.name} />
               <CInput label={t('email')} type="email" value={draft.customer.email} onChange={(e) => setCustomer('email', e.target.value)} disabled={locked} error={errors.email} />
               <CInput label={t('phone')} type="tel" value={draft.customer.phone} onChange={(e) => setCustomer('phone', e.target.value)} disabled={locked} />
@@ -728,7 +787,7 @@ export function QuoteEditor({ id, inquiryId }: { id: string; inquiryId?: string 
         open={picker}
         onClose={() => setPicker(false)}
         onPick={(p) => {
-          setDraft((d) => ({ ...d, lines: [...d.lines, { productId: p.id, title: l(p.name), qty: 1, price: basePrice(p) }] }));
+          setDraft((d) => ({ ...d, lines: [...d.lines, catalogLine(p, lang)] }));
           setErrors((e) => ({ ...e, lines: '' }));
           setPicker(false);
         }}

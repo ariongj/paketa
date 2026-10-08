@@ -45,7 +45,7 @@ function validate(d: SettingsX, t: (k: 'invalidPrefix' | 'needLocation' | 'subje
   if (d.adminEmail && !isEmail(d.adminEmail)) e.adminEmail = invalidEmail;
   const locs = d.locations ?? [];
   if (!locs.length || !locs.some((l) => l.isDefault)) e.locations = t('needLocation');
-  if ((d.notifications ?? []).some((n) => !n.subject?.me?.trim())) e.notifications = t('subjectMissing');
+  if ((d.notifications ?? []).some((n) => !n.subject?.sq?.trim())) e.notifications = t('subjectMissing');
   return e;
 }
 

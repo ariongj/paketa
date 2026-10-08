@@ -125,11 +125,11 @@ function DesktopPreview({ nodes }: { nodes: NavNode[] }) {
           ))}
           {promo && (
             <div title={promo.to} className="relative col-span-2 mt-1 h-[68px] overflow-hidden rounded-lg bg-ink">
-              <img src={thumb(promo.entity?.image ?? '/images/cat/podovi.webp')} alt="" className="absolute inset-0 h-full w-full object-cover opacity-60" />
+              <img src={thumb(promo.entity?.image ?? '/images/hero/kraft.webp')} alt="" className="absolute inset-0 h-full w-full object-cover opacity-60" />
               <div className="absolute inset-0 bg-gradient-to-r from-ink/85 to-transparent" />
               <div className="relative flex h-full flex-col justify-center px-3 text-white">
-                <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-brand-200">{l(promo.label)}</span>
-                <span className="font-display text-[17px] leading-tight">{promo.type === 'offer' ? l(promo.entity?.subtitle) : '−20%'}</span>
+                <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-lime">{l(promo.label)}</span>
+                <span className="font-display text-[17px] leading-tight">{promo.type === 'offer' ? l(promo.entity?.subtitle) : '−10 %'}</span>
                 <span className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-semibold">
                   {t('seeAll')} <ArrowRight className="h-3 w-3" />
                 </span>

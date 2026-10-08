@@ -1,4 +1,5 @@
-import type { Db, MediaItem } from '@/lib/types';
+import type { Db, MediaItem, Product } from '@/lib/types';
+import { lt } from '@/i18n';
 import { CATEGORIES, buildProducts } from './catalog';
 import { DEFAULT_SETTINGS, PROJECTS, buildCoupons, buildHome, buildPages, buildPosts } from './content';
 import { generateInquiries, generateOrders } from './demo';
@@ -9,22 +10,26 @@ import {
 } from './cms';
 
 /** Bump to force every browser to reload fresh demo data. */
-export const DB_VERSION = 5;
+export const DB_VERSION = 1;
 
-/** Every bundled image, exposed in the CMS media library. */
+/** Every bundled lifestyle image (brand assets excluded), exposed in the CMS media library. */
 const IMAGE_PATHS = [
-  'hero/living', 'hero/arch', 'hero/bath', 'hero/kitchen',
-  'misc/house-dusk', 'misc/villa', 'misc/about',
-  'cat/vrata', 'cat/prozori', 'cat/podovi', 'cat/keramika', 'cat/kupatilo', 'cat/kuhinje',
-  's/mjerenje', 's/ugradnja', 's/ugradnja-prozora', 's/podovi', 's/majstor', 's/adaptacija', 's/gips',
-  'projects/vila-primorje', 'projects/kupatilo-oval', 'projects/kupatilo-toplo', 'projects/kupatilo-travertin',
-  'projects/kuhinja-orah', 'projects/dnevna-svjetla', 'projects/stan-hrast', 'projects/kuhinja-siva',
+  'hero/kraft', 'hero/smoothie', 'hero/meal', 'hero/delivery', 'hero/iced',
+  'cat/gota', 'cat/kapake', 'cat/ene', 'cat/embelsira', 'cat/salca', 'cat/takem', 'cat/shkopinj', 'cat/karton', 'cat/alumini', 'cat/pla', 'cat/etiketa',
+  's/printim', 's/shumice', 's/dergesa', 's/mostra', 's/konsulence', 's/magazina',
+  'projects/kafiteri', 'projects/smoothie-bar', 'projects/burger', 'projects/pasticeri', 'projects/akullore', 'projects/kuti', 'projects/qese', 'projects/sushi',
+  'misc/about', 'misc/restaurant', 'misc/restaurant-top', 'misc/sushi', 'misc/fries', 'misc/sauce', 'misc/bowls', 'misc/drinks', 'misc/burger',
+  'misc/donuts', 'misc/icecream', 'misc/bag', 'misc/bag2', 'misc/cookies', 'misc/cups', 'misc/kraft-cups', 'misc/sleeve', 'misc/alu', 'misc/alu2',
+  'misc/smoothie', 'misc/iced', 'misc/box', 'misc/noodles', 'misc/delivery', 'misc/salad', 'misc/mealprep',
 ];
 
-const FOLDER: Record<string, string> = { hero: 'Hero', misc: 'Ostalo', cat: 'Kategorije', s: 'Usluge', projects: 'Projekti', p: 'Proizvodi' };
+const FOLDER: Record<string, string> = { hero: 'Hero', cat: 'Kategoritë', s: 'Shërbimet', projects: 'Referencat', misc: 'Të ndryshme', p: 'Produktet' };
 
-function buildMedia(productImages: string[], now: Date): MediaItem[] {
-  const all = [...IMAGE_PATHS.map((p) => `/images/${p}.webp`), ...productImages];
+function buildMedia(products: Product[], now: Date): MediaItem[] {
+  // product photos get the product's (Albanian) name as alt text, "— 2", "— 3"… for extra angles
+  const productAlt = new Map<string, string>();
+  for (const p of products) p.images.forEach((url, k) => productAlt.set(url, k ? `${lt(p.name, 'sq')} — ${k + 1}` : lt(p.name, 'sq')));
+  const all = [...IMAGE_PATHS.map((p) => `/images/${p}.webp`), ...products.flatMap((p) => p.images)];
   const unique = Array.from(new Set(all));
   return unique.map((url, i) => {
     const seg = url.split('/')[2] ?? 'misc';
@@ -33,8 +38,8 @@ function buildMedia(productImages: string[], now: Date): MediaItem[] {
       id: `m_${i + 1}`,
       url,
       name: `${name}.webp`,
-      alt: name.replace(/-\d$/, '').replace(/-/g, ' '),
-      folder: FOLDER[seg] ?? 'Ostalo',
+      alt: productAlt.get(url) ?? name.replace(/-\d$/, '').replace(/-/g, ' '),
+      folder: FOLDER[seg] ?? 'Të ndryshme',
       uploaded: false,
       createdAt: new Date(now.getTime() - (unique.length - i) * 3600000).toISOString(),
     };
@@ -68,7 +73,7 @@ export function createSeed(now = new Date()): Db {
     pages: buildPages(now),
     posts: buildPosts(now),
     projects: structuredClone(PROJECTS),
-    media: buildMedia(products.flatMap((p) => p.images), now),
+    media: buildMedia(products, now),
     home,
     seededAt: now.toISOString(),
 

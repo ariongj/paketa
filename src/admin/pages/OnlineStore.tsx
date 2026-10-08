@@ -169,7 +169,7 @@ export default function OnlineStore() {
                   </div>
                   {normHex(form.brandColor) !== DEFAULT_BRAND && (
                     <Button variant="ghost" size="sm" shape="rounded" icon={<RotateCcw className="h-3.5 w-3.5" />} onClick={() => pickColor(DEFAULT_BRAND)}>
-                      {t('preset_selca')}
+                      {t('preset_brand')}
                     </Button>
                   )}
                 </div>
@@ -367,10 +367,10 @@ export default function OnlineStore() {
                   <div>
                     <div className="text-[14px] font-semibold text-ink">{t('languages')}</div>
                     <div className="mt-2 flex flex-wrap gap-1.5">
-                      {LANGS.filter((x) => settings.languages[x.code] || x.code === 'me').map((x) => (
+                      {LANGS.filter((x) => settings.languages[x.code] || x.code === 'sq').map((x) => (
                         <span key={x.code} className="inline-flex h-7 items-center gap-1.5 rounded-full border border-line bg-white px-2.5 text-[12.5px] font-semibold text-ink">
                           <Check className="h-3.5 w-3.5" /> {x.label}
-                          {x.code === 'me' && <span className="font-normal text-muted">· {t('langDefault')}</span>}
+                          {x.code === 'sq' && <span className="font-normal text-muted">· {t('langDefault')}</span>}
                         </span>
                       ))}
                     </div>
@@ -446,7 +446,7 @@ function ThemeCard() {
         <div className="flex flex-col p-5 sm:p-6">
           <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">{t('currentTheme')}</div>
           <div className="mt-1.5 flex flex-wrap items-center gap-2.5">
-            <h2 className="text-[20px] font-bold tracking-tight text-ink">SELCA Home</h2>
+            <h2 className="text-[20px] font-bold tracking-tight text-ink">Paketoje · it’s packaging</h2>
             <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 text-[12px] font-semibold text-emerald-800 ring-1 ring-inset ring-emerald-700/15">
               <span className="h-2 w-2 rounded-full bg-emerald-600" /> {t('live')}
             </span>
@@ -606,8 +606,8 @@ function LogoTile({ label, variant, size, dark }: { label: string; variant: Logo
   return (
     <div className={cn('flex flex-col overflow-hidden rounded-xl border', dark ? 'border-black/20 bg-ink' : 'border-line bg-paper')}>
       <div className="grid flex-1 place-items-center px-3 py-5">
-        <span className="flex [&>svg]:h-full! [&>svg]:w-auto" style={{ height: size }}>
-          {variant === 'full' ? <Logo tone={dark ? 'light' : 'dark'} /> : <LogoMark tone={dark ? 'light' : 'dark'} />}
+        <span className="flex" style={{ height: size }}>
+          {variant === 'full' ? <Logo tone={dark ? 'light' : 'dark'} className="h-full" /> : <LogoMark tone={dark ? 'light' : 'dark'} className="h-full" />}
         </span>
       </div>
       <div className={cn('border-t px-3 py-1.5 text-[11.5px] font-medium', dark ? 'border-white/10 text-white/70' : 'border-line text-muted')}>{label}</div>

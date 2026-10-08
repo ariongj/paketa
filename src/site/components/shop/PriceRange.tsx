@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useDict, useLang } from '@/i18n';
-import { money } from '@/lib/format';
+import type { Lang } from '@/lib/types';
+import { money, num } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { T } from './dict';
 import { nicePrice, priceScale } from './filters';
@@ -15,7 +16,7 @@ const THUMB = cn(
   'pointer-events-none absolute inset-0 m-0 h-6 w-full cursor-pointer appearance-none bg-transparent focus-visible:outline-none',
   '[&::-webkit-slider-runnable-track]:h-6 [&::-webkit-slider-runnable-track]:bg-transparent',
   '[&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:mt-[2px] [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:cursor-grab [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-[5px] [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-ink [&::-webkit-slider-thumb]:shadow-[0_1px_2px_rgb(0_0_0/0.18),0_0_0_1px_rgb(28_26_23/0.18),0_4px_10px_-2px_rgb(28_26_23/0.3)] [&::-webkit-slider-thumb]:transition-transform active:[&::-webkit-slider-thumb]:cursor-grabbing active:[&::-webkit-slider-thumb]:scale-110',
-  'focus-visible:[&::-webkit-slider-thumb]:shadow-[0_0_0_1px_rgb(28_26_23/0.25),0_0_0_6px_rgb(154_46_46/0.18)]',
+  'focus-visible:[&::-webkit-slider-thumb]:shadow-[0_0_0_1px_rgb(28_26_23/0.25),0_0_0_6px_rgb(0_114_58/0.2)]',
   '[&::-moz-range-track]:bg-transparent [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-[10px] [&::-moz-range-thumb]:w-[10px] [&::-moz-range-thumb]:cursor-grab [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-[5px] [&::-moz-range-thumb]:border-solid [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-ink [&::-moz-range-thumb]:shadow-[0_0_0_1px_rgb(28_26_23/0.18),0_4px_10px_-2px_rgb(28_26_23/0.3)]',
 );
 
@@ -95,7 +96,7 @@ export function PriceRange({
           max={STEPS}
           value={posA}
           aria-label={t('priceMin')}
-          aria-valuetext={money(a, lang, { decimals: false })}
+          aria-valuetext={money(a, lang)}
           onChange={(e) => commit(Math.min(fromPos(+e.target.value), b), b)}
           className={THUMB}
           style={{ zIndex: posA > STEPS - 40 ? 4 : 3 }}
@@ -106,7 +107,7 @@ export function PriceRange({
           max={STEPS}
           value={posB}
           aria-label={t('priceMax')}
-          aria-valuetext={money(b, lang, { decimals: false })}
+          aria-valuetext={money(b, lang)}
           onChange={(e) => commit(a, Math.max(fromPos(+e.target.value), a))}
           className={THUMB}
           style={{ zIndex: 3 }}
@@ -114,19 +115,20 @@ export function PriceRange({
       </div>
 
       <div className="mt-4 flex items-center gap-2">
-        <PriceBox label={t('priceMin')} value={a} onCommit={(v) => commit(Math.min(v, b), b)} />
+        <PriceBox label={t('priceMin')} value={a} lang={lang} onCommit={(v) => commit(Math.min(v, b), b)} />
         <span className="h-px w-3 shrink-0 bg-ink/30" />
-        <PriceBox label={t('priceMax')} value={b} onCommit={(v) => commit(a, Math.max(v, a))} />
+        <PriceBox label={t('priceMax')} value={b} lang={lang} onCommit={(v) => commit(a, Math.max(v, a))} />
       </div>
     </div>
   );
 }
 
-function PriceBox({ label, value, onCommit }: { label: string; value: number; onCommit: (v: number) => void }) {
+function PriceBox({ label, value, lang, onCommit }: { label: string; value: number; lang: Lang; onCommit: (v: number) => void }) {
   const [draft, setDraft] = useState<string | null>(null);
+  const shown = num(value, lang, 2);
   const done = () => {
     if (draft !== null) {
-      const n = parseInt(draft, 10);
+      const n = parseFloat(draft.replace(',', '.'));
       if (!Number.isNaN(n)) onCommit(n);
     }
     setDraft(null);
@@ -136,13 +138,13 @@ function PriceBox({ label, value, onCommit }: { label: string; value: number; on
       <span className="block text-[10.5px] font-bold uppercase tracking-[0.14em] text-muted">{label}</span>
       <span className="flex items-baseline gap-1">
         <input
-          inputMode="numeric"
-          value={draft ?? String(Math.round(value))}
+          inputMode="decimal"
+          value={draft ?? shown}
           onFocus={(e) => {
-            setDraft(String(Math.round(value)));
+            setDraft(shown);
             e.currentTarget.select();
           }}
-          onChange={(e) => setDraft(e.target.value.replace(/[^\d]/g, '').slice(0, 6))}
+          onChange={(e) => setDraft(e.target.value.replace(/[^\d.,]/g, '').slice(0, 7))}
           onBlur={done}
           onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
           className="w-full min-w-0 bg-transparent text-[15px] font-semibold tabular-nums text-ink outline-none focus-visible:outline-none"

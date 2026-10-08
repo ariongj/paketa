@@ -38,7 +38,7 @@ export type InquiryX = Inquiry & InquiryExtra;
 export type ContactKind = 'contact' | 'b2b' | 'meeting' | 'measurement';
 export const KINDS: ContactKind[] = ['contact', 'b2b', 'meeting', 'measurement'];
 
-/** Kontakt / B2B / Takim / Matje — a contact message that asks for (or got) an appointment is a meeting. */
+/** Mesazh / Ofertë B2B / Takim / Mostra falas — a contact message that asks for (or got) an appointment is a meeting. */
 export function kindOf(q: InquiryX, linkedBooking?: boolean): ContactKind {
   if (q.kind) return q.kind;
   if (q.type === 'measurement') return 'measurement';
@@ -186,6 +186,17 @@ export function bookingsFor(id: string, bookings: Booking[]) {
   return bookings.filter((b) => b.inquiryId === id).sort((a, b) => b.start.localeCompare(a.start));
 }
 
+/**
+ * Booking service suggested for a request: free samples → sample visit at the venue (sv-mostra), a logo-print
+ * question → design consultation (sv-dizajn), everything else → B2B meeting at the depot (sv-takim).
+ */
+export const LOGO_RE = /logo|print|štamp|stamp|brend|brand/i;
+export function serviceIdFor(q: InquiryX): 'sv-mostra' | 'sv-dizajn' | 'sv-takim' {
+  if (kindOf(q) === 'measurement') return 'sv-mostra';
+  if (LOGO_RE.test(`${q.message} ${q.service ?? ''} ${(q.tags ?? []).join(' ')}`)) return 'sv-dizajn';
+  return 'sv-takim';
+}
+
 /** Default slot for "Krijo termin": the customer's preferred day if still ahead, else the next working day — 10:00. */
 export function defaultSlot(q: Inquiry, now = Date.now()) {
   const today = new Date(now);
@@ -218,7 +229,7 @@ export function quoteState(q: Quote, now: number): QuoteState {
   return q.status === 'sent' && isExpired(q, now) ? 'expired' : q.status;
 }
 
-export function quoteTotals(lines: Quote['lines'], vatRate = 21) {
+export function quoteTotals(lines: Quote['lines'], vatRate = 18) {
   const total = round2(lines.reduce((s, l) => s + (Number(l.qty) || 0) * (Number(l.price) || 0), 0));
   const vat = round2(total - total / (1 + vatRate / 100));
   return { total, vat, net: round2(total - vat) };

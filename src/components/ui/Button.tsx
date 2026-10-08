@@ -3,7 +3,7 @@ import { Link, type LinkProps } from 'react-router';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type ButtonVariant = 'primary' | 'dark' | 'light' | 'outline' | 'outlineLight' | 'ghost' | 'danger' | 'soft';
+export type ButtonVariant = 'primary' | 'dark' | 'light' | 'outline' | 'outlineLight' | 'ghost' | 'danger' | 'soft' | 'lime';
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg' | 'icon' | 'iconSm';
 
 const VARIANTS: Record<ButtonVariant, string> = {
@@ -16,6 +16,8 @@ const VARIANTS: Record<ButtonVariant, string> = {
   ghost: 'text-ink hover:bg-ink/[0.06]',
   danger: 'bg-red-600 text-white hover:bg-red-700',
   soft: 'bg-brand-50 text-brand-700 hover:bg-brand-100',
+  // Paketoje accent (storefront only — the admin theme does not remap lime)
+  lime: 'bg-lime text-ink hover:bg-[#b3f560] shadow-[inset_0_-2px_0_rgb(0_0_0/0.08)]',
 };
 
 const SIZES: Record<ButtonSize, string> = {

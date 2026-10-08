@@ -13,11 +13,12 @@ const empty = (): L10n => ({ me: '', sq: '', en: '' });
 /** Common spec labels, ready-translated. */
 const SUGGESTED: L10n[] = [
   L('Materijal', 'Materiali', 'Material'),
+  L('Zapremina', 'Kapaciteti', 'Capacity'),
   L('Dimenzije', 'Dimensionet', 'Dimensions'),
-  L('Debljina', 'Trashësia', 'Thickness'),
-  L('Boja', 'Ngjyra', 'Colour'),
-  L('Porijeklo', 'Origjina', 'Origin'),
-  L('Garancija', 'Garancia', 'Warranty'),
+  L('Komada u pakovanju', 'Copë në pako', 'Pieces per pack'),
+  L('Pakovanja u kartonu', 'Pako në karton', 'Packs per carton'),
+  L('Za tople napitke', 'Për pije të nxehta', 'For hot drinks'),
+  L('Mikrotalasna', 'Mikrovalë', 'Microwave safe'),
 ];
 
 export function SpecsEditor({ value, onChange }: { value: ProductSpec[]; onChange: (v: ProductSpec[]) => void }) {
@@ -48,7 +49,7 @@ export function SpecsEditor({ value, onChange }: { value: ProductSpec[]; onChang
     onChange(value.filter((_, k) => k !== i));
   };
   const add = (label: L10n = empty()) => onChange([...value, { label: { ...label }, value: empty() }]);
-  const suggestions = SUGGESTED.filter((s) => !value.some((v) => v.label.me.trim().toLowerCase() === s.me.toLowerCase()));
+  const suggestions = SUGGESTED.filter((s) => !value.some((v) => v.label.sq.trim().toLowerCase() === s.sq.toLowerCase()));
 
   return (
     <Card title={t('c_specs')} description={t('c_specs_d')} actions={value.length > 0 && <LangTabs value={lang} onChange={setLang} missing={missing} title={t('langHint')} />} padded={false}>

@@ -8,7 +8,9 @@ import { Accent } from '@/components/ui/misc';
 import { L10nInput } from '@/admin/components/L10nInput';
 import { useDict } from '@/i18n';
 import { adm } from '@/admin/i18n';
-import { useCategories } from '@/store/hooks';
+import { useCategories, useSettings } from '@/store/hooks';
+import { brandVars } from '@/lib/color';
+import { SAMPLES_HREF } from '@/admin/components/store/placements';
 import { cn } from '@/lib/utils';
 import { B } from './i18n';
 import { TRUST_ICONS } from './meta';
@@ -35,6 +37,7 @@ export function Group({ title, children, aside, className }: { title: ReactNode;
 /** Hint that explains the *accent* syntax, with a rendered example. */
 export function AccentHint() {
   const t = useDict(B, 'admin');
+  const brand = useSettings().brandColor;
   const word = t('accentWord');
   const [before, after] = t('accentHint').split('{word}');
   return (
@@ -43,7 +46,10 @@ export function AccentHint() {
       <code className="rounded bg-canvas px-1 py-px font-mono text-[11px] text-ink-soft">*{word}*</code>
       <span>{after}</span>
       <ArrowRight className="h-3 w-3 text-muted/70" />
-      <Accent text={`*${word}*`} className="text-[13px]" />
+      {/* storefront sample — the only place the brand colour shows inside the CMS */}
+      <span style={brandVars(brand)}>
+        <Accent text={`*${word}*`} className="text-[13px] font-semibold" />
+      </span>
     </span>
   );
 }
@@ -92,7 +98,7 @@ export function HrefField({ value, onChange, label }: { value: string; onChange:
   const t = useDict(B, 'admin');
   const cats = useCategories();
   const listId = useId();
-  const routes = ['/produktet', '/produktet?akcija=1', ...cats.map((c) => `/produktet/${c.slug}`), '/sherbimet', '/referencat', '/blog', '/rreth-nesh', '/kontakti', '/#mjerenje'];
+  const routes = ['/produktet', '/produktet?akcija=1', ...cats.map((c) => `/produktet/${c.slug}`), '/sherbimet', '/referencat', '/blog', '/rreth-nesh', '/kontakti', SAMPLES_HREF];
   return (
     <>
       <TextField label={label ?? t('href')} value={value} onChange={onChange} leading={<Link2 className="h-4 w-4" />} list={listId} placeholder="/produktet" spellCheck={false} />

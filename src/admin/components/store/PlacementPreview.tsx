@@ -1,18 +1,19 @@
 // Live preview of a slide / banner / announcement with the storefront's real styling (PDF p.35
 // "Parapamje Desktop / Mobile"). Rendered at the device's real width and scaled down to the panel, inside a
-// wrapper that restores the SELCA brand + warm tokens (the CMS itself stays neutral).
+// wrapper that restores the Paketoje brand + storefront tokens (the CMS itself stays neutral).
 import { useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { useReducedMotion } from 'motion/react';
-import { ArrowRight, ChevronLeft, ChevronRight, Phone, Ruler } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, PackageOpen, Phone } from 'lucide-react';
 import type { Lang, L10n } from '@/lib/types';
 import { lt } from '@/i18n';
 import { site } from '@/i18n/site';
 import { Accent } from '@/components/ui/misc';
 import { buttonClass } from '@/components/ui/Button';
 import { Logo } from '@/components/brand/Logo';
+import { useDb } from '@/store/db';
 import { cn } from '@/lib/utils';
 import { FONT_PAIRS, storefrontVars, type FontPair } from './theme';
-import { objectPos, type PlacementX } from './placements';
+import { isSamplesHref, objectPos, type PlacementX } from './placements';
 
 export type Device = 'desktop' | 'mobile';
 
@@ -67,7 +68,7 @@ export function PlacementPreview({
   font = 'classic',
   index = 1,
   count = 1,
-  domain = 'selcacompany.com',
+  domain = 'paketoje.com',
   placeholders,
 }: {
   p: PlacementX;
@@ -121,12 +122,12 @@ function Media({ p, device, kenburns }: { p: PlacementX; device: Device; kenburn
   const mobile = device === 'mobile';
   const src = (mobile && p.imageMobile) || p.image;
   const focal = mobile ? (p.imageMobile ? p.focalMobile : (p.focalMobile ?? p.focal)) : p.focal;
-  if (!src) return <div className="absolute inset-0 bg-[linear-gradient(135deg,#3a3631,#1c1a17)]" />;
+  if (!src) return <div className="absolute inset-0 bg-[linear-gradient(135deg,#1f3a2c,#0f1d16)]" />;
   return (
     <img
       key={src}
       src={src}
-      alt={T(p.alt, 'me')}
+      alt={T(p.alt, 'sq')}
       className={cn('absolute inset-0 h-full w-full object-cover', kenburns && !reduce && 'animate-[kenburns_9s_ease-out_both]')}
       style={{ objectPosition: objectPos(focal) }}
       draggable={false}
@@ -139,11 +140,11 @@ function Overlay({ p }: { p: PlacementX }) {
   const a = Math.max(0, Math.min(80, p.overlay)) / 100;
   return (
     <>
-      <div className="absolute inset-0" style={{ background: `rgb(28 26 23 / ${a})` }} />
+      <div className="absolute inset-0" style={{ background: `rgb(15 29 22 / ${a})` }} />
       {p.textAlign === 'left' ? (
         <div className="absolute inset-0 bg-gradient-to-r from-ink/55 via-ink/15 to-transparent" />
       ) : (
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgb(28_26_23/0.35),transparent_70%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgb(15_29_22/0.35),transparent_70%)]" />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-ink/55 via-transparent to-ink/20" />
     </>
@@ -180,7 +181,7 @@ function SlideBody({ p, device, lang, font, index, count, placeholders }: { p: P
             </div>
           )}
           <h1 className={cn('display text-shadow-soft text-white', mobile ? 'text-[46px] leading-[0.98]' : 'text-[88px] leading-[0.98]', !title && 'opacity-50')} style={heading}>
-            <Accent text={title || placeholders.title} accentClassName="text-brand-200" />
+            <Accent text={title || placeholders.title} accentClassName="text-lime [background-image:none]!" />
           </h1>
           {T(p.subtitle, lang) && <p className={cn('mt-6 max-w-xl leading-relaxed text-white/85', mobile ? 'text-[17px]' : 'text-lg')}>{T(p.subtitle, lang)}</p>}
           {(p.cta.href || sec) && (
@@ -193,7 +194,7 @@ function SlideBody({ p, device, lang, font, index, count, placeholders }: { p: P
               )}
               {sec && (
                 <span className={buttonClass({ size: 'lg', variant: 'outlineLight' })}>
-                  {p.secondary!.href.includes('mjerenje') && <Ruler className="h-4 w-4" />}
+                  {isSamplesHref(p.secondary!.href) && <PackageOpen className="h-4 w-4" />}
                   {sec}
                 </span>
               )}
@@ -239,9 +240,9 @@ function BannerBody({ p, device, lang, font, placeholders }: { p: PlacementX; de
         <Media p={p} device={device} />
         <Overlay p={p} />
         <div className={cn('absolute inset-0 flex flex-col justify-end', mobile ? 'p-6' : 'p-12', center && 'items-center text-center')}>
-          {T(p.eyebrow, lang) && <span className="text-[11.5px] font-bold uppercase tracking-[0.2em] text-brand-200">{T(p.eyebrow, lang)}</span>}
+          {T(p.eyebrow, lang) && <span className="text-[11.5px] font-bold uppercase tracking-[0.2em] text-lime">{T(p.eyebrow, lang)}</span>}
           <h2 className={cn('display mt-2 text-white', mobile ? 'text-[34px] leading-[1.02]' : 'max-w-2xl text-[56px] leading-[1.02]', !title && 'opacity-50')} style={FONT_PAIRS[font].heading}>
-            <Accent text={title || placeholders.title} accentClassName="text-brand-200" />
+            <Accent text={title || placeholders.title} accentClassName="text-lime [background-image:none]!" />
           </h2>
           {T(p.subtitle, lang) && <p className={cn('mt-3 max-w-lg text-white/85', mobile ? 'text-[15px]' : 'text-[17px]')}>{T(p.subtitle, lang)}</p>}
           {p.cta.href && (
@@ -260,20 +261,21 @@ function AnnouncementBody({ p, device, lang }: { p: PlacementX; device: Device; 
   const mobile = device === 'mobile';
   const msg = T(p.title, lang);
   const linkLabel = T(p.cta.label, lang);
+  const phone = useDb((s) => s.settings.phone);
   return (
     <div className="h-full w-full bg-paper font-sans">
       <div className="bg-ink text-paper">
         <div className={cn('flex h-9 items-center justify-between gap-4 text-[12.5px]', mobile ? 'px-4' : 'px-8')}>
           {!mobile && (
             <span className="flex items-center gap-1.5 text-paper/75">
-              <Phone className="h-3.5 w-3.5" /> +382 67 123 456
+              <Phone className="h-3.5 w-3.5" /> {phone}
             </span>
           )}
           <p className={cn('flex-1 truncate text-center font-medium', !msg && 'opacity-50')}>
             {msg || '—'}
             {p.cta.href && linkLabel && <span className="ml-2 underline underline-offset-2">{linkLabel}</span>}
           </p>
-          {!mobile && <span className="text-[11px] font-bold tracking-wide text-paper/75">ME · SQ · EN</span>}
+          {!mobile && <span className="text-[11px] font-bold tracking-wide text-paper/75">SQ · EN · SR</span>}
         </div>
       </div>
       <div className={cn('flex h-[72px] items-center justify-between border-b border-line bg-paper/95', mobile ? 'px-4' : 'px-8')}>

@@ -270,7 +270,7 @@ function StaffModal({ open, member, onClose }: { open: boolean; member: Staff | 
         <div className="space-y-5">
           <TextField label={t('name')} value={draft.name} onChange={(v) => setDraft({ ...draft, name: v })} leading={<UserRound className="h-4 w-4" />} error={tried ? errors.name : undefined} autoFocus />
           <TextField label={t('email')} type="email" value={draft.email} onChange={(v) => setDraft({ ...draft, email: v })} leading={<Mail className="h-4 w-4" />} error={tried ? errors.email : undefined} />
-          <TextField label={t('phone')} optional type="tel" value={draft.phone ?? ''} onChange={(v) => setDraft({ ...draft, phone: v })} leading={<Phone className="h-4 w-4" />} placeholder="+382 …" />
+          <TextField label={t('phone')} optional type="tel" value={draft.phone ?? ''} onChange={(v) => setDraft({ ...draft, phone: v })} leading={<Phone className="h-4 w-4" />} placeholder="+383 …" />
           <div className="rounded-lg border border-line px-3.5 py-3">
             <div className="flex items-center justify-between gap-3">
               <span className="text-[13.5px] font-semibold text-ink">{t('activeLabel')}</span>

@@ -11,7 +11,7 @@ import { useSettings } from '@/store/hooks';
 import { checkBooking, type BookingConflict } from '@/lib/bookings';
 import { dateTime } from '@/lib/format';
 import { CInput, CSelect, CTextarea } from './fields';
-import { defaultSlot, kindOf, type InquiryX } from './model';
+import { defaultSlot, serviceIdFor, type InquiryX } from './model';
 
 const T = defineDict({
   me: {
@@ -23,7 +23,7 @@ const T = defineDict({
     time: 'Vrijeme',
     duration: '{n} min',
     location: 'Lokacija',
-    onsite: 'Na adresi klijenta',
+    onsite: 'U objektu klijenta',
     address: 'Adresa',
     note: 'Bilješka za termin',
     free: 'Termin je slobodan',
@@ -45,7 +45,7 @@ const T = defineDict({
     time: 'Ora',
     duration: '{n} min',
     location: 'Vendndodhja',
-    onsite: 'Në adresën e klientit',
+    onsite: 'Në lokalin e klientit',
     address: 'Adresa',
     note: 'Shënim për terminin',
     free: 'Orari është i lirë',
@@ -67,7 +67,7 @@ const T = defineDict({
     time: 'Time',
     duration: '{n} min',
     location: 'Location',
-    onsite: "At the customer's address",
+    onsite: "At the customer's venue",
     address: 'Address',
     note: 'Appointment note',
     free: 'The slot is free',
@@ -111,7 +111,7 @@ function BookingForm({ inquiry: q, onClose }: { inquiry: InquiryX; onClose: () =
   const bookings = useDb((s) => s.bookings);
 
   const initial = useMemo(() => {
-    const svc = services.find((s) => s.id === (kindOf(q) === 'measurement' ? 'sv-mjerenje' : 'sv-konsultacija')) ?? services[0];
+    const svc = services.find((s) => s.id === serviceIdFor(q)) ?? services[0];
     const slot = defaultSlot(q);
     const person = svc && q.assignee && svc.staffIds.includes(q.assignee) ? q.assignee : (svc?.staffIds[0] ?? staff[0]?.id ?? '');
     return {

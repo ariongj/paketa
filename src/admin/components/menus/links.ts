@@ -36,7 +36,7 @@ export const LINK_TYPES: MenuItemType[] = ['page', 'product', 'collection', 'cat
 
 const EXTERNAL = /^(?:https?:|mailto:|tel:|\/\/)/i;
 
-/** Validate a free URL target: in-app path ("/kontakti", "/produktet?akcija=1", "#mjerenje") or http(s)/mailto/tel. */
+/** Validate a free URL target: in-app path ("/kontakti", "/produktet?akcija=1", "#faq") or http(s)/mailto/tel. */
 export function validUrl(target: string) {
   const v = target.trim();
   if (!v) return true; // empty = heading without a link

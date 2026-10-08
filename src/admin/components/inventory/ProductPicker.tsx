@@ -3,12 +3,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, Search } from 'lucide-react';
 import { Thumb } from '@/admin/components/kit';
 import { useDict, useL, useLang } from '@/i18n';
-import { money, num } from '@/lib/format';
+import { money, unitLabel } from '@/lib/format';
 import { fold } from '@/lib/search';
 import type { Product } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { inv } from './dict';
-import { stockUnit } from './helpers';
+import { packSizeText } from '@/admin/components/products/units';
+import { qtyOf } from './helpers';
 import type { InvRow } from './useInventory';
 import { StockStateTag, controlClass } from './ui';
 
@@ -95,12 +96,15 @@ export function ProductPicker({ rows, exclude, onPick, showCost, className }: { 
                 <Thumb src={r.p.images[0]} className="h-9 w-9" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[13.5px] font-semibold text-ink">{l(r.p.name)}</span>
-                  <span className="mt-0.5 flex items-center gap-2 text-[11.5px] text-muted">
+                  <span className="mt-0.5 flex min-w-0 items-center gap-2 text-[11.5px] text-muted">
                     <span className="font-mono">{r.p.sku}</span>
-                    <span>
-                      {t('ed_available', { n: num(r.lv.available, lang) })} {stockUnit(r.p, lang)}
-                    </span>
-                    {showCost && r.p.cost != null && <span>· {money(r.p.cost, lang)}</span>}
+                    {packSizeText(r.p, lang) && <span className="whitespace-nowrap max-sm:hidden">{packSizeText(r.p, lang)}</span>}
+                    <span className="truncate">{t('ed_available', { n: qtyOf(r.p, r.lv.available, lang) })}</span>
+                    {showCost && r.p.cost != null && (
+                      <span className="whitespace-nowrap">
+                        · {money(r.p.cost, lang)}/{unitLabel(r.p.unit, lang)}
+                      </span>
+                    )}
                   </span>
                 </span>
                 <StockStateTag state={r.state} className="hidden sm:inline-flex" />

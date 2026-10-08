@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react';
-import { Archive, Check, CheckCircle2, CircleDashed, ClipboardList, Lock, Monitor, Package, ShoppingBag, Star, Store, Wrench, XCircle, Zap } from 'lucide-react';
+import { Archive, Check, CheckCircle2, CircleDashed, ClipboardList, Lock, Monitor, Package, Printer, ShoppingBag, Star, Store, XCircle, Zap } from 'lucide-react';
 import { Card } from '@/admin/components/kit';
 import { Checkbox } from '@/components/ui/Field';
-import { useDict, useL, useLang } from '@/i18n';
+import { LANGS, useDict, useL, useLang } from '@/i18n';
 import { common } from '@/i18n/common';
-import { perUnit } from '@/lib/format';
+import { money, perUnit } from '@/lib/format';
 import type { Badge as BadgeT, Category, Collection, Lang, ProductStatus, SalesChannel, Unit } from '@/lib/types';
-import { cn } from '@/lib/utils';
+import { cn, round2 } from '@/lib/utils';
+import { piecePriceText } from './units';
 import { pd } from './dict';
 import { FormField, NumInput, SelectInput, TextInput, ToggleRow } from './parts';
 import { TagsInput } from './TagsInput';
@@ -87,7 +88,7 @@ export function StatusCard({
           <div className="flex items-center justify-between gap-3 border-t border-line/70 pt-3.5">
             <span className="text-[13px] font-semibold text-ink-soft">{t('translations')}</span>
             <div className="flex gap-1.5">
-              {(['me', 'sq', 'en'] as Lang[]).map((lg) => {
+              {LANGS.map(({ code: lg, short }) => {
                 const miss = translations.miss[lg];
                 return (
                   <span
@@ -95,7 +96,7 @@ export function StatusCard({
                     title={miss ? `${translations.total - miss}/${translations.total}` : undefined}
                     className={cn('inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-bold tabular-nums', miss ? 'bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-600/20' : 'bg-ink/[0.05] text-ink-soft')}
                   >
-                    {lg.toUpperCase()}
+                    {short}
                     {miss ? <span className="font-semibold">{translations.total - miss}/{translations.total}</span> : <Check className="h-3 w-3" strokeWidth={3} />}
                   </span>
                 );
@@ -186,8 +187,8 @@ export function OrganizationCard({
           </SelectInput>
         </FormField>
         <FormField label={t('f_vendor')}>
-          <TextInput value={vendor} onChange={(e) => onVendor(e.target.value)} placeholder={t('f_vendor_ph')} list="selca-vendors" aria-label={t('f_vendor')} />
-          <datalist id="selca-vendors">
+          <TextInput value={vendor} onChange={(e) => onVendor(e.target.value)} placeholder={t('f_vendor_ph')} list="paketoje-vendors" aria-label={t('f_vendor')} />
+          <datalist id="paketoje-vendors">
             {vendors.map((v) => (
               <option key={v} value={v} />
             ))}
@@ -281,42 +282,42 @@ export function TemplateCard({ value, onChange }: { value: 'standard' | 'quote';
 }
 
 /* ------------------------------------------------------------------ */
-/* Installation & lead time                                            */
+/* Logo print add-on ("Printim me logo", stored as `installation`)     */
+/* and lead time                                                       */
 /* ------------------------------------------------------------------ */
 export function InstallCard({
   installation,
   onInstallation,
   leadDays,
   onLeadDays,
-  warranty,
-  onWarranty,
   unit,
+  price,
+  packSize,
 }: {
   installation: { available: boolean; price: number };
   onInstallation: (v: { available: boolean; price: number }) => void;
   leadDays: number | null;
   onLeadDays: (v: number | null) => void;
-  warranty: number | null;
-  onWarranty: (v: number | null) => void;
   unit: Unit;
+  /** active selling price per unit — for the "with print" readout */
+  price: number | null;
+  packSize: number | null;
 }) {
   const t = useDict(pd, 'admin');
   const lang = useLang('admin');
+  const withPrint = installation.available && installation.price > 0 && price && price > 0 ? round2(price + installation.price) : null;
   return (
     <Card title={t('c_install')}>
       <div className="space-y-4">
-        <ToggleRow label={t('f_install')} hint={t('f_install_h')} checked={installation.available} onChange={(v) => onInstallation({ ...installation, available: v })} icon={<Wrench className="h-4 w-4" />} />
+        <ToggleRow label={t('f_install')} hint={t('f_install_h')} checked={installation.available} onChange={(v) => onInstallation({ ...installation, available: v })} icon={<Printer className="h-4 w-4" />} />
         {installation.available && (
-          <FormField label={t('f_installPrice')}>
-            <NumInput money zeroAsEmpty value={installation.price} onChange={(v) => onInstallation({ ...installation, price: v ?? 0 })} prefix="€" suffix={perUnit(unit, lang)} placeholder="0" aria-label={t('f_installPrice')} />
+          <FormField label={t('f_installPrice')} hint={withPrint ? t('installTotal', { price: `${money(withPrint, lang)} ${perUnit(unit, lang)}`, piece: piecePriceText({ unit, packSize }, withPrint, lang) || '—' }) : undefined}>
+            <NumInput money zeroAsEmpty value={installation.price} onChange={(v) => onInstallation({ ...installation, price: v ?? 0 })} prefix="€" suffix={perUnit(unit, lang)} placeholder="1,50" aria-label={t('f_installPrice')} />
           </FormField>
         )}
-        <div className="grid grid-cols-2 gap-3 border-t border-line/70 pt-4">
-          <FormField label={t('f_lead')}>
-            <NumInput integer value={leadDays} onChange={onLeadDays} suffix={t('daysUnit')} placeholder="7" aria-label={t('f_lead')} />
-          </FormField>
-          <FormField label={t('f_warranty')}>
-            <NumInput integer value={warranty} onChange={onWarranty} suffix={t('yearsUnit')} placeholder="2" aria-label={t('f_warranty')} />
+        <div className="border-t border-line/70 pt-4">
+          <FormField label={t('f_lead')} hint={t('f_lead_h')}>
+            <NumInput integer value={leadDays} onChange={onLeadDays} suffix={t('daysUnit')} placeholder="2" aria-label={t('f_lead')} />
           </FormField>
         </div>
       </div>

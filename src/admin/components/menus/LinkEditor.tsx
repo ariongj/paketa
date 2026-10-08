@@ -1,4 +1,4 @@
-// One menu link: label (ME/SQ/EN), what it points to and the destination picker (PDF p.36
+// One menu link: label (SQ/EN/SR), what it points to and the destination picker (PDF p.36
 // "Lidhje te faqe, produkt, koleksion, ofertë ose URL").
 import { useMemo, useState } from 'react';
 import { Check, CornerDownRight, Link2, Trash2, Wand2 } from 'lucide-react';
@@ -13,6 +13,7 @@ import type { PageX } from '@/admin/components/editorial/meta';
 import type { L10n, MenuItem, MenuItemType } from '@/lib/types';
 import { fold } from '@/lib/search';
 import { cn, thumb } from '@/lib/utils';
+import { SAMPLES_HREF } from '@/admin/components/store/placements';
 import { LINK_TYPES, resolveLink, type LinkSources, type ResolvedLink } from './links';
 import { itemErrors } from './tree';
 import { mn, TYPE_ICON } from './dict';
@@ -35,7 +36,7 @@ interface Opt {
 }
 
 const MAX_OPTS = 40;
-const QUICK_PATHS = ['/produktet', '/produktet?akcija=1', '/sherbimet', '/referencat', '/rreth-nesh', '/blog', '/kontakti', '/#mjerenje'];
+const QUICK_PATHS = ['/produktet', '/produktet?akcija=1', '/sherbimet', '/referencat', '/rreth-nesh', '/blog', '/kontakti', SAMPLES_HREF];
 
 function optionsFor(type: MenuItemType, src: LinkSources): Opt[] {
   const res = (id: string) => resolveLink({ type, target: id }, src);
@@ -95,7 +96,7 @@ export function LinkEditor({
   const filtered = useMemo(() => {
     const needle = fold(q.trim());
     if (!needle) return options;
-    return options.filter((o) => fold(`${o.title.me} ${o.title.sq} ${o.title.en} ${o.sub}`).includes(needle));
+    return options.filter((o) => fold(`${o.title.sq} ${o.title.en} ${o.title.me} ${o.sub}`).includes(needle));
   }, [options, q]);
 
   if (!ctx || !draft) return <Drawer open={false} onClose={onClose}>{null}</Drawer>;
@@ -114,7 +115,7 @@ export function LinkEditor({
   };
   const pick = (o: Opt) => {
     // Fill the label from the destination while it is still empty or follows the previous destination's name.
-    const followsName = !draft.label.me.trim() || (entityTitle && sameL10n(draft.label, entityTitle));
+    const followsName = !draft.label.sq.trim() || (entityTitle && sameL10n(draft.label, entityTitle));
     patch({ target: o.id, ...(followsName ? { label: { ...o.title } } : {}) });
   };
   const apply = () => {

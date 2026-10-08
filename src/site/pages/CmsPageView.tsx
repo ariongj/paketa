@@ -1,12 +1,12 @@
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router';
-import { ArrowRight, ChevronRight, Clock, FileSearch, FileText, Mail, Phone, RefreshCw } from 'lucide-react';
+import { ArrowRight, ChevronRight, Clock, FileSearch, FileText, Mail, Phone, RefreshCw, RotateCcw } from 'lucide-react';
 import { Markdown } from '@/components/ui/Markdown';
 import { ButtonLink } from '@/components/ui/Button';
 import { PageHero } from '@/site/components/SectionHeading';
 import { NotFoundBlock } from '@/site/components/content/NotFoundBlock';
 import { C } from '@/site/components/content/dict';
-import { telHref } from '@/site/components/content/posts';
+import { REFUND_EMAIL, telHref } from '@/site/components/content/posts';
 import { usePageTitle } from '@/site/layout/SiteLayout';
 import { defineDict, useDict, useL, useLang } from '@/i18n';
 import { useDb } from '@/store/db';
@@ -56,7 +56,7 @@ const T = defineDict({
 const PROSE = cn(
   'text-[16.5px] sm:text-[17px]',
   '[&_p]:leading-[1.8] [&_li]:leading-[1.7] [&_ul]:space-y-2 [&_li::marker]:text-brand-600',
-  '[&_h2]:mt-12 [&_h2]:border-t [&_h2]:border-line [&_h2]:pt-10 [&_h2]:text-[28px] [&_h2]:leading-tight sm:[&_h2]:text-[30px]',
+  '[&_h2]:mt-12 [&_h2]:border-t [&_h2]:border-dashed [&_h2]:border-line [&_h2]:pt-10 [&_h2]:text-[28px] [&_h2]:leading-tight sm:[&_h2]:text-[30px]',
   '[&>p:first-child]:mt-0 [&>p:first-child]:text-[19px] [&>p:first-child]:leading-[1.65] [&>p:first-child]:text-ink sm:[&>p:first-child]:text-[20px]',
 );
 
@@ -69,6 +69,7 @@ export default function CmsPageView() {
   const settings = useSettings();
   const all = useDb((s) => s.pages);
   const published = useMemo(() => all.filter((p) => p.published), [all]);
+  const navPages = useMemo(() => published.filter((p) => p.showInFooter || p.slug === slug), [published, slug]);
   const page = published.find((p) => p.slug === slug);
   usePageTitle(page ? l(page.title) : t('nf_eyebrow'));
 
@@ -76,7 +77,7 @@ export default function CmsPageView() {
     <nav aria-label={t('pages')} className="rounded-3xl bg-white p-3 ring-1 ring-line">
       <div className="px-3 pb-2 pt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-muted">{t('pages')}</div>
       <ul>
-        {published.map((p) => {
+        {navPages.map((p) => {
           const current = p.id === page?.id;
           return (
             <li key={p.id}>
@@ -119,12 +120,13 @@ export default function CmsPageView() {
           </>
         }
       >
-        {published.length > 0 && <div className="mx-auto max-w-md">{nav}</div>}
+        {navPages.length > 0 && <div className="mx-auto max-w-md">{nav}</div>}
       </NotFoundBlock>
     );
   }
 
   const title = l(page.title);
+  const returns = page.slug === 'kthimet' || /kthim|povrat|return/i.test(page.slug);
 
   return (
     <>
@@ -142,33 +144,33 @@ export default function CmsPageView() {
           </article>
 
           <aside className="space-y-5 lg:sticky lg:top-28 lg:self-start">
-            {published.length > 1 && nav}
+            {navPages.length > 1 && nav}
 
-            <div className="relative overflow-hidden rounded-3xl bg-ink p-6 text-white sm:p-7">
+            <div className="relative overflow-hidden rounded-3xl bg-brand-700 p-6 text-white sm:p-7">
               <div className="bg-grain pointer-events-none absolute inset-0" />
-              <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-brand-600/35 blur-3xl" />
+              <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-signal/35 blur-3xl" />
               <div className="relative">
                 <h2 className="display text-[28px] leading-tight">{t('help_title')}</h2>
-                <p className="mt-2 text-[14.5px] leading-relaxed text-paper/65">{t('help_text')}</p>
+                <p className="mt-2 text-[14.5px] leading-relaxed text-white/75">{t('help_text')}</p>
                 <ul className="mt-6 space-y-3 text-[14.5px]">
                   <li>
                     <a href={telHref(settings.phone)} className="group flex items-center gap-3 font-semibold text-white">
-                      <span className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-brand-200 ring-1 ring-white/10 transition-colors group-hover:bg-brand-600 group-hover:text-white">
+                      <span className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-lime ring-1 ring-white/10 transition-colors group-hover:bg-lime group-hover:text-ink">
                         <Phone className="h-4 w-4" />
                       </span>
                       {settings.phone}
                     </a>
                   </li>
                   <li>
-                    <a href={`mailto:${settings.email}`} className="group flex items-center gap-3 font-semibold text-white">
-                      <span className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-brand-200 ring-1 ring-white/10 transition-colors group-hover:bg-brand-600 group-hover:text-white">
-                        <Mail className="h-4 w-4" />
+                    <a href={`mailto:${returns ? REFUND_EMAIL : settings.email}`} className="group flex items-center gap-3 break-all font-semibold text-white">
+                      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-lime ring-1 ring-white/10 transition-colors group-hover:bg-lime group-hover:text-ink">
+                        {returns ? <RotateCcw className="h-4 w-4" /> : <Mail className="h-4 w-4" />}
                       </span>
-                      {settings.email}
+                      {returns ? REFUND_EMAIL : settings.email}
                     </a>
                   </li>
-                  <li className="flex items-center gap-3 text-paper/75">
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-brand-200 ring-1 ring-white/10">
+                  <li className="flex items-center gap-3 text-white/80">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-lime ring-1 ring-white/10">
                       <Clock className="h-4 w-4" />
                     </span>
                     {l(settings.hours)}

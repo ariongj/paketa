@@ -9,15 +9,16 @@ import { EmptyState } from '@/components/ui/misc';
 import { Card, FilterPills, PageHeader, SearchInput, Table, Td, Th, Thumb, Tr } from '@/admin/components/kit';
 import { inv } from '@/admin/components/inventory/dict';
 import { useInventoryRows, type InvRow } from '@/admin/components/inventory/useInventory';
-import { LOW_STOCK, isOpenPo, stockUnit, toCsv, variantCount } from '@/admin/components/inventory/helpers';
-import { Gate, IconBtn, SelectField, Stat, StockStateTag } from '@/admin/components/inventory/ui';
+import { LOW_STOCK, isOpenPo, sumPiecesText, sumQty, sumUnitsText, toCsv, variantCount, type QtySum, type UnitLike } from '@/admin/components/inventory/helpers';
+import { Gate, IconBtn, PiecesLine, SelectField, Stat, StockStateTag, UnitQty } from '@/admin/components/inventory/ui';
+import { packSizeText, piecesPer, unitWord, unitsText } from '@/admin/components/products/units';
 import { AdjustDialog } from '@/admin/components/inventory/AdjustDialog';
 import { MovementsDrawer } from '@/admin/components/inventory/MovementsDrawer';
 import { useDict, useL, useLang } from '@/i18n';
 import { adm } from '@/admin/i18n';
 import { useDb } from '@/store/db';
 import { useCan } from '@/store/hooks';
-import { money, num } from '@/lib/format';
+import { money, num, unitLabel } from '@/lib/format';
 import { fold } from '@/lib/search';
 import { cn, download } from '@/lib/utils';
 
@@ -42,13 +43,28 @@ function HintTh({ children, hint, className }: { children: ReactNode; hint: stri
   );
 }
 
-function Qty({ n, muted, strong, unit }: { n: number; muted?: boolean; strong?: boolean; unit?: string }) {
+/** Pack quantity ("120 pako") with the pieces it holds ("6.000 copë") as muted secondary text. */
+function Qty({ n, of, muted, strong, icon }: { n: number; of: UnitLike; muted?: boolean; strong?: boolean; icon?: ReactNode }) {
+  const zero = n === 0;
+  return (
+    <span className="inline-flex flex-col items-end">
+      <span className="inline-flex items-center gap-1">
+        {icon}
+        <UnitQty n={n} of={zero ? undefined : of} className={cn(strong ? 'text-[14.5px] font-bold text-ink' : 'font-medium', muted && zero && 'text-muted/60')} />
+      </span>
+      <PiecesLine of={of} qty={n} className="mt-px" />
+    </span>
+  );
+}
+
+/** KPI value "1.240 pako" — a plain number when the tracked products use different units. */
+function KpiQty({ s }: { s: QtySum }) {
   const lang = useLang('admin');
   return (
-    <span className={cn('tabular-nums', strong ? 'text-[14.5px] font-bold text-ink' : 'font-medium', muted && n === 0 && 'text-muted/60')}>
-      {num(n, lang)}
-      {unit && <span className="ml-1 text-[11.5px] font-medium text-muted">{unit}</span>}
-    </span>
+    <>
+      {num(s.qty, lang)}
+      {s.unit && <span className="ml-1.5 text-[13px] font-semibold text-muted">{unitWord(s.unit, s.qty, lang)}</span>}
+    </>
   );
 }
 
@@ -131,11 +147,11 @@ export default function Inventory() {
     const tracked = rows.filter((r) => r.lv.tracked);
     return {
       tracked: tracked.length,
-      units: tracked.reduce((s, r) => s + r.lv.onHand, 0),
+      onHand: sumQty(tracked.map((r) => ({ of: r.p, qty: r.lv.onHand }))),
       value: tracked.reduce((s, r) => s + r.lv.onHand * (r.p.cost ?? 0), 0),
       low: rows.filter((r) => r.state === 'low').length,
       out: rows.filter((r) => r.state === 'out').length,
-      incoming: rows.reduce((s, r) => s + r.lv.incoming, 0),
+      incoming: sumQty(rows.filter((r) => r.lv.incoming > 0).map((r) => ({ of: r.p, qty: r.lv.incoming }))),
       openPos: purchaseOrders.filter(isOpenPo).length,
     };
   }, [rows, purchaseOrders]);
@@ -151,14 +167,17 @@ export default function Inventory() {
   const openAdjust = (id: string) => canEdit && setParam({ korigjo: id });
 
   const exportCsv = () => {
-    const header = [t('col_sku'), t('col_product'), t('col_onHand'), t('col_committed'), t('col_unavailable'), t('col_available'), t('col_incoming'), t('col_location'), ...(canCost ? ['EUR / unit'] : [])];
+    const header = [t('col_sku'), t('col_product'), t('csv_unit'), t('csv_packSize'), t('col_onHand'), t('col_committed'), t('col_unavailable'), t('col_available'), t('csv_availablePcs'), t('col_incoming'), t('col_location'), ...(canCost ? [t('csv_cost')] : [])];
     const body = list.map((r) => [
       r.p.sku,
       l(r.p.name),
+      unitLabel(r.p.unit, lang),
+      piecesPer(r.p),
       r.lv.tracked ? r.lv.onHand : t('untracked'),
       r.lv.committed,
       r.lv.unavailable,
       r.lv.tracked ? r.lv.available : t('untracked'),
+      r.lv.tracked ? r.lv.available * piecesPer(r.p) : '',
       r.lv.incoming,
       locName(r.locationId) ?? '',
       ...(canCost ? [String(r.p.cost ?? '').replace('.', lang === 'en' ? '.' : ',')] : []),
@@ -177,7 +196,7 @@ export default function Inventory() {
         </span>,
       );
     if (v > 1) bits.push(<span key="v">{t('variants', { n: v })}</span>);
-    bits.push(<span key="u">{stockUnit(r.p, lang)}</span>);
+    bits.push(<span key="u" className="whitespace-nowrap">{packSizeText(r.p, lang) || unitLabel(r.p.unit, lang)}</span>);
     return bits;
   };
 
@@ -232,13 +251,13 @@ export default function Inventory() {
       {/* KPIs — clicking one filters the table */}
       <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {canCost ? (
-          <Stat icon={Wallet} label={t('kpi_value')} value={money(kpi.value, lang, { decimals: false })} hint={t('kpi_valueHint', { n: num(kpi.units, lang) })} />
+          <Stat icon={Wallet} label={t('kpi_value')} value={money(kpi.value, lang, { decimals: false })} hint={t('kpi_valueHint', { n: sumUnitsText(kpi.onHand, lang) })} />
         ) : (
-          <Stat icon={Boxes} label={t('kpi_units')} value={num(kpi.units, lang)} hint={t('kpi_unitsHint', { n: kpi.tracked })} />
+          <Stat icon={Boxes} label={t('kpi_units')} value={<KpiQty s={kpi.onHand} />} hint={[sumPiecesText(kpi.onHand, lang), t('kpi_unitsHint', { n: kpi.tracked })].filter(Boolean).join(' · ')} />
         )}
-        <Stat icon={TriangleAlert} tone="amber" label={t('kpi_low')} value={kpi.low} hint={t('kpi_lowHint', { n: LOW_STOCK })} active={filter === 'low'} onClick={() => toggleFilter('low')} />
+        <Stat icon={TriangleAlert} tone="amber" label={t('kpi_low')} value={kpi.low} hint={t('kpi_lowHint', { n: unitsText(LOW_STOCK, 'pack', lang) })} active={filter === 'low'} onClick={() => toggleFilter('low')} />
         <Stat icon={Ban} tone="red" label={t('kpi_out')} value={kpi.out} hint={t('kpi_outHint')} active={filter === 'out'} onClick={() => toggleFilter('out')} />
-        <Stat icon={Truck} label={t('kpi_incoming')} value={num(kpi.incoming, lang)} hint={t('kpi_incomingHint', { n: kpi.openPos })} active={filter === 'incoming'} onClick={() => toggleFilter('incoming')} />
+        <Stat icon={Truck} label={t('kpi_incoming')} value={<KpiQty s={kpi.incoming} />} hint={[sumPiecesText(kpi.incoming, lang), t('kpi_incomingHint', { n: kpi.openPos })].filter(Boolean).join(' · ')} active={filter === 'incoming'} onClick={() => toggleFilter('incoming')} />
       </div>
 
       <Card padded={false}>
@@ -303,7 +322,6 @@ export default function Inventory() {
               </thead>
               <tbody>
                 {list.map((r) => {
-                  const u = stockUnit(r.p, lang);
                   return (
                     <Tr key={r.p.id} onClick={() => openHistory(r.p.id)} className="group">
                       <Td className="max-w-[250px] 2xl:max-w-[340px]">
@@ -329,24 +347,17 @@ export default function Inventory() {
                       {r.lv.tracked ? (
                         <>
                           <Td className="px-3! text-right">
-                            <Qty n={r.lv.onHand} />
+                            <Qty n={r.lv.onHand} of={r.p} />
                           </Td>
                           <Td className="px-3! text-right">
-                            <Qty n={r.lv.committed} muted />
+                            <Qty n={r.lv.committed} of={r.p} muted />
                           </Td>
                           <Td className="px-3! text-right max-lg:hidden">
-                            {r.lv.unavailable > 0 ? (
-                              <span className="inline-flex items-center gap-1 font-medium tabular-nums">
-                                <Lock className="h-3 w-3 text-muted" />
-                                {num(r.lv.unavailable, lang)}
-                              </span>
-                            ) : (
-                              <Qty n={0} muted />
-                            )}
+                            <Qty n={r.lv.unavailable} of={r.p} muted icon={r.lv.unavailable > 0 && <Lock className="h-3 w-3 text-muted" />} />
                           </Td>
                           <Td className="px-3! text-right">
                             <div className="flex flex-col items-end gap-1">
-                              <Qty n={r.lv.available} strong unit={u} />
+                              <Qty n={r.lv.available} of={r.p} strong />
                               <StockStateTag state={r.state} className="py-0! text-[11px]" />
                             </div>
                           </Td>
@@ -363,8 +374,12 @@ export default function Inventory() {
                       )}
                       <Td className="px-3! text-right">
                         {r.lv.incoming > 0 ? (
-                          <span className="inline-flex items-center gap-1 font-semibold tabular-nums text-ink">
-                            <Truck className="h-3.5 w-3.5 text-muted" />+{num(r.lv.incoming, lang)}
+                          <span className="inline-flex flex-col items-end">
+                            <span className="inline-flex items-center gap-1 font-semibold text-ink">
+                              <Truck className="h-3.5 w-3.5 text-muted" />
+                              <UnitQty n={r.lv.incoming} of={r.p} sign />
+                            </span>
+                            <PiecesLine of={r.p} qty={r.lv.incoming} className="mt-px" />
                           </span>
                         ) : (
                           <span className="text-muted/60">—</span>
@@ -397,14 +412,16 @@ export default function Inventory() {
             {/* Mobile cards */}
             <ul className="divide-y divide-line/70 md:hidden">
               {list.map((r) => {
-                const u = stockUnit(r.p, lang);
                 return (
                   <li key={r.p.id} onClick={() => openHistory(r.p.id)} className="cursor-pointer px-4 py-4 transition-colors active:bg-canvas">
                     <div className="flex gap-3">
                       <Thumb src={r.p.images[0]} className="h-12 w-12" />
                       <div className="min-w-0 flex-1">
                         <div className="line-clamp-2 text-[14px] font-semibold leading-snug text-ink">{l(r.p.name)}</div>
-                        <div className="mt-0.5 font-mono text-[12px] text-muted">{r.p.sku}</div>
+                        <div className="mt-0.5 text-[12px] text-muted">
+                          <span className="font-mono">{r.p.sku}</span>
+                          {packSizeText(r.p, lang) && <span className="whitespace-nowrap"> · {packSizeText(r.p, lang)}</span>}
+                        </div>
                         {r.locationId && (
                           <div className="mt-0.5 flex items-center gap-1 text-[12px] text-muted">
                             <MapPin className="h-3 w-3" />
@@ -416,7 +433,7 @@ export default function Inventory() {
                         {r.lv.tracked ? (
                           <>
                             <div className="text-[10.5px] font-semibold uppercase tracking-wide text-muted">{t('col_available')}</div>
-                            <Qty n={r.lv.available} strong unit={u} />
+                            <Qty n={r.lv.available} of={r.p} strong />
                           </>
                         ) : (
                           <StockStateTag state="untracked" />
@@ -436,6 +453,7 @@ export default function Inventory() {
                           <div key={label} className="min-w-0">
                             <dt className="truncate text-[10.5px] font-semibold text-muted">{label}</dt>
                             <dd className={cn('text-[14px] font-semibold tabular-nums', n === 0 && 'text-muted/60')}>{num(n, lang)}</dd>
+                            <PiecesLine of={r.p} qty={n} className="truncate text-[10px]!" />
                           </div>
                         ))}
                       </dl>

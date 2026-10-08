@@ -11,7 +11,7 @@ import { useDb } from '@/store/db';
 import { T } from './i18n';
 import { S } from './strings';
 import { CharCount, ExampleChip, NumberField, TextAreaField, TextField, isExample } from './fields';
-import { EXAMPLE_FIELDS, ORDER_PREFIX_RE, TIMEZONES, tzNow, tzOffset, type SecProps } from './model';
+import { EXAMPLE_FIELDS, ORDER_PREFIX_RE, TIMEZONES, tzLabel, tzNow, tzOffset, type SecProps } from './model';
 import { Block, LinkRow, Note, Panel, Segmented, StateText } from './ui';
 
 const G = defineDict({
@@ -24,18 +24,18 @@ const G = defineDict({
     contact_h: 'Prikazuje se u podnožju sajta, na stranici Kontakt i u potvrdama.',
     addressGroup: 'Adresa',
     country: 'Država',
-    countryName: 'Crna Gora',
+    countryName: 'Kosovo',
     defaults: 'Standardi i formati',
     defaults_d: 'Valuta, porez, jedinice mjere i vremenska zona za cijelu prodavnicu.',
     currency: 'Osnovna valuta',
     currencyName: 'EUR — Euro (€)',
     currency_h: 'Cijene na sajtu su u eurima. Valute drugih tržišta podešavaju se u modulu Tržišta.',
     markets: 'Tržišta',
-    vat_h: 'Cijene uključuju PDV. CMS ne zamjenjuje fiskalnu specifikaciju.',
+    vat_h: 'Cijene uključuju TVSH (standardna stopa 18 %). Fiskalizacija (ATK) ide preko fiskalnog uređaja / integracije.',
     units: 'Jedinice mjere',
     weight: 'Težina',
     length: 'Dimenzije',
-    saleUnits: 'Prodajne jedinice proizvoda',
+    saleUnits: 'Prodajne jedinice (cijena po pakovanju)',
     timezone: 'Vremenska zona',
     timezone_h: 'Za rasporede popusta, ponuda i termina · trenutno vrijeme: {time}',
     numbering: 'Numeracija narudžbi',
@@ -66,18 +66,18 @@ const G = defineDict({
     contact_h: 'Shfaqet në fund të faqes, te faqja Kontakt dhe në konfirmime.',
     addressGroup: 'Adresa',
     country: 'Shteti',
-    countryName: 'Mali i Zi',
+    countryName: 'Kosova',
     defaults: 'Standardet dhe formatet',
     defaults_d: 'Valuta, taksa, njësitë matëse dhe zona kohore për të gjithë dyqanin.',
     currency: 'Valuta bazë',
     currencyName: 'EUR — Euro (€)',
     currency_h: 'Çmimet në faqe janë në euro. Valutat e tregjeve të tjera caktohen te moduli Tregjet.',
     markets: 'Tregjet',
-    vat_h: 'Çmimet përfshijnë TVSH-në. CMS nuk zëvendëson specifikimin fiskal.',
+    vat_h: 'Çmimet përfshijnë TVSH-në (norma standarde 18 %). Fiskalizimi (ATK) bëhet me pajisjen fiskale / integrimin.',
     units: 'Njësitë matëse',
     weight: 'Pesha',
     length: 'Përmasat',
-    saleUnits: 'Njësitë e shitjes së produkteve',
+    saleUnits: 'Njësitë e shitjes (çmimi për pako)',
     timezone: 'Zona kohore',
     timezone_h: 'Për oraret e zbritjeve, ofertave dhe termineve · ora tani: {time}',
     numbering: 'Numërimi i porosive',
@@ -108,18 +108,18 @@ const G = defineDict({
     contact_h: 'Shown in the site footer, on the Contact page and in confirmations.',
     addressGroup: 'Address',
     country: 'Country',
-    countryName: 'Montenegro',
+    countryName: 'Kosovo',
     defaults: 'Standards & formats',
     defaults_d: 'Currency, tax, units of measure and time zone for the whole store.',
     currency: 'Base currency',
     currencyName: 'EUR — Euro (€)',
     currency_h: 'Prices on the site are in euros. Other markets’ currencies are set in Markets.',
     markets: 'Markets',
-    vat_h: 'Prices include VAT. The CMS doesn’t replace the fiscal specification.',
+    vat_h: 'Prices include VAT (TVSH, standard rate 18 %). Fiscalisation (ATK) runs through the fiscal device / integration.',
     units: 'Units of measure',
     weight: 'Weight',
     length: 'Dimensions',
-    saleUnits: 'Product sales units',
+    saleUnits: 'Sales units (price per pack)',
     timezone: 'Time zone',
     timezone_h: 'For discount, offer and appointment schedules · time now: {time}',
     numbering: 'Order numbering',
@@ -144,7 +144,7 @@ const G = defineDict({
 });
 
 const ico = 'h-4 w-4';
-const UNITS: Unit[] = ['kom', 'm2', 'm', 'set'];
+const UNITS: Unit[] = ['pack', 'kom', 'set', 'm'];
 const clip = (s: string, max: number) => (s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s);
 
 function useClock(zone: string) {
@@ -216,10 +216,10 @@ export function GeneralSection({ s, set, setExt, errors }: SecProps) {
           <div className="grid gap-x-4 gap-y-5 sm:grid-cols-2">
             <TextField label={tl('email')} type="email" value={s.email} onChange={(v) => set('email', v)} leading={<Mail className={ico} />} error={errors.email} />
             <TextField label={tl('phone')} type="tel" value={s.phone} onChange={(v) => set('phone', v)} leading={<Phone className={ico} />} example />
-            <TextField label={tl('phone2')} type="tel" optional value={s.phone2 ?? ''} onChange={(v) => set('phone2', v)} leading={<Phone className={ico} />} example placeholder="+382 …" />
-            <TextField label={tl('whatsapp')} type="tel" optional value={s.whatsapp ?? ''} onChange={(v) => set('whatsapp', v)} leading={<MessageCircle className={ico} />} example placeholder="+382 …" />
+            <TextField label={tl('phone2')} type="tel" optional value={s.phone2 ?? ''} onChange={(v) => set('phone2', v)} leading={<Phone className={ico} />} example placeholder="+383 …" />
+            <TextField label={tl('whatsapp')} type="tel" optional value={s.whatsapp ?? ''} onChange={(v) => set('whatsapp', v)} leading={<MessageCircle className={ico} />} example placeholder="+383 …" />
             <L10nInput className="sm:col-span-2" label={tl('hours')} value={s.hours} onChange={(v) => set('hours', v)} />
-            <TextField label={tl('instagram')} hint={tl('instagram_h')} value={s.instagram} onChange={(v) => set('instagram', v.replace(/^@+/, '').trim())} leading={<AtSign className={ico} />} placeholder="selca_doo" />
+            <TextField label={tl('instagram')} hint={tl('instagram_h')} value={s.instagram} onChange={(v) => set('instagram', v.replace(/^@+/, '').trim())} leading={<AtSign className={ico} />} placeholder="paketoje" />
             <TextField label={tl('facebook')} optional value={s.facebook ?? ''} onChange={(v) => set('facebook', v)} leading={<FacebookIcon className={ico} />} placeholder="https://facebook.com/…" />
           </div>
         </Block>
@@ -227,7 +227,7 @@ export function GeneralSection({ s, set, setExt, errors }: SecProps) {
         <Block title={t('addressGroup')}>
           <div className="grid gap-x-4 gap-y-5 sm:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
             <TextField label={tl('address')} value={s.address} onChange={(v) => set('address', v)} leading={<MapPin className={ico} />} example />
-            <TextField label={tl('city')} value={s.city} onChange={(v) => set('city', v)} />
+            <TextField label={tl('city')} value={s.city} onChange={(v) => set('city', v)} placeholder="Mitrovicë" />
             <TextField label={t('country')} value={t('countryName')} onChange={() => undefined} readOnly className="sm:col-span-1" inputClassName="bg-[#f6f6f6] text-muted" />
             <TextField
               label={tl('mapUrl')}
@@ -289,7 +289,7 @@ export function GeneralSection({ s, set, setExt, errors }: SecProps) {
             <Select aria-label={t('timezone')} value={s.timezone} onChange={(e) => set('timezone', e.target.value)} className="h-10! rounded-lg! text-[14px]!">
               {TIMEZONES.map((z) => (
                 <option key={z} value={z}>
-                  ({tzOffset(z)}) {z.replace('Europe/', '').replace('_', ' ')}
+                  ({tzOffset(z)}) {tzLabel(z, lang)}
                 </option>
               ))}
             </Select>
@@ -315,9 +315,9 @@ export function GeneralSection({ s, set, setExt, errors }: SecProps) {
               <div className="flex h-10 items-center gap-3 rounded-lg bg-[#f6f6f6] px-3.5 ring-1 ring-inset ring-black/[0.05]">
                 <span className="text-[12.5px] text-muted">{t('nextOrder')}</span>
                 <span className="font-mono text-[14px] font-semibold tracking-wide text-ink">
-                  {(prefixOk ? s.orderPrefix : 'SC-') + nextNumber}
+                  {(prefixOk ? s.orderPrefix : 'PK-') + nextNumber}
                 </span>
-                <span className="hidden font-mono text-[12.5px] text-muted sm:inline">· {(prefixOk ? s.orderPrefix : 'SC-') + (nextNumber + 1)} …</span>
+                <span className="hidden font-mono text-[12.5px] text-muted sm:inline">· {(prefixOk ? s.orderPrefix : 'PK-') + (nextNumber + 1)} …</span>
               </div>
             </div>
           </div>
@@ -338,7 +338,7 @@ export function GeneralSection({ s, set, setExt, errors }: SecProps) {
               <StateText tone="ok">{t('domainOk')}</StateText>
             </div>
           </div>
-          <p className="mt-2 text-[12.5px] text-muted">{t('redirect', { domain: s.ext.domain || 'selca.me' })}</p>
+          <p className="mt-2 text-[12.5px] text-muted">{t('redirect', { domain: s.ext.domain || 'paketoje.com' })}</p>
         </Block>
 
         <Block title="SEO">
@@ -356,8 +356,8 @@ export function GeneralSection({ s, set, setExt, errors }: SecProps) {
                   <LogoMark className="h-3.5!" />
                 </span>
                 <span className="min-w-0 leading-tight">
-                  <span className="block truncate text-[14px] text-[#202124]">{s.companyName || 'SELCA'}</span>
-                  <span className="block truncate text-[12px] text-[#4d5156]">https://{s.ext.domain || 'selca.me'}</span>
+                  <span className="block truncate text-[14px] text-[#202124]">{s.companyName || 'Paketoje'}</span>
+                  <span className="block truncate text-[12px] text-[#4d5156]">https://{s.ext.domain || 'paketoje.com'}</span>
                 </span>
               </div>
               <div className="mt-2 text-[19px] leading-[1.3] text-[#1a0dab] sm:text-[20px]">{clip(seo.title || s.companyName, 62)}</div>

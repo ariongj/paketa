@@ -4,7 +4,7 @@
 // "Variantet & inventari" table (SKU / stock / on-off per option combination), shipping data and URL
 // redirects as optional extension fields on the stored product (`ProductX`). Everything else in the
 // app keeps reading `product.stock`, which always equals the sum of the enabled variants.
-import type { Category, Collection, Db, L10n, Product, ProductOption, ProductOptionValue } from '@/lib/types';
+import type { Category, Collection, Db, L10n, PriceTier, Product, ProductOption, ProductOptionValue } from '@/lib/types';
 import { UNTRACKED_STOCK } from '@/lib/inventory';
 import { basePrice } from '@/lib/pricing';
 import { round2, slugify, uid } from '@/lib/utils';
@@ -38,7 +38,8 @@ export type ProductX = Product & { variants?: Variant[]; shipping?: ShippingInfo
 
 export const isTracked = (p: Pick<Product, 'stock'>) => p.stock < UNTRACKED_STOCK;
 export const MAX_TRACKED = UNTRACKED_STOCK - 1;
-export const LOW_STOCK = 5;
+/** Packs — at or below this a tracked product counts as low stock. */
+export const LOW_STOCK = 10;
 
 /* ------------------------------------------------------------------ */
 /* Variants                                                            */
@@ -218,7 +219,7 @@ export type Requirement = 'name' | 'category' | 'price' | 'image';
 
 export function missingForPublish(p: Pick<Product, 'name' | 'categoryId' | 'price' | 'images'>, categories: Pick<Category, 'id'>[]): Requirement[] {
   const out: Requirement[] = [];
-  if (!p.name.me.trim()) out.push('name');
+  if (!p.name.sq.trim()) out.push('name');
   if (!p.categoryId || !categories.some((c) => c.id === p.categoryId)) out.push('category');
   if (!(p.price > 0)) out.push('price');
   if (!p.images.length) out.push('image');
@@ -261,7 +262,7 @@ export function productRefs(id: string, db: RefDb): ProductRefs {
 /* ------------------------------------------------------------------ */
 /** Unique slug among products. */
 export function uniqueSlug(base: string, selfId: string, products: Pick<Product, 'id' | 'slug'>[]) {
-  const root = base || 'proizvod';
+  const root = base || 'produkt';
   let s = root;
   let n = 2;
   while (products.some((p) => p.slug === s && p.id !== selfId)) s = `${root}-${n++}`;
@@ -271,4 +272,52 @@ export function uniqueSlug(base: string, selfId: string, products: Pick<Product,
 /** Sorted, de-duplicated values of a string field across products (vendors, tags). */
 export function distinct(values: (string | undefined)[]) {
   return [...new Set(values.map((v) => v?.trim()).filter(Boolean) as string[])].sort((a, b) => a.localeCompare(b));
+}
+
+/* ------------------------------------------------------------------ */
+/* Volume tiers (Çmime shumice) — editor rows ↔ Product.tiers          */
+/* ------------------------------------------------------------------ */
+/** An editable tier row: values may be empty while typing. */
+export interface TierRow {
+  id: string;
+  minQty: number | null;
+  pct: number | null;
+}
+export type TierIssue = 'min' | 'pct' | 'dup';
+
+export const tierRowsOf = (tiers: PriceTier[] | undefined): TierRow[] =>
+  [...(tiers ?? [])].sort((a, b) => a.minQty - b.minQty).map((t) => ({ id: uid('tier'), minQty: t.minQty, pct: t.pct }));
+
+/** Problem of each row (by id): threshold below 2, discount outside 1–90 %, or a repeated threshold. */
+export function tierIssues(rows: TierRow[]): Record<string, TierIssue> {
+  const out: Record<string, TierIssue> = {};
+  const seen = new Set<number>();
+  for (const r of rows) {
+    if (r.minQty == null || !Number.isInteger(r.minQty) || r.minQty < 2) out[r.id] = 'min';
+    else if (r.pct == null || r.pct < 1 || r.pct > 90) out[r.id] = 'pct';
+    else if (seen.has(r.minQty)) out[r.id] = 'dup';
+    if (r.minQty != null) seen.add(r.minQty);
+  }
+  return out;
+}
+
+/** Valid rows only, ascending — what gets stored on the product. */
+export function cleanTiers(rows: TierRow[]): PriceTier[] {
+  const bad = tierIssues(rows);
+  return rows
+    .filter((r) => !bad[r.id])
+    .map((r) => ({ minQty: r.minQty as number, pct: round2(r.pct as number) }))
+    .sort((a, b) => a.minQty - b.minQty);
+}
+
+/** true when a higher threshold gives the same or a smaller discount than a lower one. */
+export function tiersOutOfOrder(tiers: PriceTier[]) {
+  return tiers.some((t, i) => i > 0 && t.pct <= tiers[i - 1].pct);
+}
+
+/** Sensible defaults (same as the seeded catalogue): 10+ packs −5 % and a full carton −10 %. */
+export function suggestedTiers(cartonPacks?: number | null): PriceTier[] {
+  if (cartonPacks && cartonPacks > 10) return [{ minQty: 10, pct: 5 }, { minQty: cartonPacks, pct: 10 }];
+  if (cartonPacks && cartonPacks > 1) return [{ minQty: cartonPacks, pct: 8 }];
+  return [{ minQty: 10, pct: 5 }, { minQty: 20, pct: 10 }];
 }

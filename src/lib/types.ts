@@ -431,7 +431,7 @@ export interface Settings {
   /* ---- CMS v2 ---- */
   /** IANA zone used for schedules (discounts, offers, bookings) */
   timezone: string;
-  /** Prefix for order numbers, e.g. "SC-" → SC-1042 */
+  /** Prefix for order numbers, e.g. "PK-" → PK-1042 */
   orderPrefix: string;
   locations: StoreLocation[];
   notifications: NotificationTemplate[];
@@ -509,7 +509,7 @@ export type RuleOp = 'eq' | 'neq' | 'gt' | 'lt' | 'contains';
 export interface CollectionRule {
   field: CollectionRuleField;
   op: RuleOp;
-  /** Always stored as text: numbers as "300", booleans as "true", ids as "cat-podovi" */
+  /** Always stored as text: numbers as "300", booleans as "true", ids as "cat-gota" */
   value: string;
 }
 export type CollectionSort = 'manual' | 'bestselling' | 'price-asc' | 'price-desc' | 'newest';
@@ -629,7 +629,7 @@ export interface Offer {
   placements: OfferSlot[];
   /** Staff id responsible */
   owner: string;
-  /** e.g. "utm_source=site&utm_campaign=jesen-podovi" */
+  /** e.g. "utm_source=site&utm_campaign=pije-te-ftohta" */
   utm: string;
   metrics: OfferMetrics;
   createdAt?: string;
@@ -745,7 +745,7 @@ export interface InventoryMovement {
   at: string;
   /** Staff id, or 'web' for storefront sales */
   by: string;
-  /** Source document, e.g. "PO-2026-014", "SC-1042", "RT-1003" */
+  /** Source document, e.g. "PO-2026-014", "PK-1042", "RT-1003" */
   ref?: string;
   location?: string;
 }
@@ -874,7 +874,7 @@ export interface AuditEntry {
   action: AuditAction;
   object: AuditObject;
   objectId: string;
-  /** Short human detail, e.g. "SC-1042 → shipped" or a product name */
+  /** Short human detail, e.g. "PK-1042 → shipped" or a product name */
   detail?: string;
 }
 

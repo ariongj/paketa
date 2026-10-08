@@ -23,6 +23,7 @@ import { useCan, useCategories } from '@/store/hooks';
 import { membershipIndex } from '@/lib/collections';
 import { basePrice } from '@/lib/pricing';
 import { money, num, perUnit, timeAgo } from '@/lib/format';
+import { packSizeText, piecePriceText, unitsText } from '@/admin/components/products/units';
 import { fold } from '@/lib/search';
 import type { ProductStatus } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -36,19 +37,25 @@ const DEFAULT_DIR: Record<SortKey, 'asc' | 'desc'> = { newest: 'desc', updated: 
 const COLLATOR: Record<string, string> = { me: 'sr-Latn', sq: 'sq', en: 'en' };
 const PAGE = 25;
 
-/** Price with the compare-at price struck through, a unit suffix and "from" for quote products. */
+/** Price per selling unit ("2,50 € / pako"), the per-piece price underneath, compare-at struck through; quote items show a badge. */
 function PriceCell({ p }: { p: ProductX }) {
   const lang = useLang('admin');
   const t = useDict(pd, 'admin');
   const { price, compareAt } = pricingOf(p);
-  const fmt = (v: number) => money(v, lang, { decimals: v % 1 !== 0 });
-  if (!price) return <span className="text-muted">—</span>;
   const quote = p.template === 'quote' || p.quoteOnly;
+  if (!price)
+    return quote ? (
+      <span className="inline-flex items-center gap-1 rounded-md bg-ink/[0.06] px-1.5 py-0.5 text-[11.5px] font-semibold text-ink-soft">{t('quoteBadge')}</span>
+    ) : (
+      <span className="text-muted">—</span>
+    );
+  const piece = piecePriceText(p, price, lang);
   return (
     <div className="whitespace-nowrap text-right tabular-nums">
-      <span className="font-semibold text-ink">{quote ? t('fromPrice', { price: fmt(price) }) : fmt(price)}</span>
-      {(p.unit === 'm2' || p.unit === 'm') && <span className="ml-0.5 text-[12px] text-muted">{perUnit(p.unit, lang)}</span>}
-      {compareAt != null && <div className="text-[12px] text-muted line-through">{fmt(compareAt)}</div>}
+      {compareAt != null && <span className="mr-1.5 text-[12px] text-muted line-through">{money(compareAt, lang)}</span>}
+      <span className="font-semibold text-ink">{quote ? t('fromPrice', { price: money(price, lang) }) : money(price, lang)}</span>
+      <span className="ml-0.5 text-[12px] text-muted">{perUnit(p.unit, lang)}</span>
+      {piece && <div className="text-[12px] text-muted">{piece}</div>}
     </div>
   );
 }
@@ -534,6 +541,7 @@ export default function Products() {
                               </Link>
                               <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[12px] text-muted">
                                 <span className="font-mono tracking-tight">{p.sku || '—'}</span>
+                                {packSizeText(p, lang) && <span className="shrink-0 rounded bg-ink/[0.05] px-1 py-px text-[11px] font-medium text-ink-soft">{packSizeText(p, lang)}</span>}
                                 {!show('vendor') && p.vendor && <span className="truncate max-xl:hidden">· {p.vendor}</span>}
                                 {!show('category') && <span className="truncate">· {catLabel(p)}</span>}
                               </div>
@@ -544,8 +552,8 @@ export default function Products() {
                           <StatusLabel status={p.status} />
                         </Td>
                         <Td>
-                          <InventoryCell product={p} />
-                          {(p.incoming ?? 0) > 0 && <div className="mt-0.5 text-[11.5px] text-muted tabular-nums">{t('incomingN', { n: num(p.incoming ?? 0, lang) })}</div>}
+                          <InventoryCell product={p} pieces />
+                          {(p.incoming ?? 0) > 0 && <div className="mt-0.5 text-[11.5px] text-muted tabular-nums">{t('incomingN', { n: unitsText(p.incoming ?? 0, p.unit, lang) })}</div>}
                         </Td>
                         {show('category') && <Td className="whitespace-nowrap text-[13px] text-ink-soft max-lg:hidden">{catLabel(p)}</Td>}
                         {show('vendor') && <Td className="whitespace-nowrap text-[13px] text-ink-soft max-lg:hidden">{p.vendor || '—'}</Td>}
@@ -588,7 +596,8 @@ export default function Products() {
                           <div className="min-w-0">
                             <div className="line-clamp-2 text-[14px] font-semibold leading-snug text-ink">{l(p.name) || '—'}</div>
                             <div className="mt-0.5 truncate text-[12px] text-muted">
-                              <span className="font-mono">{p.sku}</span> · {catLabel(p)}
+                              <span className="font-mono">{p.sku}</span>
+                              {packSizeText(p, lang) && <> · {packSizeText(p, lang)}</>} · {catLabel(p)}
                             </div>
                           </div>
                           <div className="-mr-1.5 -mt-1" onClick={stop}>

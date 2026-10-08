@@ -2,7 +2,7 @@
 // the entries stay in the list that owns them (projects, homepage sections, settings.locations).
 // The rule flags below are optional extras on the stored records — older data simply lacks them.
 import type { ComponentType } from 'react';
-import { CalendarDays, Hash, Hammer, Image, Link2, ListChecks, MapPin, MessageCircleQuestionMark, Boxes, ToggleRight, Type, Waypoints, Wrench } from 'lucide-react';
+import { CalendarDays, Hash, Handshake, Image, Link2, ListChecks, MapPin, MessageCircleQuestionMark, Boxes, Stamp, ToggleRight, Type, Waypoints } from 'lucide-react';
 import type { ContentFieldType, ContentModel, Db, L10n } from '@/lib/types';
 
 export const FIELD_TYPES: ContentFieldType[] = ['text', 'number', 'choice', 'image', 'link', 'date', 'boolean', 'reference'];
@@ -96,9 +96,9 @@ export const modelPublic = (m: ModelX) => m.public ?? true;
 /* Where the entries live                                              */
 /* ------------------------------------------------------------------ */
 export const MODEL_ICON: Record<string, ComponentType<{ className?: string }>> = {
-  projects: Hammer,
+  projects: Stamp,
   'home.faq': MessageCircleQuestionMark,
-  'home.services': Wrench,
+  'home.services': Handshake,
   'settings.locations': MapPin,
 };
 export const modelIcon = (source: string) => MODEL_ICON[source] ?? Boxes;
@@ -156,7 +156,7 @@ export function entriesOf(m: Pick<ModelX, 'source' | 'entries'>, db: Pick<Db, 'p
 
 /** Distinct option values already used by the entries (choice fields without stored options). */
 export function usedOptions(m: Pick<ModelX, 'source'>, key: string, db: Pick<Db, 'projects'>): string[] {
-  if (m.source === 'projects' && key === 'tags') return Array.from(new Set(db.projects.flatMap((p) => p.tags.map((x) => x.me)).filter(Boolean)));
+  if (m.source === 'projects' && key === 'tags') return Array.from(new Set(db.projects.flatMap((p) => p.tags.map((x) => x.sq || x.me)).filter(Boolean)));
   return [];
 }
 
@@ -165,7 +165,7 @@ export function usedOptions(m: Pick<ModelX, 'source'>, key: string, db: Pick<Db,
 /* ------------------------------------------------------------------ */
 export const KEY_RE = /^[a-zA-Z][a-zA-Z0-9_]*$/;
 
-/** "carina dozvola" → "carinaDozvola" */
+/** "lloji i lokalit" → "llojiILokalit" */
 export function keyFromLabel(label: string) {
   const words = label
     .normalize('NFKD')
@@ -184,7 +184,7 @@ export type FieldError = 'label' | 'key' | 'keyTaken' | 'options' | 'ref';
 
 export function fieldErrors(f: FieldX, others: FieldX[]): FieldError[] {
   const out: FieldError[] = [];
-  if (!f.label.me.trim()) out.push('label');
+  if (!f.label.sq.trim()) out.push('label');
   if (!KEY_RE.test(f.key)) out.push('key');
   else if (others.some((o) => o.key.toLowerCase() === f.key.toLowerCase())) out.push('keyTaken');
   if (f.type === 'choice' && f.custom && (f.options?.length ?? 0) < 2) out.push('options');

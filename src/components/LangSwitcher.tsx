@@ -5,7 +5,23 @@ import { useUi } from '@/store/ui';
 import { useDb } from '@/store/db';
 import { cn } from '@/lib/utils';
 
-export function LangSwitcher({ scope = 'site', tone = 'dark', align = 'right', compact }: { scope?: Scope; tone?: 'dark' | 'light'; align?: 'left' | 'right'; compact?: boolean }) {
+/**
+ * Language picker. `variant="menu"` (default) is a dropdown; `variant="segmented"` shows every
+ * enabled language side by side (SQ · EN · SR) — used in the storefront header and mobile menu.
+ */
+export function LangSwitcher({
+  scope = 'site',
+  tone = 'dark',
+  align = 'right',
+  compact,
+  variant = 'menu',
+}: {
+  scope?: Scope;
+  tone?: 'dark' | 'light';
+  align?: 'left' | 'right';
+  compact?: boolean;
+  variant?: 'menu' | 'segmented';
+}) {
   const lang = useUi((s) => (scope === 'admin' ? s.adminLang : s.lang));
   const setLang = useUi((s) => (scope === 'admin' ? s.setAdminLang : s.setLang));
   const enabled = useDb((s) => s.settings.languages);
@@ -22,7 +38,36 @@ export function LangSwitcher({ scope = 'site', tone = 'dark', align = 'right', c
   }, [open]);
 
   const langs = scope === 'admin' ? LANGS : LANGS.filter((l) => enabled[l.code]);
-  const current = LANGS.find((l) => l.code === lang)!;
+  const current = LANGS.find((l) => l.code === lang) ?? LANGS[0];
+
+  if (variant === 'segmented') {
+    if (langs.length < 2) return null;
+    const light = tone === 'light';
+    return (
+      <div role="radiogroup" aria-label="Language" className={cn('inline-flex items-center rounded-full p-0.5', light ? 'bg-white/[0.08] ring-1 ring-white/10' : 'bg-white ring-1 ring-line')}>
+        {langs.map((l) => {
+          const on = l.code === lang;
+          return (
+            <button
+              key={l.code}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              title={l.label}
+              onClick={() => setLang(l.code)}
+              className={cn(
+                'rounded-full font-bold tracking-[0.08em] transition-colors',
+                compact ? 'h-6 min-w-[34px] px-2 text-[10.5px]' : 'h-9 min-w-[46px] px-3 text-[12px]',
+                on ? (light ? 'bg-lime text-ink' : 'bg-ink text-paper') : light ? 'text-white/65 hover:text-white' : 'text-muted hover:text-ink',
+              )}
+            >
+              {l.short}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div ref={ref} className="relative">

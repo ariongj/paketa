@@ -2,7 +2,7 @@
 // staff can preview an unpublished one with ?preview=1 while logged into the CMS.
 import { useMemo } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
-import { ArrowDown, ArrowRight, ArrowUpDown, ChevronDown, Compass, Eye, LayoutGrid, Percent, Tag, Wrench } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpDown, ChevronDown, Compass, Eye, Layers, LayoutGrid, Percent, Stamp, Tag } from 'lucide-react';
 import { ProductCard } from '@/site/components/ProductCard';
 import { Breadcrumbs } from '@/site/components/SectionHeading';
 import { HelpBand } from '@/site/components/shop/HelpBand';
@@ -16,9 +16,9 @@ import { useDb } from '@/store/db';
 import { useUi } from '@/store/ui';
 import { useCollection } from '@/store/hooks';
 import { collectionProducts, sortProducts } from '@/lib/collections';
-import { basePrice, discountPct } from '@/lib/pricing';
+import { basePrice, discountPct, piecePrice, tiersOf } from '@/lib/pricing';
 import { discountState } from '@/lib/discounts';
-import { money, perUnit } from '@/lib/format';
+import { money, moneyPiece } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { Collection, CollectionSort, Product } from '@/lib/types';
 
@@ -57,7 +57,12 @@ function CollectionView({ collection, products, preview }: { collection: Collect
   const cheapest = useMemo(() => products.filter((p) => !p.quoteOnly).sort((a, b) => basePrice(a) - basePrice(b))[0], [products]);
   const maxPct = Math.max(0, ...products.map(discountPct));
   const installs = products.some((p) => p.installation?.available);
-  // an automatic product discount on this collection (e.g. "Jesen — podovi −15%") is applied in the cart — say so up front
+  const maxTier = Math.max(0, ...products.flatMap((p) => tiersOf(p).map((x) => x.pct)));
+  const minPiece = useMemo(() => {
+    const v = products.filter((p) => !p.quoteOnly && p.unit === 'pack' && p.packSize).map((p) => piecePrice(p));
+    return v.length ? Math.min(...v) : 0;
+  }, [products]);
+  // an automatic product discount on this collection (e.g. "KAFE15 — café collection −15%") is applied in the cart — say so up front
   const discounts = useDb((s) => s.discounts);
   const auto = useMemo(
     () => discounts.find((d) => d.kind === 'products' && d.method === 'auto' && d.audience.type === 'all' && d.appliesTo.scope === 'collections' && d.appliesTo.ids.includes(collection.id) && discountState(d) === 'active'),
@@ -91,7 +96,7 @@ function CollectionView({ collection, products, preview }: { collection: Collect
               <h1 className="display mt-3 text-[46px] leading-[1] text-ink sm:text-[68px]">
                 <Accent text={accentTitle(title)} />
               </h1>
-              {l(collection.description) && <p className="mt-5 max-w-xl font-display text-[20px] italic leading-[1.45] text-ink-soft sm:text-[23px]">{l(collection.description)}</p>}
+              {l(collection.description) && <p className="mt-5 max-w-xl text-[17px] leading-relaxed text-ink-soft sm:text-[19px]">{l(collection.description)}</p>}
               <div className="mt-7 flex flex-wrap gap-2">
                 <span className={pill}>
                   <LayoutGrid className="h-3.5 w-3.5 text-brand-600" /> {countLabel(t, lang, products.length)}
@@ -99,22 +104,27 @@ function CollectionView({ collection, products, preview }: { collection: Collect
                 {cheapest && (
                   <span className={pill}>
                     <Tag className="h-3.5 w-3.5 text-brand-600" />
-                    {t('fromPrice', { price: money(basePrice(cheapest), lang, { decimals: basePrice(cheapest) % 1 !== 0 }) })}
-                    {cheapest.unit === 'm2' || cheapest.unit === 'm' ? ` ${perUnit(cheapest.unit, lang)}` : ''}
+                    {t('fromPrice', { price: money(basePrice(cheapest), lang) })}
+                    {minPiece > 0 && <span className="font-medium text-muted">· {t('fromPiece', { price: moneyPiece(minPiece, lang) })}</span>}
                   </span>
                 )}
                 {installs && (
                   <span className={cn(pill, 'max-sm:hidden')}>
-                    <Wrench className="h-3.5 w-3.5 text-brand-600" /> {t('install')}
+                    <Stamp className="h-3.5 w-3.5 text-brand-600" /> {t('install')}
+                  </span>
+                )}
+                {maxTier > 0 && (
+                  <span className={cn(pill, 'max-sm:hidden')}>
+                    <Layers className="h-3.5 w-3.5 text-brand-600" /> {t('tierPill', { pct: maxTier })}
                   </span>
                 )}
                 {auto && (
-                  <span className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-3.5 py-1.5 text-[13px] font-bold text-white shadow-[0_10px_24px_-14px_var(--color-brand-700)]">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-pink px-3.5 py-1.5 text-[13px] font-bold text-white shadow-[0_10px_24px_-14px_var(--color-pink-ink)]">
                     <Percent className="h-3.5 w-3.5" /> {auto.valueType === 'percent' ? t('autoPct', { pct: auto.value }) : t('autoFixed', { amount: money(auto.value, lang) })}
                   </span>
                 )}
                 {!auto && maxPct > 0 && (
-                  <span className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-3.5 py-1.5 text-[13px] font-bold text-white shadow-[0_10px_24px_-14px_var(--color-brand-700)]">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-pink px-3.5 py-1.5 text-[13px] font-bold text-white shadow-[0_10px_24px_-14px_var(--color-pink-ink)]">
                     <Percent className="h-3.5 w-3.5" /> {t('upTo', { pct: maxPct })}
                   </span>
                 )}
@@ -127,7 +137,7 @@ function CollectionView({ collection, products, preview }: { collection: Collect
             </div>
 
             <div className="relative animate-fade-up [animation-delay:120ms]">
-              <div className="relative aspect-[4/3] overflow-hidden rounded-[28px] bg-sand shadow-[0_40px_80px_-40px_rgb(28_26_23/0.55)]">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-[28px] bg-sand shadow-[0_40px_80px_-40px_rgb(15_29_22/0.55)]">
                 {collection.image ? (
                   <Img src={collection.image} eager alt={title} className="absolute inset-0 h-full w-full object-cover" style={{ animation: 'kenburns 2.6s cubic-bezier(.16,1,.3,1) both' }} />
                 ) : (
@@ -136,7 +146,7 @@ function CollectionView({ collection, products, preview }: { collection: Collect
                 <div className="absolute inset-0 bg-gradient-to-t from-ink/25 via-transparent to-transparent" />
               </div>
               {products.length > 0 && (
-                <div className="absolute -bottom-6 left-4 flex items-center gap-3 rounded-2xl bg-white/95 py-2.5 pl-2.5 pr-4 shadow-[0_18px_40px_-18px_rgb(28_26_23/0.45)] ring-1 ring-line backdrop-blur sm:left-6">
+                <div className="absolute -bottom-6 left-4 flex items-center gap-3 rounded-2xl bg-white/95 py-2.5 pl-2.5 pr-4 shadow-[0_18px_40px_-18px_rgb(15_29_22/0.45)] ring-1 ring-line backdrop-blur sm:left-6">
                   <div className="flex -space-x-3">
                     {products.slice(0, 3).map((p) => (
                       <Img key={p.id} src={p.images[0]} small alt="" className="h-10 w-10 rounded-full object-cover ring-2 ring-white" />

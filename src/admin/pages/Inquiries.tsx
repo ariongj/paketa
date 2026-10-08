@@ -27,6 +27,7 @@ import { cn, download } from '@/lib/utils';
 
 const T = defineDict({
   me: {
+    desc: 'Zahtjevi za besplatne uzorke, upiti za veleprodaju i štampu logotipa i poruke sa sajta — sve u jednom inboxu.',
     manual: 'Ručni upit',
     export: 'Izvoz',
     exported: 'Izvezeno {n} upita (CSV)',
@@ -48,7 +49,7 @@ const T = defineDict({
     emptyTitle: 'Nema upita za ove filtere',
     emptyText: 'Promijenite karticu ili filtere, ili obrišite pretragu.',
     noneTitle: 'Još nema upita',
-    noneText: 'Formulari sa sajta, ručni upiti i pozivi pojavljuju se ovdje odmah.',
+    noneText: 'Zahtjevi za uzorke, upiti za ponudu (veleprodaja / logo) i poruke sa sajta pojavljuju se ovdje odmah — kao i ručno upisani pozivi.',
     spam: 'Zaštita od spama: skriveno polje (honeypot) i ograničenje slanja — jedno slanje formulara pravi tačno jedan upit. Upiti sa istim telefonom ili e-mailom u roku od 7 dana označavaju se kao mogući duplikati.',
     selected: '{n} izabrano',
     selectAll: 'Izaberi sve',
@@ -65,6 +66,7 @@ const T = defineDict({
     sortDate: 'Sortiraj po datumu',
   },
   sq: {
+    desc: 'Kërkesat për mostra falas, ofertat për shumicë e printim me logo dhe mesazhet nga faqja — në një inbox.',
     manual: 'Kërkesë manuale',
     export: 'Eksporto',
     exported: 'U eksportuan {n} kërkesa (CSV)',
@@ -86,7 +88,7 @@ const T = defineDict({
     emptyTitle: 'Asnjë kërkesë për këta filtra',
     emptyText: 'Ndryshoni skedën ose filtrat, ose pastroni kërkimin.',
     noneTitle: 'Ende nuk ka kërkesa',
-    noneText: 'Formularët e faqes, kërkesat manuale dhe telefonatat shfaqen këtu menjëherë.',
+    noneText: 'Kërkesat për mostra, kërkesat për ofertë (shumicë / logo) dhe mesazhet nga faqja shfaqen këtu menjëherë — edhe telefonatat e regjistruara manualisht.',
     spam: 'Mbrojtje nga spam: fushë e fshehur (honeypot) dhe kufizim dërgimesh — një dërgim i formularit krijon vetëm një kërkesë. Kërkesat me të njëjtin telefon ose e-mail brenda 7 ditëve shënohen si dyfishe të mundshme.',
     selected: '{n} të zgjedhura',
     selectAll: 'Zgjidh të gjitha',
@@ -103,6 +105,7 @@ const T = defineDict({
     sortDate: 'Rendit sipas datës',
   },
   en: {
+    desc: 'Free-sample requests, wholesale and logo-print quote requests and website messages — in one inbox.',
     manual: 'Manual request',
     export: 'Export',
     exported: 'Exported {n} requests (CSV)',
@@ -124,7 +127,7 @@ const T = defineDict({
     emptyTitle: 'No requests match these filters',
     emptyText: 'Change the tab or filters, or clear the search.',
     noneTitle: 'No requests yet',
-    noneText: 'Website forms, manual requests and phone calls show up here instantly.',
+    noneText: 'Sample requests, quote requests (wholesale / logo) and website messages show up here instantly — and so do phone calls you log manually.',
     spam: 'Spam protection: a hidden honeypot field and send throttling — one form submission creates exactly one request. Requests with the same phone or e-mail within 7 days are flagged as possible duplicates.',
     selected: '{n} selected',
     selectAll: 'Select all',
@@ -326,6 +329,7 @@ export default function Inquiries() {
       <PageHeader
         breadcrumbs={[ta('nav_contacts'), ta('nav_inbox')]}
         title={ta('nav_contacts')}
+        description={t('desc')}
         actions={
           <>
             <span title={can('contacts', 'export') ? undefined : noPerm}>

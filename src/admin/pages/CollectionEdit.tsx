@@ -102,7 +102,8 @@ function Editor({ source }: { source?: Collection }) {
 
   const [original, setOriginal] = useState<Collection>(() => structuredClone(source ?? blank()));
   const [form, setForm] = useState<Collection>(original);
-  const autoFor = (c: Collection) => !c.slug || c.slug === slugify(c.title.me);
+  // Albanian (SQ) is the primary language: it drives the slug and is the required title.
+  const autoFor = (c: Collection) => !c.slug || c.slug === slugify(c.title.sq);
   const [slugAuto, setSlugAuto] = useState(() => autoFor(original));
   const [tried, setTried] = useState(false);
   const [showAll, setShowAll] = useState(false);
@@ -119,13 +120,13 @@ function Editor({ source }: { source?: Collection }) {
   const usage = useMemo(() => (source ? collectionUsage(source, { discounts, offers, menus }) : { discounts: [], offers: [], menus: [] }), [source, discounts, offers, menus]);
   // smart → manual: offer to keep today's active matches as the hand-picked list
   const smartMatches = useMemo(() => (form.rules.length ? collectionProducts({ ...form, kind: 'smart' }, products, { publicOnly: true }).map((p) => p.id) : []), [form, products]);
-  const domain = adminEmail.split('@')[1] || 'selca.me';
+  const domain = adminEmail.split('@')[1] || 'paketoje.com';
 
   type Errors = Partial<Record<'title' | 'slug' | 'rules', string>>;
   const validate = (f: Collection): Errors => {
     const e: Errors = {};
-    if (!f.title.me.trim()) e.title = t('e_title');
-    const slug = slugify(f.slug) || slugify(f.title.me);
+    if (!f.title.sq.trim()) e.title = t('e_title');
+    const slug = slugify(f.slug) || slugify(f.title.sq);
     if (slug && collections.some((c) => c.slug === slug && c.id !== f.id)) e.slug = t('e_slug');
     if (f.kind === 'smart') {
       if (!f.rules.length) e.rules = t('e_noRules');
@@ -150,7 +151,7 @@ function Editor({ source }: { source?: Collection }) {
     const next: Collection = {
       ...form,
       id: cid,
-      slug: uniqueCollectionSlug(slugify(form.slug) || slugify(form.title.me) || cid, cid, collections),
+      slug: uniqueCollectionSlug(slugify(form.slug) || slugify(form.title.sq) || cid, cid, collections),
       published: canPublish ? form.published : original.published,
       seo: seo.title || seo.description ? seo : undefined,
       createdAt: form.createdAt || new Date().toISOString(),
@@ -312,7 +313,7 @@ function Editor({ source }: { source?: Collection }) {
                       label={t('f_title')}
                       required
                       value={form.title}
-                      onChange={(title) => setForm((f) => ({ ...f, title, slug: slugAuto ? slugify(title.me) : f.slug }))}
+                      onChange={(title) => setForm((f) => ({ ...f, title, slug: slugAuto ? slugify(title.sq) : f.slug }))}
                       className={cn(errors.title && '[&_input]:border-red-500 [&_input]:ring-4 [&_input]:ring-red-500/10')}
                     />
                     <FieldError>{errors.title}</FieldError>
@@ -436,7 +437,7 @@ function Editor({ source }: { source?: Collection }) {
                             type="button"
                             onClick={() => {
                               setSlugAuto(true);
-                              set({ slug: slugify(form.title.me) });
+                              set({ slug: slugify(form.title.sq) });
                             }}
                             className="inline-flex items-center gap-1 font-semibold text-ink hover:underline"
                           >
@@ -467,10 +468,10 @@ function Editor({ source }: { source?: Collection }) {
                     />
                   </FormField>
                   <FormField label={t('f_metaTitle')} hint={t('f_metaTitle_h')} aside={<Counter n={(form.seo?.title ?? '').length} max={60} />}>
-                    <TextInput value={form.seo?.title ?? ''} placeholder={`${form.title.me.trim() || t('f_title')} — ${companyName}`} onChange={(e) => set({ seo: { ...form.seo, title: e.target.value } })} aria-label={t('f_metaTitle')} />
+                    <TextInput value={form.seo?.title ?? ''} placeholder={`${form.title.sq.trim() || t('f_title')} — ${companyName}`} onChange={(e) => set({ seo: { ...form.seo, title: e.target.value } })} aria-label={t('f_metaTitle')} />
                   </FormField>
                   <FormField label={t('f_metaDesc')} hint={t('f_metaDesc_h')} aside={<Counter n={(form.seo?.description ?? '').length} max={160} />}>
-                    <Textarea rows={3} value={form.seo?.description ?? ''} placeholder={form.description.me} onChange={(e) => set({ seo: { ...form.seo, description: e.target.value } })} aria-label={t('f_metaDesc')} className="rounded-lg! px-3! py-2.5! text-[14px]!" />
+                    <Textarea rows={3} value={form.seo?.description ?? ''} placeholder={form.description.sq} onChange={(e) => set({ seo: { ...form.seo, description: e.target.value } })} aria-label={t('f_metaDesc')} className="rounded-lg! px-3! py-2.5! text-[14px]!" />
                   </FormField>
                   <div>
                     <div className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
@@ -478,10 +479,10 @@ function Editor({ source }: { source?: Collection }) {
                     </div>
                     <div className="rounded-xl border border-line bg-white p-4 shadow-[0_1px_6px_rgb(32_33_36/0.08)]" style={{ fontFamily: 'arial, sans-serif' }}>
                       <div className="truncate text-[12px] text-[#4d5156]">
-                        https://{domain} › kolekcija › {slugify(form.slug) || slugify(form.title.me) || '…'}
+                        https://{domain} › koleksioni › {slugify(form.slug) || slugify(form.title.sq) || '…'}
                       </div>
-                      <div className="mt-1 line-clamp-1 text-[19px] leading-snug text-[#1a0dab]">{form.seo?.title?.trim() || `${form.title.me.trim() || t('f_title')} — ${companyName}`}</div>
-                      <p className="mt-1 line-clamp-2 text-[13.5px] leading-[1.55] text-[#4d5156]">{form.seo?.description?.trim() || form.description.me.trim() || '—'}</p>
+                      <div className="mt-1 line-clamp-1 text-[19px] leading-snug text-[#1a0dab]">{form.seo?.title?.trim() || `${form.title.sq.trim() || t('f_title')} — ${companyName}`}</div>
+                      <p className="mt-1 line-clamp-2 text-[13.5px] leading-[1.55] text-[#4d5156]">{form.seo?.description?.trim() || form.description.sq.trim() || '—'}</p>
                     </div>
                   </div>
                 </div>

@@ -1,7 +1,9 @@
 // Neutral status badges for the orders area (PDF p.07: statuses use text + a symbol, never colour alone).
 // Payment, fulfilment and returns are separate states (PDF p.17) — each gets its own badge.
 import type { ReactNode } from 'react';
+import { Layers, Printer } from 'lucide-react';
 import { useDict } from '@/i18n';
+import { common } from '@/i18n/common';
 import { cn } from '@/lib/utils';
 import type { DraftOrder, FulfillmentState, PaymentState, ReturnStatus } from '@/lib/types';
 import { od } from './dict';
@@ -158,5 +160,38 @@ export function ArchivedBadge() {
     <StatusPill tone="outline" glyph="dash">
       {t('archived')}
     </StatusPill>
+  );
+}
+
+/** "Në printim" — the order is in logo-print production (status 'installation', before shipping). */
+export function PrintBadge({ className }: { className?: string }) {
+  const tc = useDict(common, 'admin');
+  return (
+    <StatusPill tone="attention" icon={<Printer className="h-3 w-3 shrink-0" aria-hidden />} className={className}>
+      {tc('status_installation')}
+    </StatusPill>
+  );
+}
+
+/** Volume-tier chip on an order line ("Shumicë −5%"): the pack price already includes the tier. */
+export function TierChip({ pct, className }: { pct?: number; className?: string }) {
+  const t = useDict(od, 'admin');
+  if (!pct) return null;
+  return (
+    <span title={t('tierTip')} className={cn('inline-flex h-[20px] items-center gap-1 rounded-md bg-ink/[0.06] px-1.5 text-[11.5px] font-semibold text-ink-soft', className)}>
+      <Layers className="h-3 w-3" aria-hidden />
+      {t('tierBadge', { pct })}
+    </span>
+  );
+}
+
+/** Logo-print add-on chip ("Printim me logo"). */
+export function LogoChip({ className, label }: { className?: string; label?: ReactNode }) {
+  const tc = useDict(common, 'admin');
+  return (
+    <span className={cn('inline-flex h-[20px] items-center gap-1 rounded-md border border-line bg-white px-1.5 text-[11.5px] font-semibold text-ink-soft', className)}>
+      <Printer className="h-3 w-3" aria-hidden />
+      {label ?? tc('installation')}
+    </span>
   );
 }

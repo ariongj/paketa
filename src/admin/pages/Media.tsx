@@ -135,7 +135,7 @@ type UsageFilter = 'all' | 'used' | 'unused' | 'noalt';
 type View = 'grid' | 'list';
 /** Tiles rendered per "page" — keeps the grid light with 100+ images */
 const PAGE = 30;
-const VIEW_KEY = 'selca-media-view';
+const VIEW_KEY = 'pk-media-view';
 
 /** Natural size of bundled images measured in this session (seed records carry no dimensions). */
 const DIMS = new Map<string, { w: number; h: number }>();

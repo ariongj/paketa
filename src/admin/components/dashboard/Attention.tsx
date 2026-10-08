@@ -3,7 +3,6 @@ import { Link } from 'react-router';
 import { CalendarClock, CheckCheck, ChevronRight, CreditCard, Hourglass, PackageMinus, Truck, Undo2, UserX } from 'lucide-react';
 import { Card } from '@/admin/components/kit';
 import { useDict, useL, useLang } from '@/i18n';
-import { common } from '@/i18n/common';
 import { useDb } from '@/store/db';
 import { useCan } from '@/store/hooks';
 import { money, timeAgo, unitLabel } from '@/lib/format';
@@ -30,7 +29,6 @@ const dateTimeShort = (iso: string, lang: Lang) => fmtDate(new Date(iso), lang, 
  */
 function useAttentionItems(now: Date): Item[] {
   const t = useDict(D, 'admin');
-  const tc = useDict(common, 'admin');
   const l = useL('admin');
   const lang = useLang('admin');
   const can = useCan();
@@ -50,7 +48,7 @@ function useAttentionItems(now: Date): Item[] {
       const low = lowStockProducts(products);
       if (low.length) {
         const p = low[0];
-        const qty = `${p.stock} ${p.unit === 'm2' ? tc('packs') : unitLabel(p.unit, lang)}`;
+        const qty = `${p.stock} ${unitLabel(p.unit, lang)}`;
         out.push({ id: 'low', icon: PackageMinus, text: plural('low', low.length), detail: t('d_low', { name: l(p.name), n: qty }), to: '/admin/proizvodi?zalihe=low' });
       }
     }
@@ -124,7 +122,7 @@ function useAttentionItems(now: Date): Item[] {
       }
     }
     return out;
-  }, [products, orders, bookings, inquiries, offers, returns, now, can, t, tc, l, lang]);
+  }, [products, orders, bookings, inquiries, offers, returns, now, can, t, l, lang]);
 }
 
 export function Attention({ now, className }: { now: Date; className?: string }) {

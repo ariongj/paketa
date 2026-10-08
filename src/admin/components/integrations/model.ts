@@ -1,9 +1,9 @@
 // Integrime — view model on top of settings.integrations (PDF p.40: scopes, status, history, secret rotation).
 // The catalogue of kinds/providers/scopes lives in analytics/integrations.ts (shared with the Analytics screen).
 // Everything is SIMULATED: no request ever leaves the browser and no secret is stored.
-import type { Integration, IntegrationKind, L10n, Order } from '@/lib/types';
+import type { Integration, IntegrationKind, L10n, Lang, Order } from '@/lib/types';
 import type { MarkState } from '@/admin/components/analytics/ui';
-import { DEFAULT_PROVIDER, KINDS, KIND_META, demoLog, type IntegrationX } from '@/admin/components/analytics/integrations';
+import { DEFAULT_PROVIDER, KINDS, KIND_META, demoLog, pName, type IntegrationX } from '@/admin/components/analytics/integrations';
 
 export { KINDS, KIND_META };
 
@@ -59,7 +59,7 @@ export function groupsOf(stored: Integration[]): Group[] {
   });
 }
 
-export const providerName = (x: IntegrationY) => KIND_META[x.kind].providers.find((p) => p.id === x.provider)?.name;
+export const providerName = (x: IntegrationY, lang: Lang) => pName(KIND_META[x.kind].providers.find((p) => p.id === x.provider)?.name, lang);
 
 /** Last successful sync — stored after a simulated connect/test, otherwise a stable "a few minutes ago". */
 export function lastSyncOf(x: IntegrationY, now: Date): string | undefined {
@@ -87,7 +87,7 @@ export const WEBHOOK_EVENTS: Record<IntegrationKind, string[]> = {
   erp: ['stock.updated', 'invoice.posted'],
 };
 
-export const webhookUrl = (kind: IntegrationKind) => `https://selca.me/api/webhooks/${kind}`;
+export const webhookUrl = (kind: IntegrationKind) => `https://paketoje.com/api/webhooks/${kind}`;
 
 const T = (me: string, sq: string, en: string): L10n => ({ me, sq, en });
 
@@ -105,9 +105,9 @@ export function logOf(x: IntegrationY, orders: Order[], now: Date): LogEntry[] {
       out.push({ at: o.fulfillment!.shippedAt!, level: 'ok', text: T(`shipment.created — ${o.number} · nalepnica kreirana`, `shipment.created — ${o.number} · etiketa u krijua`, `shipment.created — ${o.number} · label created`) });
   if (x.kind === 'fiscal')
     for (const o of recent.filter((o) => o.payment.status === 'paid').slice(0, 4))
-      out.push({ at: o.createdAt, level: 'ok', text: T(`invoice.fiscalized — ${o.number} · IKOF/JIKR sačuvani`, `invoice.fiscalized — ${o.number} · IKOF/JIKR u ruajtën`, `invoice.fiscalized — ${o.number} · IKOF/JIKR stored`) });
+      out.push({ at: o.createdAt, level: 'ok', text: T(`invoice.fiscalized — ${o.number} · verifikacioni kod sačuvan`, `invoice.fiscalized — ${o.number} · kodi i verifikimit u ruajt`, `invoice.fiscalized — ${o.number} · verification code stored`) });
   if (x.kind === 'erp') {
-    out.push({ at: new Date(now.getTime() - 35 * 60000).toISOString(), level: 'ok', text: T('stock.updated — 42 artikla sinhronizovana', 'stock.updated — 42 artikuj u sinkronizuan', 'stock.updated — 42 items synced') });
+    out.push({ at: new Date(now.getTime() - 35 * 60000).toISOString(), level: 'ok', text: T('stock.updated — 37 artikala (PAK-…) sinhronizovano, zalihe u pakovanjima', 'stock.updated — 37 artikuj (PAK-…) u sinkronizuan, stoku në pako', 'stock.updated — 37 items (PAK-…) synced, stock in packs') });
     out.push({ at: new Date(now.getTime() - 6 * 3600000).toISOString(), level: 'warn', text: T('2 artikla bez šifre u knjigovodstvu — preskočeni', '2 artikuj pa kod në kontabilitet — u anashkaluan', '2 items without an accounting code — skipped') });
   }
   return out.sort((a, b) => b.at.localeCompare(a.at)).slice(0, 40);

@@ -3,11 +3,14 @@ import { CircleAlert, CircleCheck, ExternalLink, RefreshCw, Sparkles, Trash2 } f
 import { Hint, Label, Switch } from '@/components/ui/Field';
 import { Button, buttonClass } from '@/components/ui/Button';
 import { useDict } from '@/i18n';
-import type { L10n, Lang } from '@/lib/types';
+import type { L10n } from '@/lib/types';
+import { LogoMark } from '@/components/brand/Logo';
+import { useSettings } from '@/store/hooks';
 import { cn } from '@/lib/utils';
 import { href as withBase } from '@/lib/paths';
 import { adm } from '@/admin/i18n';
 import { ed } from './i18n';
+import { ED_LANGS, LANG_SHORT } from './meta';
 
 /* ------------------------------------------------------------------ */
 /* Compact admin text input — matches the L10nInput control style       */
@@ -148,18 +151,16 @@ export function SlugField({
 /* ------------------------------------------------------------------ */
 /* Translation completeness per language                               */
 /* ------------------------------------------------------------------ */
-const LANG_CODES: Lang[] = ['me', 'sq', 'en'];
-
 export function TranslationStatus({ fields, className }: { fields: { label: string; value: L10n; optional?: boolean }[]; className?: string }) {
   const t = useDict(ed, 'admin');
   return (
     <div className={cn('space-y-1.5', className)}>
-      {LANG_CODES.map((code) => {
+      {ED_LANGS.map((code) => {
         const missing = fields.filter((f) => !f.optional && !f.value?.[code]?.trim()).map((f) => f.label);
         const ok = missing.length === 0;
         return (
           <div key={code} className="flex items-center gap-2.5 rounded-lg bg-canvas/60 px-2.5 py-2">
-            <span className="grid h-6 w-8 shrink-0 place-items-center rounded-md bg-white text-[10.5px] font-extrabold tracking-wide text-ink ring-1 ring-line">{code.toUpperCase()}</span>
+            <span className="grid h-6 w-8 shrink-0 place-items-center rounded-md bg-white text-[10.5px] font-extrabold tracking-wide text-ink ring-1 ring-line">{LANG_SHORT[code]}</span>
             <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink-soft">{t(`lang_${code}`)}</span>
             {ok ? (
               <span className="inline-flex shrink-0 items-center gap-1 text-[11.5px] font-semibold text-emerald-700">
@@ -256,7 +257,7 @@ export function LangDots({ value }: { value: L10n[] }) {
   const te = useDict(ed, 'admin');
   return (
     <span className="inline-flex shrink-0 items-center gap-1">
-      {(['me', 'sq', 'en'] as const).map((code) => {
+      {ED_LANGS.map((code) => {
         const ok = value.every((v) => v[code]?.trim());
         return (
           <span
@@ -264,7 +265,7 @@ export function LangDots({ value }: { value: L10n[] }) {
             title={`${te(`lang_${code}`)} — ${ok ? te('complete') : te('missingShort')}`}
             className={cn('rounded px-1 py-px text-[9.5px] font-extrabold tracking-wide', ok ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700')}
           >
-            {code.toUpperCase()}
+            {LANG_SHORT[code]}
           </span>
         );
       })}
@@ -293,14 +294,17 @@ export function mdSummary(md: string, max = 160) {
 
 export function SearchPreview({ domain, path, title, description, className }: { domain: string; path: string[]; title: string; description: string; className?: string }) {
   const t = useDict(ed, 'admin');
+  const company = useSettings().companyName || 'Paketoje';
   return (
     <div className={className}>
       <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-muted">{t('serpTitle')}</div>
       <div className="rounded-xl border border-line/80 bg-canvas/40 p-4">
         <div className="flex items-center gap-2.5">
-          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white text-[11px] font-extrabold text-brand-700 ring-1 ring-line">S</span>
+          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-white ring-1 ring-line">
+            <LogoMark className="h-4" />
+          </span>
           <div className="min-w-0 leading-tight">
-            <div className="truncate text-[13px] font-medium text-ink">SELCA COMPANY</div>
+            <div className="truncate text-[13px] font-medium text-ink">{company}</div>
             <div className="truncate text-[12px] text-muted">
               https://{domain}
               {path.filter(Boolean).map((p, i) => (

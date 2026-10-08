@@ -66,7 +66,7 @@ export function defaultRules(now = new Date()): BookingRules {
       { open: false, from: '09:00', to: '13:00' },
     ],
     exceptions: [
-      { id: 'ex-sajam', date: dayKey(nextFriday), label: { me: 'Sajam „Gradnja“', sq: 'Panairi „Gradnja“', en: '“Gradnja” trade fair' }, closed: false, from: '08:00', to: '13:00' },
+      { id: 'ex-sajam', date: dayKey(nextFriday), label: { me: 'Sajam HoReCa u Prištini', sq: 'Panairi HoReCa në Prishtinë', en: 'HoReCa trade fair, Prishtina' }, closed: false, from: '08:00', to: '13:00' },
       { id: 'ex-flamuri', date: `${y}-11-28`, label: { me: 'Dan albanske zastave', sq: 'Dita e Flamurit', en: 'Albanian Flag Day' }, closed: true },
       { id: 'ex-nova', date: `${y}-12-31`, dateTo: `${y + 1}-01-02`, label: { me: 'Nova godina', sq: 'Viti i Ri', en: 'New Year' }, closed: true },
     ],
@@ -173,7 +173,7 @@ export function checkSlot(
   return { ok: true };
 }
 
-/** The booking that blocks a slot — shown in the error ("Blerim already has Montaža 13:00–16:00"). */
+/** The booking that blocks a slot — shown in the error ("Valon already has a sample visit 10:00–11:00"). */
 function conflictFor(c: SlotCandidate, bookings: Booking[], reason: BookingConflict, ignoreId?: string) {
   const s0 = new Date(c.start).getTime();
   const s1 = s0 + c.durationMin * 60000;

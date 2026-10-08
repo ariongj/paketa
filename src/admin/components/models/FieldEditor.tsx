@@ -1,4 +1,4 @@
-// Add / edit one field of a content model: type picker, label (ME/SQ/EN), API key, rules and validation preview.
+// Add / edit one field of a content model: type picker, label (SQ/EN/SR), API key, rules and validation preview.
 import { useState } from 'react';
 import { Check, Lock, ShieldCheck, Trash2 } from 'lucide-react';
 import { Modal } from '@/components/ui/Overlay';
@@ -193,7 +193,7 @@ export function FieldEditor({
               label={t('label')}
               required
               value={draft.label}
-              onChange={(label) => patch(keyAuto && !system ? { label, key: keyFromLabel(label.me) } : { label })}
+              onChange={(label) => patch(keyAuto && !system ? { label, key: keyFromLabel(label.sq) } : { label })}
             />
             {show('label') && <FieldError>{t('labelRequired')}</FieldError>}
           </div>

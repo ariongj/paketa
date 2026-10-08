@@ -1,7 +1,8 @@
 import { useId } from 'react';
 import { Plus, X, Zap } from 'lucide-react';
 import { FieldError } from '@/components/ui/Field';
-import { useDict, useL } from '@/i18n';
+import { useDict, useL, useLang } from '@/i18n';
+import { unitLabel } from '@/lib/format';
 import { common } from '@/i18n/common';
 import type { Category, CollectionRule, CollectionRuleField, RuleOp } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -34,6 +35,7 @@ export function RulesEditor({
   const tp = useDict(pd, 'admin');
   const tc = useDict(common, 'admin');
   const l = useL('admin');
+  const lang = useLang('admin');
   const ids = useId();
   const set = (i: number, patch: Partial<CollectionRule>) => onRules(rules.map((r, k) => (k === i ? { ...r, ...patch } : r)));
   const changeField = (i: number, field: CollectionRuleField) => onRules(rules.map((r, k) => (k === i ? defaultRule(field, categories) : r)));
@@ -86,7 +88,7 @@ export function RulesEditor({
             inputMode={isNumeric(r.field) ? 'decimal' : undefined}
             onChange={(e) => set(i, { value: isNumeric(r.field) ? e.target.value.replace(/[^\d.,]/g, '') : e.target.value })}
             placeholder={t('valuePh')}
-            suffix={r.field === 'price' || r.field === 'compareAt' ? '€' : undefined}
+            suffix={r.field === 'price' || r.field === 'compareAt' ? '€' : r.field === 'stock' ? unitLabel('pack', lang) : undefined}
             invalid={invalid}
             aria-label={t('valuePh')}
           />

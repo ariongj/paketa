@@ -75,7 +75,7 @@ function ConnectForm({ x, mode, onClose, onSubmit }: { x: IntegrationY; mode: 'c
           <legend className="mb-2 text-[13px] font-semibold text-ink-soft">{t('provider')}</legend>
           <div className={cn('grid gap-2', meta.providers.length > 2 ? 'sm:grid-cols-3' : 'sm:grid-cols-2')}>
             {meta.providers.map((p) => (
-              <RadioCard key={p.id} checked={d.provider === p.id} onSelect={() => setD({ ...d, provider: p.id })} title={<span className="text-[14px]">{p.name}</span>} description={l(p.note)} />
+              <RadioCard key={p.id} checked={d.provider === p.id} onSelect={() => setD({ ...d, provider: p.id })} title={<span className="text-[14px]">{typeof p.name === 'string' ? p.name : l(p.name)}</span>} description={l(p.note)} />
             ))}
           </div>
         </fieldset>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { Link, useParams } from 'react-router';
 import { ArrowRight, CalendarDays, Clock, FileQuestion } from 'lucide-react';
-import type { HomeSection } from '@/lib/types';
+import type { HomeSection, Product } from '@/lib/types';
 import { Img, Reveal, plain } from '@/components/ui/misc';
 import { ButtonLink } from '@/components/ui/Button';
 import { Markdown } from '@/components/ui/Markdown';
@@ -9,54 +9,65 @@ import { Breadcrumbs, SectionHeading } from '@/site/components/SectionHeading';
 import { AuthorAvatar, PostCard, PostMeta } from '@/site/components/content/PostCard';
 import { ShareButtons } from '@/site/components/content/ShareButtons';
 import { MeasureCta } from '@/site/components/content/MeasureCta';
+import { ProductCard } from '@/site/components/ProductCard';
 import { NotFoundBlock } from '@/site/components/content/NotFoundBlock';
 import { C } from '@/site/components/content/dict';
 import { headingsOf, postHref, tagKey, usePublishedPosts } from '@/site/components/content/posts';
 import { usePageTitle } from '@/site/layout/SiteLayout';
 import { defineDict, useDict, useL, useLang } from '@/i18n';
 import { useDb } from '@/store/db';
+import { useActiveProducts, useCategories } from '@/store/hooks';
 import { date } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 const T = defineDict({
   me: {
-    blog: 'Savjeti',
+    blog: 'Blog',
     by: 'Autor',
     toc: 'U ovom članku',
     related_eyebrow: 'Nastavite čitanje',
     related_title: 'Još *korisnih savjeta*',
-    allPosts: 'Svi savjeti',
+    allPosts: 'Svi članci',
     nf_eyebrow: 'Članak nije pronađen',
-    nf_title: 'Ovaj savjet je *zalutao*',
-    nf_text: 'Članak je možda uklonjen ili mu je promijenjena adresa. Pogledajte ostale savjete naših majstora.',
+    nf_title: 'Ovaj članak je *zalutao*',
+    nf_text: 'Članak je možda uklonjen ili mu je promijenjena adresa. Pogledajte ostale vodiče našeg tima.',
     nf_suggest: 'Možda vas zanima',
-    authorNote: 'Savjeti iz prakse — iz salona i sa terena širom Crne Gore.',
+    authorNote: 'Savjeti iz prakse — iz našeg magacina u Mitrovici i iz lokala sa kojima radimo.',
+    prod_eyebrow: 'Iz članka',
+    prod_title: 'Proizvodi *iz ovog vodiča*',
+    prod_all: 'Svi proizvodi',
   },
   sq: {
-    blog: 'Këshilla',
+    blog: 'Blog',
     by: 'Autori',
     toc: 'Në këtë artikull',
     related_eyebrow: 'Vazhdoni leximin',
     related_title: 'Më shumë *këshilla të dobishme*',
-    allPosts: 'Të gjitha këshillat',
+    allPosts: 'Të gjithë artikujt',
     nf_eyebrow: 'Artikulli nuk u gjet',
-    nf_title: 'Kjo këshillë *ka humbur rrugën*',
-    nf_text: 'Artikulli mund të jetë hequr ose adresa i është ndryshuar. Shikoni këshillat e tjera të mjeshtrave tanë.',
+    nf_title: 'Ky artikull *ka humbur rrugën*',
+    nf_text: 'Artikulli mund të jetë hequr ose adresa i është ndryshuar. Shikoni udhëzuesit e tjerë të ekipit tonë.',
     nf_suggest: 'Mund t’ju interesojë',
-    authorNote: 'Këshilla nga praktika — nga salloni dhe nga terreni në gjithë Malin e Zi.',
+    authorNote: 'Këshilla nga praktika — nga depoja jonë në Mitrovicë dhe nga lokalet me të cilat punojmë.',
+    prod_eyebrow: 'Nga artikulli',
+    prod_title: 'Produktet *nga ky udhëzues*',
+    prod_all: 'Të gjitha produktet',
   },
   en: {
-    blog: 'Advice',
+    blog: 'Blog',
     by: 'Written by',
     toc: 'In this article',
     related_eyebrow: 'Keep reading',
     related_title: 'More *useful advice*',
-    allPosts: 'All advice',
+    allPosts: 'All articles',
     nf_eyebrow: 'Article not found',
     nf_title: 'This article has *wandered off*',
     nf_text: 'It may have been removed or its address changed. Have a look at the other guides from our team.',
     nf_suggest: 'You might like',
-    authorNote: 'Advice from practice — from our showroom and job sites across Montenegro.',
+    authorNote: 'Advice from practice — from our warehouse in Mitrovica and the venues we work with.',
+    prod_eyebrow: 'From the article',
+    prod_title: 'Products *from this guide*',
+    prod_all: 'All products',
   },
 });
 
@@ -67,12 +78,12 @@ const ARTICLE = cn(
   '[&_h2]:mt-12 [&_h2]:scroll-mt-28 [&_h2]:text-[28px] [&_h2]:leading-tight sm:[&_h2]:text-[32px]',
   '[&>p:first-child]:mt-0 [&>p:first-child]:text-[19px] [&>p:first-child]:text-ink sm:[&>p:first-child]:text-[21px] [&>p:first-child]:leading-[1.7]',
   '[&>p:first-child::first-letter]:float-left [&>p:first-child::first-letter]:mr-3 [&>p:first-child::first-letter]:mt-[6px] [&>p:first-child::first-letter]:font-display [&>p:first-child::first-letter]:text-[74px] [&>p:first-child::first-letter]:leading-[0.8] [&>p:first-child::first-letter]:text-brand-600',
-  '[&_blockquote]:my-10 [&_blockquote]:rounded-r-2xl [&_blockquote]:border-l-[3px] [&_blockquote]:bg-sand/70 [&_blockquote]:py-6 [&_blockquote]:pl-6 [&_blockquote]:pr-6 [&_blockquote]:text-[21px] [&_blockquote]:leading-snug sm:[&_blockquote]:pl-8 sm:[&_blockquote]:text-[23px]',
+  '[&_blockquote]:my-10 [&_blockquote]:rounded-r-2xl [&_blockquote]:border-l-[5px] [&_blockquote]:bg-lime-soft/60 [&_blockquote]:py-6 [&_blockquote]:pl-6 [&_blockquote]:pr-6 [&_blockquote]:text-[21px] [&_blockquote]:leading-snug sm:[&_blockquote]:pl-8 sm:[&_blockquote]:text-[23px]',
 );
 
 type CtaData = Extract<HomeSection, { type: 'cta' }>;
 
-/** Thin brand-red bar at the very top showing how far through the article the reader is. */
+/** Thin brand-green bar at the very top showing how far through the article the reader is. */
 function ReadingProgress({ target }: { target: RefObject<HTMLElement | null> }) {
   const [p, setP] = useState(0);
   useEffect(() => {
@@ -152,6 +163,8 @@ export default function PostPage() {
   const l = useL();
   const lang = useLang();
   const posts = usePublishedPosts();
+  const products = useActiveProducts();
+  const categories = useCategories();
   const ctaImage = useDb((s) => s.home.find((h): h is CtaData => h.type === 'cta')?.data.image);
   const post = posts.find((p) => p.slug === slug);
   const articleRef = useRef<HTMLElement>(null);
@@ -162,6 +175,26 @@ export default function PostPage() {
 
   const body = post ? l(post.body) : '';
   const toc = useMemo(() => headingsOf(body), [body]);
+  // Products the article talks about: SKUs mentioned in the text first, then best sellers of every
+  // category whose name (any language) appears in the title, tag or body.
+  const mentioned = useMemo(() => {
+    if (!post) return [];
+    const hay = [post.title.me, post.title.sq, post.title.en, post.tag.me, post.tag.sq, post.tag.en, body].join(' ').toLowerCase();
+    const words = (s: string) => {
+      const full = s.toLowerCase().trim();
+      const first = full.split(/[\s&,]+/)[0];
+      return first.length >= 4 && first !== full ? [full, first] : [full];
+    };
+    const catIds = new Set(
+      categories.filter((c) => !c.soon && [c.name.me, c.name.sq, c.name.en].some((n) => n && words(n).some((w) => w.length >= 3 && hay.includes(w)))).map((c) => c.id),
+    );
+    const bySku = products.filter((p) => hay.includes(p.sku.toLowerCase()));
+    const byCat = products.filter((p) => catIds.has(p.categoryId)).sort((a, b) => b.sold - a.sold);
+    const out: Product[] = [];
+    for (const p of [...bySku, ...byCat]) if (!out.some((x) => x.id === p.id) && p.stock !== 0) out.push(p);
+    return out.slice(0, 4);
+  }, [post, body, categories, products]);
+
   const related = useMemo(() => {
     if (!post) return [];
     const key = tagKey(post);
@@ -298,6 +331,31 @@ export default function PostPage() {
           </div>
         </div>
       </article>
+
+      {mentioned.length >= 2 && (
+        <section className="pb-20 sm:pb-24">
+          <div className="container-x">
+            <Reveal>
+              <SectionHeading
+                eyebrow={t('prod_eyebrow')}
+                title={t('prod_title')}
+                action={
+                  <ButtonLink to="/produktet" variant="outline" iconRight={<ArrowRight className="h-4 w-4" />}>
+                    {t('prod_all')}
+                  </ButtonLink>
+                }
+              />
+            </Reveal>
+            <div className="mt-10 grid grid-cols-2 gap-x-4 gap-y-10 sm:gap-x-6 lg:grid-cols-4">
+              {mentioned.map((p, i) => (
+                <Reveal key={p.id} delay={i * 70} className="flex">
+                  <ProductCard product={p} className="w-full" />
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="pb-20 sm:pb-24">
         <div className="container-x">

@@ -12,6 +12,7 @@ import { useDb } from '@/store/db';
 import { useCan, useCurrentStaff } from '@/store/hooks';
 import { timeAgo } from '@/lib/format';
 import { Callout, DemoChip, StatusMark } from '@/admin/components/analytics/ui';
+import { pName } from '@/admin/components/analytics/integrations';
 import { IntegrationCard } from '@/admin/components/integrations/IntegrationCard';
 import { ConnectModal, DisconnectModal, type ConnectDraft } from '@/admin/components/integrations/Dialogs';
 import { LogDrawer } from '@/admin/components/integrations/LogDrawer';
@@ -61,7 +62,7 @@ export default function Integrations() {
     const x = byId(connect?.id ?? null);
     if (!x || !connect) return;
     const at = new Date().toISOString();
-    const provider = KIND_META[x.kind].providers.find((p) => p.id === d.provider)?.name ?? d.provider;
+    const provider = pName(KIND_META[x.kind].providers.find((p) => p.id === d.provider)?.name, lang) ?? d.provider;
     const fresh = x.status === 'disconnected';
     const next = pushLog(
       {

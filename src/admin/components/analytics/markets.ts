@@ -6,7 +6,8 @@ import type { L10n, Lang, Market } from '@/lib/types';
 
 export type Rounding = 'none' | '0.99' | '1' | '10' | '100';
 export const ROUNDINGS: Rounding[] = ['none', '0.99', '1', '10', '100'];
-export type ShippingMode = 'zones' | 'flat' | 'none';
+/** zones = Kosovo zones from Settings · flat = one fee · quote = B2B, delivery priced in the quote · none = pickup only */
+export type ShippingMode = 'zones' | 'flat' | 'quote' | 'none';
 export type CatalogMode = 'all' | 'stock';
 
 export interface MarketX extends Market {
@@ -19,30 +20,39 @@ export interface MarketX extends Market {
   catalog?: CatalogMode;
 }
 
-export const CURRENCIES = ['EUR', 'ALL', 'RSD', 'BAM', 'MKD'] as const;
+/** Paketoje invoices in EUR everywhere; ALL / MKD exist for regional price lists shown for information. */
+export const CURRENCIES = ['EUR', 'ALL', 'MKD'] as const;
+
+/** Reference currency per country — shown "for information" next to EUR prices (stored rate, confirm before use). */
+export const INFO_FX: Record<string, { currency: string; rate: number }> = {
+  AL: { currency: 'ALL', rate: 98 },
+  MK: { currency: 'MKD', rate: 61.5 },
+};
 
 export const COUNTRIES: Record<string, L10n> = {
-  ME: { me: 'Crna Gora', sq: 'Mali i Zi', en: 'Montenegro' },
   XK: { me: 'Kosovo', sq: 'Kosova', en: 'Kosovo' },
   AL: { me: 'Albanija', sq: 'Shqipëria', en: 'Albania' },
-  RS: { me: 'Srbija', sq: 'Serbia', en: 'Serbia' },
-  BA: { me: 'Bosna i Hercegovina', sq: 'Bosnja dhe Hercegovina', en: 'Bosnia and Herzegovina' },
-  HR: { me: 'Hrvatska', sq: 'Kroacia', en: 'Croatia' },
   MK: { me: 'Sjeverna Makedonija', sq: 'Maqedonia e Veriut', en: 'North Macedonia' },
+  ME: { me: 'Crna Gora', sq: 'Mali i Zi', en: 'Montenegro' },
+  RS: { me: 'Srbija', sq: 'Serbia', en: 'Serbia' },
+  DE: { me: 'Njemačka', sq: 'Gjermania', en: 'Germany' },
+  CH: { me: 'Švajcarska', sq: 'Zvicra', en: 'Switzerland' },
 };
 
+/** Kosovo is the live market; the region is served B2B on request (delivery priced in the quote). */
 const DEFAULTS: Record<string, Partial<MarketX>> = {
-  'mk-me': { domain: 'selca.me', defaultLang: 'me', fxRate: 1, rounding: 'none', shipping: { mode: 'zones' }, catalog: 'all' },
-  'mk-xk': { domain: 'selca.me/xk', defaultLang: 'sq', fxRate: 1, rounding: 'none', shipping: { mode: 'flat', fee: 35, days: '3–5' }, catalog: 'stock' },
-  'mk-al': { domain: 'selca.al', defaultLang: 'sq', fxRate: 98.5, rounding: '10', shipping: { mode: 'flat', fee: 3900, days: '3–6' }, catalog: 'stock' },
+  'mk-xk': { domain: 'paketoje.com', defaultLang: 'sq', fxRate: 1, rounding: 'none', shipping: { mode: 'zones' }, catalog: 'all' },
+  'mk-al': { domain: 'paketoje.com/al', defaultLang: 'sq', fxRate: 1, rounding: 'none', shipping: { mode: 'quote', days: '2–4' }, catalog: 'stock' },
+  'mk-mk': { domain: 'paketoje.com/mk', defaultLang: 'sq', fxRate: 1, rounding: 'none', shipping: { mode: 'quote', days: '2–4' }, catalog: 'stock' },
+  'mk-me': { domain: 'paketoje.com/me', defaultLang: 'me', fxRate: 1, rounding: 'none', shipping: { mode: 'quote', days: '2–5' }, catalog: 'stock' },
 };
-const GENERIC: Partial<MarketX> = { domain: '', fxRate: 1, rounding: 'none', shipping: { mode: 'flat', fee: 0, days: '' }, catalog: 'stock' };
+const GENERIC: Partial<MarketX> = { domain: '', fxRate: 1, rounding: 'none', shipping: { mode: 'quote', days: '' }, catalog: 'stock' };
 
 /** Market with its overrides filled in (stored values win over the defaults). */
 export function marketX(m: Market): MarketX {
   const x = m as MarketX;
   const d = DEFAULTS[m.id] ?? GENERIC;
-  return { ...d, ...x, defaultLang: x.defaultLang ?? d.defaultLang ?? m.languages[0] ?? 'me', shipping: x.shipping ?? d.shipping ?? { mode: 'flat' } };
+  return { ...d, ...x, defaultLang: x.defaultLang ?? d.defaultLang ?? m.languages[0] ?? 'sq', shipping: x.shipping ?? d.shipping ?? { mode: 'flat' } };
 }
 
 /** Converted price with the stored rate and the market's rounding policy. */

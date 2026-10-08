@@ -58,7 +58,7 @@ const dd = (iso: string) => String(new Date(iso).getDate()).padStart(2, '0');
 const SQ_MONTHS = ['janar', 'shkurt', 'mars', 'prill', 'maj', 'qershor', 'korrik', 'gusht', 'shtator', 'tetor', 'nëntor', 'dhjetor'];
 const SQ_SHORT = ['jan', 'shk', 'mar', 'pri', 'maj', 'qer', 'kor', 'gus', 'sht', 'tet', 'nën', 'dhj'];
 
-/** "04 tetor", "04 tet 2027", "04 tetor, 09:00" — Albanian without Intl, ME / EN through Intl. */
+/** "04 tetor", "04 tet 2027", "04 tetor, 09:00" — Albanian without Intl, SR / EN through Intl. */
 export function dayLabel(iso: string, lang: Lang, opts: { month?: 'long' | 'short'; year?: boolean; time?: boolean } = {}) {
   const d = new Date(iso);
   const month = opts.month ?? 'long';
@@ -116,7 +116,11 @@ const slugAfter = (href: string, prefix: string) => {
   return decodeURIComponent(href.slice(prefix.length).split(/[?#/]/)[0] ?? '') || null;
 };
 
-/** What a CTA path points to: { type: 'collection', label: 'Premium kupatilo' } — used by "Lidhja" and the destination field. */
+/** Storefront anchor of the free-samples form (the section id kept from the platform is `mjerenje`; `#mostra` is accepted too). */
+export const SAMPLES_HREF = '/#mjerenje';
+export const isSamplesHref = (h: string) => /^\/(sherbimet)?#(mjerenje|mostra)$/.test(h);
+
+/** What a CTA path points to: { type: 'collection', label: 'Kafeteri & bar' } — used by "Lidhja" and the destination field. */
 export function resolveHref(href: string, ctx: LinkCtx, lang: Lang): { type: LinkType; label: string } {
   const h = href.trim();
   if (!h) return { type: 'none', label: '' };
@@ -143,7 +147,7 @@ export function resolveHref(href: string, ctx: LinkCtx, lang: Lang): { type: Lin
   }
   // fixed storefront pages
   const path = h.split(/[?#]/)[0] || '/';
-  if (h === '/#mjerenje') return { type: 'page', label: SE[lang].dest_measure };
+  if (isSamplesHref(h)) return { type: 'page', label: SE[lang].dest_measure };
   if (path === '/produktet' && !h.includes('#')) return { type: 'category', label: site[lang].allProducts };
   const fixed: Record<string, 'nav_services' | 'nav_contact' | 'nav_projects' | 'nav_about' | 'nav_blog'> = { '/sherbimet': 'nav_services', '/kontakti': 'nav_contact', '/referencat': 'nav_projects', '/rreth-nesh': 'nav_about', '/blog': 'nav_blog' };
   if (fixed[path]) return { type: 'page', label: site[lang][fixed[path]] };

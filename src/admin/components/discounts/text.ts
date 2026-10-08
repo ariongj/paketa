@@ -6,7 +6,7 @@ import { money } from '@/lib/format';
 import { discountClass, type RejectedDiscount } from '@/lib/discounts';
 import type { Discount, DiscountClass, DiscountKind, DiscountState, DiscountTarget } from '@/lib/types';
 import { dd } from './i18n';
-import { fmtDate, fmtRange } from './meta';
+import { DEFAULT_TZ, fmtDate, fmtRange } from './meta';
 
 export function useDiscountText() {
   const t = useDict(dd, 'admin');
@@ -15,7 +15,7 @@ export function useDiscountText() {
   const products = useDb((s) => s.products);
   const collections = useDb((s) => s.collections);
   const segments = useDb((s) => s.segments);
-  const tz = useDb((s) => s.settings.timezone) || 'Europe/Podgorica';
+  const tz = useDb((s) => s.settings.timezone) || DEFAULT_TZ;
   const zones = useDb((s) => s.settings.shippingZones);
   const discounts = useDb((s) => s.discounts);
 
@@ -43,7 +43,7 @@ export function useDiscountText() {
     [t, eur],
   );
 
-  /** "all products" / "the “Podovi” collection" / "3 products" */
+  /** "all products" / "the “Kafiteri” collection" / "3 products" */
   const scope = useCallback(
     (target: Pick<DiscountTarget, 'scope' | 'ids'>) => {
       if (target.scope === 'all') return t('scope_all');

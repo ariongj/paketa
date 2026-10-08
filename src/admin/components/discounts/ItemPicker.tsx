@@ -11,6 +11,7 @@ import { collectionProducts } from '@/lib/collections';
 import { basePrice } from '@/lib/pricing';
 import { money } from '@/lib/format';
 import { fold } from '@/lib/search';
+import { packSizeText, unitWord } from '@/admin/components/products/units';
 import { cn } from '@/lib/utils';
 import { dd } from './i18n';
 import { FHint } from './ui';
@@ -40,7 +41,7 @@ function useRows(kind: Kind): Row[] {
         return { id: c.id, title: l(c.title), meta: bits.join(' · '), image: c.image, muted: !c.published };
       });
     return products.map((p) => {
-      const bits = [p.sku, money(basePrice(p), lang)];
+      const bits = [p.sku, `${money(basePrice(p), lang)} / ${unitWord(p.unit, 1, lang)}`, packSizeText(p, lang)];
       if (p.status !== 'active') bits.push(p.status === 'archived' ? t('archived') : t('unpublished'));
       return { id: p.id, title: l(p.name), meta: bits.filter(Boolean).join(' · '), image: p.images[0], muted: p.status !== 'active' };
     });

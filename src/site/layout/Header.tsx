@@ -1,20 +1,21 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, NavLink, useLocation } from 'react-router';
-import { ArrowRight, ArrowUpRight, Heart, Menu, Phone, Search, ShoppingBag, Ruler } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, ChevronDown, Heart, Menu, PackageOpen, Percent, Phone, Search, ShoppingBag, Truck } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Logo } from '@/components/brand/Logo';
 import { LangSwitcher } from '@/components/LangSwitcher';
-import { ButtonLink } from '@/components/ui/Button';
-import { Img } from '@/components/ui/misc';
+import { Accent, Img } from '@/components/ui/misc';
 import { Drawer } from '@/components/ui/Overlay';
 import { useDict, useL } from '@/i18n';
 import { site } from '@/i18n/site';
 import { useUi } from '@/store/ui';
-import { useCategories, usePlacements, useSettings } from '@/store/hooks';
+import { useActiveProducts, useCategories, usePlacements, useSettings } from '@/store/hooks';
 import { isPromo, type NavNode } from '@/admin/components/menus/links';
 import { useNavMenu } from '@/admin/components/menus/useNav';
+import { useMeasureHref } from '@/site/components/company/data';
 import type { L10n } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { chrome } from './dict';
 
 /* ------------------------------------------------------------------ */
 /* Main menu (CMS → Menus "main"), with the built-in links as fallback  */
@@ -46,41 +47,72 @@ const toItem = (n: NavNode, l: (v: L10n) => string): NavItem => ({
 /** Image tile in the mega menu / mobile grid (category, collection, product, offer). */
 const isTile = (n: NavItem) => !!n.image && n.type !== 'url' && n.type !== 'page' && !isPromo(n);
 
+const pathOf = (to: string) => to.split(/[?#]/)[0];
+
+/** The catalogue entry ("Produktet") — gets the category mega menu even when the CMS item has no sub-links. */
+const isShop = (n: NavItem) => n.children.some(isTile) || pathOf(n.to) === '/produktet';
+
 /** Header main menu: the CMS menu when it has visible links, otherwise the built-in navigation. */
-function useMainNav(): { items: NavItem[]; fallback: boolean } {
+function useMainNav(): NavItem[] {
   const nodes = useNavMenu('main');
   const cats = useCategories();
   const l = useL();
   const t = useDict(site);
   return useMemo(() => {
-    if (nodes.length) return { items: nodes.map((n) => toItem(n, l)), fallback: false };
+    if (nodes.length) return nodes.map((n) => toItem(n, l));
     const link = (id: string, to: string, label: string): NavItem => ({ id, label, to, external: false, type: 'url', children: [] });
-    return {
-      fallback: true,
-      items: [
-        {
-          ...link('nav-products', '/produktet', t('nav_products')),
-          children: [
-            ...cats.map((c): NavItem => ({ id: c.id, label: l(c.name), to: `/produktet/${c.slug}`, external: false, type: 'category', image: c.image, sub: l(c.tagline), children: [] })),
-            link('nav-sale', '/produktet?akcija=1', t('sale')),
-          ],
-        },
-        link('nav-services', '/sherbimet', t('nav_services')),
-        link('nav-projects', '/referencat', t('nav_projects')),
-        link('nav-about', '/rreth-nesh', t('nav_about')),
-        link('nav-blog', '/blog', t('nav_blog')),
-        link('nav-contact', '/kontakti', t('nav_contact')),
-      ],
-    };
+    return [
+      {
+        ...link('nav-products', '/produktet', t('nav_products')),
+        children: [
+          ...cats.map((c): NavItem => ({ id: c.id, label: l(c.name), to: `/produktet/${c.slug}`, external: false, type: 'category', image: c.image, sub: l(c.tagline), children: [] })),
+          link('nav-sale', '/produktet?akcija=1', t('sale')),
+        ],
+      },
+      link('nav-services', '/sherbimet', t('nav_services')),
+      link('nav-projects', '/referencat', t('nav_projects')),
+      link('nav-blog', '/blog', t('nav_blog')),
+      link('nav-contact', '/kontakti', t('nav_contact')),
+    ];
   }, [nodes, cats, l, t]);
 }
 
-const pathOf = (to: string) => to.split(/[?#]/)[0];
+/* ------------------------------------------------------------------ */
+/* Category tiles for the mega menu / mobile menu                       */
+/* ------------------------------------------------------------------ */
+type TileKind = 'stock' | 'quote' | 'soon';
+interface ShopTile extends NavItem {
+  kind: TileKind;
+  /** Products that can be bought straight away */
+  count: number;
+}
+
+/**
+ * Tiles of the shop menu: its image children, or — when the CMS item has none — every category.
+ * Categories are classified as stocked, made-to-order (only quote items) or "coming soon".
+ */
+function useShopTiles(item: NavItem | undefined): ShopTile[] {
+  const cats = useCategories();
+  const products = useActiveProducts();
+  const l = useL();
+  return useMemo(() => {
+    if (!item) return [];
+    let tiles = item.children.filter(isTile);
+    if (!tiles.length && pathOf(item.to) === '/produktet')
+      tiles = cats.map((c) => ({ id: c.id, label: l(c.name), to: `/produktet/${c.slug}`, external: false, type: 'category' as const, image: c.image, sub: l(c.tagline), children: [] }));
+    return tiles.map((n) => {
+      const cat = n.type === 'category' ? cats.find((c) => `/produktet/${c.slug}` === pathOf(n.to)) : undefined;
+      const own = cat ? products.filter((p) => p.categoryId === cat.id) : [];
+      const count = own.filter((p) => !p.quoteOnly).length;
+      const kind: TileKind = cat?.soon ? 'soon' : cat && own.length > 0 && count === 0 ? 'quote' : 'stock';
+      return { ...n, kind, count };
+    });
+  }, [item, cats, products, l]);
+}
 
 /** Highlight a dropdown parent while the shopper is inside its section. */
 function inSection(n: NavItem, pathname: string) {
-  const shop = n.children.some((c) => c.type === 'category' || c.type === 'product' || c.type === 'collection');
-  if (shop && (pathname.startsWith('/produkt') || pathname.startsWith('/koleksioni'))) return true;
+  if (isShop(n) && (pathname.startsWith('/produkt') || pathname.startsWith('/koleksioni'))) return true;
   return [n, ...n.children].some((x) => {
     const p = pathOf(x.to);
     return !x.external && p.length > 1 && (pathname === p || pathname.startsWith(`${p}/`));
@@ -103,6 +135,9 @@ function NavTarget({ item, className, onClick, children }: { item: NavItem; clas
   );
 }
 
+/** Lime marker swipe behind the active nav label (same gesture as the <Accent> headline words). */
+const MARKER = 'bg-[linear-gradient(transparent_60%,var(--color-lime)_60%,var(--color-lime)_92%,transparent_92%)]';
+
 /* ------------------------------------------------------------------ */
 /* Announcement bar — live "bar" placements, settings as fallback       */
 /* ------------------------------------------------------------------ */
@@ -110,9 +145,10 @@ function AnnouncementBar() {
   const settings = useSettings();
   const bar = usePlacements('bar');
   const l = useL();
+  const c = useDict(chrome);
   const [i, setI] = useState(0);
   const items = useMemo(() => {
-    const live = bar.filter((p) => p.title.me.trim()).map((p) => ({ id: p.id, text: p.title, href: p.cta?.href?.trim() ?? '' }));
+    const live = bar.filter((p) => p.title.me.trim() || p.title.sq.trim()).map((p) => ({ id: p.id, text: p.title, href: p.cta?.href?.trim() ?? '' }));
     return live.length ? live : settings.announcements.map((text, n) => ({ id: `a${n}`, text, href: '' }));
   }, [bar, settings.announcements]);
   useEffect(() => {
@@ -122,14 +158,19 @@ function AnnouncementBar() {
   }, [items.length]);
   if (!items.length) return null;
   const cur = items[i % items.length];
-  const textCls = 'truncate font-medium';
+  const textCls = 'truncate font-semibold decoration-lime/60 underline-offset-4 hover:underline';
   return (
     <div className="relative z-50 bg-ink text-paper">
       <div className="container-x flex h-9 items-center justify-between gap-4 text-[12.5px]">
-        <a href={`tel:${settings.phone.replace(/\s/g, '')}`} className="hidden items-center gap-1.5 text-paper/75 hover:text-white md:flex">
-          <Phone className="h-3.5 w-3.5" /> {settings.phone}
-        </a>
-        <div className="relative h-full flex-1 overflow-hidden text-center md:max-w-[60%]">
+        <div className="hidden min-w-0 flex-1 items-center gap-5 text-paper/70 lg:flex">
+          <a href={`tel:${settings.phone.replace(/\s/g, '')}`} className="inline-flex items-center gap-1.5 transition-colors hover:text-white">
+            <Phone className="h-3.5 w-3.5" /> {settings.phone}
+          </a>
+          <span className="inline-flex items-center gap-1.5">
+            <Truck className="h-3.5 w-3.5 text-lime" /> {c('delivery')}
+          </span>
+        </div>
+        <div className="relative h-full min-w-0 flex-1 overflow-hidden text-center lg:max-w-[46%]">
           <AnimatePresence mode="wait">
             <motion.p
               key={cur.id}
@@ -137,82 +178,159 @@ function AnnouncementBar() {
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -14, opacity: 0 }}
               transition={{ duration: 0.35 }}
-              className="absolute inset-0 flex items-center justify-center truncate font-medium"
+              className="absolute inset-0 flex items-center justify-center gap-2 truncate font-semibold"
             >
+              <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-lime" />
               {!cur.href ? (
-                l(cur.text)
+                <span className="truncate">{l(cur.text)}</span>
               ) : /^(?:https?:|mailto:|tel:)/i.test(cur.href) ? (
-                <a href={cur.href} target="_blank" rel="noreferrer" className={cn(textCls, 'decoration-paper/40 underline-offset-4 hover:underline')}>
+                <a href={cur.href} target="_blank" rel="noreferrer" className={textCls}>
                   {l(cur.text)}
                 </a>
               ) : (
-                <Link to={cur.href} className={cn(textCls, 'decoration-paper/40 underline-offset-4 hover:underline')}>
+                <Link to={cur.href} className={textCls}>
                   {l(cur.text)}
                 </Link>
               )}
             </motion.p>
           </AnimatePresence>
         </div>
-        <div className="hidden md:block">
-          <LangSwitcher tone="light" compact />
+        <div className="hidden flex-1 justify-end md:flex">
+          <LangSwitcher tone="light" variant="segmented" compact />
         </div>
       </div>
     </div>
   );
 }
 
-function MegaMenu({ item, onClose }: { item: NavItem; onClose: () => void }) {
+/* ------------------------------------------------------------------ */
+/* Mega menu                                                           */
+/* ------------------------------------------------------------------ */
+function MegaTile({ tile, onClose }: { tile: ShopTile; onClose: () => void }) {
+  const c = useDict(chrome);
+  return (
+    <NavTarget item={tile} onClick={onClose} className="group flex items-center gap-3.5 rounded-2xl p-2 transition-colors hover:bg-white hover:shadow-[0_10px_30px_-22px_rgba(15,29,22,0.5)]">
+      <span className="relative h-[62px] w-[62px] shrink-0 overflow-hidden rounded-xl bg-sand ring-1 ring-ink/5">
+        {tile.image && <Img src={tile.image} small alt="" className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-1.5 text-[14.5px] font-bold leading-tight text-ink">
+          <span className="truncate">{tile.label}</span>
+          <ArrowRight className="h-3.5 w-3.5 shrink-0 -translate-x-1 text-brand-600 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
+        </span>
+        {tile.sub && <span className="mt-0.5 block truncate text-[12.5px] text-muted">{tile.sub}</span>}
+        {tile.kind === 'quote' ? (
+          <span className="mt-1 inline-flex rounded-full bg-pink-soft px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.1em] text-pink-ink">{c('madeToOrder')}</span>
+        ) : tile.count > 0 ? (
+          <span className="mt-1 block text-[10.5px] font-bold uppercase tracking-[0.14em] text-brand-700">{c('productsN', { n: tile.count })}</span>
+        ) : null}
+      </span>
+    </NavTarget>
+  );
+}
+
+function SoonChip({ tile, onClick, className }: { tile: NavItem; onClick?: () => void; className?: string }) {
+  return (
+    <NavTarget
+      item={tile}
+      onClick={onClick}
+      className={cn('inline-flex h-8 items-center gap-2 rounded-full border border-dashed border-ink/25 bg-white/50 pl-1 pr-3 text-[12.5px] font-semibold text-ink-soft transition-colors hover:border-ink/50 hover:text-ink', className)}
+    >
+      <span className="h-6 w-6 overflow-hidden rounded-full bg-sand">{tile.image && <Img src={tile.image} small alt="" className="h-full w-full object-cover" />}</span>
+      {tile.label}
+    </NavTarget>
+  );
+}
+
+function MegaMenu({ item, tiles, samplesHref, onClose }: { item: NavItem; tiles: ShopTile[]; samplesHref: string; onClose: () => void }) {
   const t = useDict(site);
-  const promo = item.children.find((c) => isPromo(c));
-  const tiles = item.children.filter((c) => c !== promo);
+  const c = useDict(chrome);
+  const main = tiles.filter((x) => x.kind !== 'soon');
+  const soon = tiles.filter((x) => x.kind === 'soon');
+  const promos = item.children.filter((x) => isPromo(x));
+  const links = item.children.filter((x) => !isTile(x) && !isPromo(x));
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
       transition={{ duration: 0.22 }}
-      className="absolute inset-x-0 top-full border-t border-line bg-paper shadow-[0_30px_60px_-30px_rgba(28,26,23,0.35)]"
+      className="absolute inset-x-0 top-full border-t border-line bg-paper shadow-[0_40px_80px_-40px_rgba(15,29,22,0.45)]"
     >
-      <div className="container-x grid grid-cols-12 gap-8 py-8">
-        <div className={cn('grid gap-3', promo ? 'col-span-9 grid-cols-3' : 'col-span-12 grid-cols-4')}>
-          {tiles.map((c) => (
-            <NavTarget key={c.id} item={c} onClick={onClose} className="group flex items-center gap-4 rounded-2xl p-2.5 transition-colors hover:bg-white">
-              <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-sand">
-                {c.image ? (
-                  <Img src={c.image} small alt={c.label} className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                ) : (
-                  <span className="grid h-full w-full place-items-center text-ink-soft transition-colors group-hover:text-brand-700">
-                    <ArrowUpRight className="h-5 w-5" />
-                  </span>
-                )}
-              </div>
-              <div className="min-w-0">
-                <div className="font-semibold text-ink">{c.label}</div>
-                {c.sub && <div className="mt-0.5 line-clamp-2 text-[13px] leading-snug text-muted">{c.sub}</div>}
-              </div>
-            </NavTarget>
-          ))}
-        </div>
-        {promo && (
-          <NavTarget item={promo} onClick={onClose} className="group relative col-span-3 overflow-hidden rounded-2xl bg-ink">
-            <Img src={promo.image ?? '/images/cat/podovi.webp'} small alt="" className="absolute inset-0 h-full w-full object-cover opacity-70 transition-transform duration-700 group-hover:scale-105" />
-            <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/20 to-transparent" />
-            <div className="relative flex h-full min-h-[180px] flex-col justify-end p-5 text-white">
-              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-brand-200">{promo.label}</span>
-              <span className="mt-1 font-display text-2xl leading-tight">{promo.type === 'offer' ? promo.sub ?? '' : '−20%'}</span>
-              <span className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold">
-                {t('seeAll')} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </span>
+      <div className="container-x grid gap-8 py-7 lg:grid-cols-[minmax(0,1fr)_330px]">
+        <div className="min-w-0">
+          <div className="mb-3 flex items-center justify-between px-2">
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted">{t('categories')}</span>
+            <Link to={item.to || '/produktet'} onClick={onClose} className="group inline-flex items-center gap-1.5 text-[13.5px] font-bold text-ink hover:text-brand-700">
+              {c('browseAll')} <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-3 gap-1">
+            {main.map((x) => (
+              <MegaTile key={x.id} tile={x} onClose={onClose} />
+            ))}
+          </div>
+          {(soon.length > 0 || promos.length > 0 || links.length > 0) && (
+            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-dashed border-ink/15 px-2 pt-4">
+              {promos.map((p) => (
+                <NavTarget key={p.id} item={p} onClick={onClose} className="inline-flex h-8 items-center gap-1.5 rounded-full bg-pink-soft px-3 text-[12.5px] font-bold text-pink-ink transition-colors hover:bg-pink hover:text-ink">
+                  <Percent className="h-3.5 w-3.5" /> {p.label}
+                </NavTarget>
+              ))}
+              {links.map((p) => (
+                <NavTarget key={p.id} item={p} onClick={onClose} className="inline-flex h-8 items-center gap-1.5 rounded-full border border-line bg-white px-3 text-[12.5px] font-semibold text-ink-soft hover:border-ink/30 hover:text-ink">
+                  {p.label}
+                </NavTarget>
+              ))}
+              {soon.length > 0 && (
+                <span className="ml-auto flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">{c('soon')}</span>
+                  {soon.map((s) => (
+                    <SoonChip key={s.id} tile={s} onClick={onClose} />
+                  ))}
+                </span>
+              )}
             </div>
-          </NavTarget>
-        )}
+          )}
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <Link to="/sherbimet" onClick={onClose} className="group relative isolate flex min-h-[214px] flex-1 flex-col overflow-hidden rounded-3xl bg-brand-700 p-6 text-white">
+            <div className="bg-grain pointer-events-none absolute inset-0 -z-10 opacity-70" />
+            <div className="absolute -bottom-10 -right-8 -z-10 h-44 w-36 rotate-[8deg] overflow-hidden rounded-2xl border-4 border-white/90 shadow-2xl transition-transform duration-700 group-hover:rotate-[4deg] group-hover:scale-105">
+              <Img src="/images/s/printim.webp" small alt="" className="h-full w-full object-cover" />
+            </div>
+            <span className="text-[10.5px] font-bold uppercase tracking-[0.2em] text-lime">{c('printEyebrow')}</span>
+            <span className="display mt-2 max-w-[190px] text-[28px] leading-[1.02]">
+              <Accent text={c('printTitle')} accentClassName="text-lime [background-image:none]!" />
+            </span>
+            <span className="mt-2 max-w-[180px] text-[12.5px] leading-snug text-white/75">{c('printText')}</span>
+            <span className="mt-auto inline-flex h-9 items-center gap-1.5 self-start rounded-full bg-lime px-4 text-[12.5px] font-bold text-ink transition-colors group-hover:bg-white">
+              {c('printCta')} <ArrowRight className="h-3.5 w-3.5" />
+            </span>
+          </Link>
+          <Link to={samplesHref} onClick={onClose} className="group flex items-center gap-3 rounded-2xl border border-dashed border-ink/20 bg-white/60 p-3 transition-colors hover:border-ink/40 hover:bg-white">
+            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-lime text-ink">
+              <PackageOpen className="h-5 w-5" />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-[13.5px] font-bold text-ink">{t('freeMeasure')}</span>
+              <span className="block truncate text-[12px] text-muted">{c('samplesText')}</span>
+            </span>
+            <ArrowUpRight className="ml-auto h-4 w-4 shrink-0 text-ink/40 transition-colors group-hover:text-ink" />
+          </Link>
+        </div>
       </div>
     </motion.div>
   );
 }
 
-export function Header({ transparentTop = false }: { transparentTop?: boolean }) {
+/* ------------------------------------------------------------------ */
+/* Header                                                              */
+/* ------------------------------------------------------------------ */
+export function Header() {
   const t = useDict(site);
+  const c = useDict(chrome);
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mega, setMega] = useState<string | null>(null);
@@ -221,10 +339,13 @@ export function Header({ transparentTop = false }: { transparentTop?: boolean })
   const setCartOpen = useUi((s) => s.setCartOpen);
   const setSearchOpen = useUi((s) => s.setSearchOpen);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { items: nav, fallback } = useMainNav();
+  const nav = useMainNav();
+  const shop = nav.find(isShop);
+  const tiles = useShopTiles(shop);
+  const samplesHref = useMeasureHref();
 
   useEffect(() => {
-    const fn = () => setScrolled(window.scrollY > 24);
+    const fn = () => setScrolled(window.scrollY > 8);
     fn();
     window.addEventListener('scroll', fn, { passive: true });
     return () => window.removeEventListener('scroll', fn);
@@ -235,40 +356,50 @@ export function Header({ transparentTop = false }: { transparentTop?: boolean })
     setMobileOpen(false);
   }, [location.pathname, location.search]);
 
-  const megaItem = mega ? nav.find((n) => n.id === mega && n.children.length) : undefined;
-  const solid = !transparentTop || scrolled || !!megaItem;
-  const tone = solid ? 'dark' : 'light';
+  // "/" opens the search (unless the shopper is typing somewhere)
+  useEffect(() => {
+    const fn = (e: KeyboardEvent) => {
+      if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
+      const el = e.target as HTMLElement | null;
+      if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
+      e.preventDefault();
+      setSearchOpen(true);
+    };
+    window.addEventListener('keydown', fn);
+    return () => window.removeEventListener('keydown', fn);
+  }, [setSearchOpen]);
+
+  const megaItem = mega ? nav.find((n) => n.id === mega && n === shop) : undefined;
 
   const linkCls = (active: boolean) =>
     cn(
-      'relative rounded-full px-3.5 py-2 text-[14.5px] font-semibold transition-colors',
-      solid ? (active ? 'text-ink' : 'text-ink-soft hover:text-ink') : active ? 'text-white' : 'text-white/85 hover:text-white',
+      'relative inline-flex h-10 items-center gap-1 rounded-full px-3.5 text-[14.5px] font-semibold transition-colors',
+      active ? 'text-ink' : 'text-ink-soft hover:bg-ink/[0.05] hover:text-ink',
     );
-
-  const iconBtn = cn('relative grid h-10 w-10 place-items-center rounded-full transition-colors', solid ? 'text-ink hover:bg-ink/[0.06]' : 'text-white hover:bg-white/10');
+  const label = (text: string, active: boolean) => <span className={cn('px-0.5', active && MARKER)}>{text}</span>;
+  const iconBtn = 'relative grid h-10 w-10 place-items-center rounded-full text-ink transition-colors hover:bg-ink/[0.06]';
 
   return (
     <>
       <AnnouncementBar />
       <header
         className={cn(
-          'sticky top-0 z-40 transition-[background,box-shadow,border-color] duration-300',
-          solid ? 'border-b border-line/80 bg-paper/90 backdrop-blur-xl' : 'border-b border-transparent bg-transparent',
-          transparentTop && '-mb-[76px]',
+          'sticky top-0 z-40 border-b bg-paper/85 backdrop-blur-xl transition-[box-shadow,border-color] duration-300',
+          scrolled || megaItem ? 'border-line shadow-[0_12px_32px_-24px_rgba(15,29,22,0.45)]' : 'border-line/70',
         )}
         onMouseLeave={() => setMega(null)}
       >
-        <div className="container-x flex h-[76px] items-center gap-3">
-          <button className={cn(iconBtn, 'lg:hidden -ml-2')} onClick={() => setMobileOpen(true)} aria-label={t('menu')}>
+        <div className="container-x flex h-16 items-center gap-1.5 lg:h-[76px]">
+          <button className={cn(iconBtn, '-ml-2 lg:hidden')} onClick={() => setMobileOpen(true)} aria-label={t('menu')}>
             <Menu className="h-5 w-5" />
           </button>
-          <Link to="/" className="shrink-0" aria-label="SELCA COMPANY">
-            <Logo tone={tone} className="h-[46px]" />
+          <Link to="/" className="shrink-0 rounded-lg" aria-label="Paketoje">
+            <Logo className="h-[34px] lg:h-[40px]" />
           </Link>
 
-          <nav className="ml-6 hidden items-center gap-0.5 lg:flex">
+          <nav className="ml-8 hidden items-center gap-0.5 lg:flex xl:ml-10">
             {nav.map((n) =>
-              n.children.length ? (
+              n === shop ? (
                 <button
                   key={n.id}
                   type="button"
@@ -276,126 +407,198 @@ export function Header({ transparentTop = false }: { transparentTop?: boolean })
                   onClick={() => setMega((m) => (m === n.id ? null : n.id))}
                   className={linkCls(inSection(n, location.pathname) || mega === n.id)}
                   aria-expanded={mega === n.id}
+                  aria-haspopup="true"
                 >
-                  {n.label}
+                  {label(n.label, inSection(n, location.pathname))}
+                  <ChevronDown className={cn('h-4 w-4 opacity-60 transition-transform duration-300', mega === n.id && 'rotate-180')} />
                 </button>
               ) : n.external ? (
                 <a key={n.id} href={n.to} target="_blank" rel="noreferrer" onMouseEnter={() => setMega(null)} className={linkCls(false)}>
                   {n.label}
                 </a>
-              ) : (
-                <NavLink key={n.id} to={n.to} onMouseEnter={() => setMega(null)} className={({ isActive }) => linkCls(isActive)}>
-                  {n.label}
+              ) : n.to ? (
+                <NavLink key={n.id} to={n.to} onMouseEnter={() => setMega(null)} className={({ isActive }) => linkCls(isActive || inSection(n, location.pathname))}>
+                  {({ isActive }) => label(n.label, isActive || inSection(n, location.pathname))}
                 </NavLink>
-              ),
+              ) : null,
             )}
           </nav>
 
-          <div className="ml-auto flex items-center gap-0.5">
-            <button className={iconBtn} onClick={() => setSearchOpen(true)} aria-label={t('searchPlaceholder')}>
+          <div className="ml-auto flex items-center gap-0.5 sm:gap-1">
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="mr-1 hidden h-10 w-[230px] items-center gap-2.5 rounded-full border border-line bg-white/70 pl-4 pr-1.5 text-left text-[13.5px] text-muted transition-colors hover:border-ink/25 hover:bg-white xl:flex"
+              aria-label={c('openSearch')}
+              title={c('pressSlash')}
+            >
+              <Search className="h-4 w-4 shrink-0 text-ink" />
+              <span className="min-w-0 flex-1 truncate">{c('searchShort')}</span>
+              <kbd className="grid h-7 w-7 place-items-center rounded-full bg-sand font-sans text-[12px] font-bold text-ink-soft">/</kbd>
+            </button>
+            <button className={cn(iconBtn, 'xl:hidden')} onClick={() => setSearchOpen(true)} aria-label={c('openSearch')}>
               <Search className="h-[19px] w-[19px]" />
             </button>
             <Link to="/te-preferuarat" className={cn(iconBtn, 'hidden sm:grid')} aria-label={t('wishlist')}>
               <Heart className="h-[19px] w-[19px]" />
-              {wishCount > 0 && <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-brand-600 px-1 text-[10px] font-bold text-white">{wishCount}</span>}
+              {wishCount > 0 && <span className="absolute right-0.5 top-0.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-brand-600 px-1 text-[10px] font-bold text-white ring-2 ring-paper">{wishCount}</span>}
             </Link>
             <button className={iconBtn} onClick={() => setCartOpen(true)} aria-label={t('cart')}>
               <ShoppingBag className="h-[19px] w-[19px]" />
               {cartCount > 0 && (
-                <span key={cartCount} className="absolute right-0.5 top-0.5 grid h-[18px] min-w-[18px] animate-pop place-items-center rounded-full bg-brand-600 px-1 text-[10px] font-bold text-white">
+                <span key={cartCount} className="absolute right-0 top-0 grid h-[19px] min-w-[19px] animate-pop place-items-center rounded-full bg-pink px-1 text-[10.5px] font-extrabold text-ink ring-2 ring-paper">
                   {cartCount}
                 </span>
               )}
             </button>
-            <ButtonLink to="/#mjerenje" variant={solid ? 'primary' : 'light'} size="sm" className="ml-2 hidden xl:inline-flex" icon={<Ruler className="h-4 w-4" />}>
+            <Link
+              to={samplesHref}
+              className="ml-2 hidden h-10 items-center gap-2 rounded-full bg-lime pl-3.5 pr-4 text-[13.5px] font-bold text-ink shadow-[inset_0_-2px_0_rgb(0_0_0/0.08)] transition-colors hover:bg-ink hover:text-lime md:inline-flex"
+            >
+              <PackageOpen className="h-4 w-4" />
               {t('freeMeasure')}
-            </ButtonLink>
+            </Link>
           </div>
         </div>
-        <AnimatePresence>{megaItem && <MegaMenu key={megaItem.id} item={megaItem} onClose={() => setMega(null)} />}</AnimatePresence>
+        <AnimatePresence>
+          {megaItem && (
+            <>
+              <motion.div
+                key="scrim"
+                aria-hidden
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="pointer-events-none absolute inset-x-0 top-full -z-10 h-screen bg-ink/25"
+              />
+              <MegaMenu key={megaItem.id} item={megaItem} tiles={tiles} samplesHref={samplesHref} onClose={() => setMega(null)} />
+            </>
+          )}
+        </AnimatePresence>
       </header>
-      <MobileMenu open={mobileOpen} onClose={() => setMobileOpen(false)} nav={nav} fallback={fallback} />
+      <MobileMenu open={mobileOpen} onClose={() => setMobileOpen(false)} nav={nav} shop={shop} tiles={tiles} samplesHref={samplesHref} />
     </>
   );
 }
 
-interface MobileRow {
-  key: string;
-  to: string;
-  label: string;
-  external: boolean;
-  /** Indented sub-links shown under the row */
-  sub: NavItem[];
-}
-
-function MobileMenu({ open, onClose, nav, fallback }: { open: boolean; onClose: () => void; nav: NavItem[]; fallback: boolean }) {
+/* ------------------------------------------------------------------ */
+/* Mobile menu                                                         */
+/* ------------------------------------------------------------------ */
+function MobileMenu({ open, onClose, nav, shop, tiles, samplesHref }: { open: boolean; onClose: () => void; nav: NavItem[]; shop?: NavItem; tiles: ShopTile[]; samplesHref: string }) {
   const t = useDict(site);
+  const c = useDict(chrome);
   const settings = useSettings();
-  // The first dropdown with image tiles (Proizvodi) drives the category grid; its link becomes "All products".
-  const shop = nav.find((n) => n.children.some(isTile));
-  const tiles = shop ? shop.children.filter(isTile) : [];
-  const links: MobileRow[] = [
-    { key: 'home', to: '/', label: t('home'), external: false, sub: [] },
-    ...nav.map((n) =>
-      n === shop
-        ? { key: n.id, to: n.to || '/produktet', label: n.to ? t('allProducts') : n.label, external: n.external, sub: fallback ? [] : n.children.filter((c) => !isTile(c)) }
-        : { key: n.id, to: n.to, label: n.label, external: n.external, sub: n.children },
-    ),
-  ];
-  const rowCls = 'border-b border-line py-3.5 text-[17px] font-semibold';
+  const setSearchOpen = useUi((s) => s.setSearchOpen);
+  const main = tiles.filter((x) => x.kind !== 'soon');
+  const soon = tiles.filter((x) => x.kind === 'soon');
+  const extra = shop ? shop.children.filter((x) => !isTile(x)) : [];
+  const rows = nav.filter((n) => n !== shop);
+  const rowCls = 'flex items-center justify-between border-b border-line py-3.5 font-display text-[22px] font-bold tracking-[-0.02em]';
+
   return (
-    <Drawer open={open} onClose={onClose} side="left" title={<Logo className="h-9" />} width="max-w-[380px]">
-      <div className="px-5 py-5">
-        {tiles.length > 0 && (
+    <Drawer
+      open={open}
+      onClose={onClose}
+      side="left"
+      title={<Logo className="h-8" />}
+      width="max-w-[400px]"
+      footer={
+        <div className="space-y-3">
+          <Link to={samplesHref} onClick={onClose} className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-lime text-[15px] font-bold text-ink">
+            <PackageOpen className="h-4 w-4" /> {t('bookMeasure')}
+          </Link>
+          <div className="flex items-center justify-between gap-3">
+            <LangSwitcher variant="segmented" />
+            <a href={`tel:${settings.phone.replace(/\s/g, '')}`} className="inline-flex items-center gap-2 text-[13.5px] font-semibold text-ink">
+              <Phone className="h-4 w-4" /> {settings.phone}
+            </a>
+          </div>
+        </div>
+      }
+    >
+      <div className="px-5 pb-6 pt-4">
+        <button
+          onClick={() => {
+            onClose();
+            setSearchOpen(true);
+          }}
+          className="flex h-12 w-full items-center gap-3 rounded-full border border-line bg-white px-4 text-left text-[14.5px] text-muted"
+        >
+          <Search className="h-4 w-4 text-ink" /> <span className="truncate">{t('searchPlaceholder')}</span>
+        </button>
+
+        {main.length > 0 && (
           <>
-            <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.2em] text-muted">{t('categories')}</div>
-            <div className="grid grid-cols-2 gap-2">
-              {tiles.map((c) => (
-                <NavTarget key={c.id} item={c} onClick={onClose} className="group relative h-24 overflow-hidden rounded-xl bg-ink">
-                  <Img src={c.image} small alt="" className="absolute inset-0 h-full w-full object-cover opacity-75" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-ink/80 to-transparent" />
-                  <span className="absolute bottom-2 left-3 right-3 truncate text-sm font-semibold text-white">{c.label}</span>
+            <div className="mb-2.5 mt-6 flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted">{t('categories')}</span>
+              <Link to={shop?.to || '/produktet'} onClick={onClose} className="inline-flex items-center gap-1 text-[13px] font-bold text-brand-700">
+                {c('browseAll')} <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {main.map((x) => (
+                <NavTarget key={x.id} item={x} onClick={onClose} className="group flex flex-col gap-1.5 rounded-2xl bg-white p-1.5 pb-2 ring-1 ring-line">
+                  <span className="relative aspect-square overflow-hidden rounded-xl bg-sand">
+                    {x.image && <Img src={x.image} small alt="" className="h-full w-full object-cover" />}
+                    {x.kind === 'quote' && <span className="absolute left-1 top-1 rounded-full bg-pink px-1.5 py-0.5 text-[8.5px] font-extrabold uppercase tracking-wide text-ink">Logo</span>}
+                  </span>
+                  <span className="line-clamp-2 px-0.5 text-[12px] font-bold leading-tight text-ink">{x.label}</span>
                 </NavTarget>
               ))}
             </div>
+            {(soon.length > 0 || extra.length > 0) && (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                {extra.map((x) => (
+                  <NavTarget
+                    key={x.id}
+                    item={x}
+                    onClick={onClose}
+                    className={cn('inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[12.5px] font-bold', isPromo(x) ? 'bg-pink-soft text-pink-ink' : 'border border-line bg-white text-ink-soft')}
+                  >
+                    {isPromo(x) && <Percent className="h-3.5 w-3.5" />} {x.label}
+                  </NavTarget>
+                ))}
+                {soon.length > 0 && <span className="text-[10.5px] font-bold uppercase tracking-[0.16em] text-muted">{c('soon')}</span>}
+                {soon.map((s) => (
+                  <SoonChip key={s.id} tile={s} onClick={onClose} />
+                ))}
+              </div>
+            )}
           </>
         )}
-        <nav className={cn('flex flex-col', tiles.length > 0 && 'mt-6')}>
-          {links.map((n) => (
-            <div key={n.key} className="flex flex-col">
+
+        <nav className="mt-6 flex flex-col border-t border-line">
+          {rows.map((n) => (
+            <div key={n.id} className="flex flex-col">
               {!n.to ? (
                 <span className={cn(rowCls, 'text-ink')}>{n.label}</span>
               ) : n.external ? (
                 <a href={n.to} target="_blank" rel="noreferrer" onClick={onClose} className={cn(rowCls, 'text-ink')}>
-                  {n.label}
+                  {n.label} <ArrowUpRight className="h-5 w-5 text-ink/30" />
                 </a>
               ) : (
                 <NavLink to={n.to} end onClick={onClose} className={({ isActive }) => cn(rowCls, isActive ? 'text-brand-700' : 'text-ink')}>
-                  {n.label}
+                  {n.label} <ArrowRight className="h-5 w-5 text-ink/25" />
                 </NavLink>
               )}
-              {n.sub.map((c) => (
-                <NavTarget
-                  key={c.id}
-                  item={c}
-                  onClick={onClose}
-                  className={cn('border-b border-line py-3 pl-4 text-[15px]', isPromo(c) ? 'font-semibold text-brand-700' : 'font-medium text-ink-soft')}
-                >
-                  {c.label}
+              {n.children.map((x) => (
+                <NavTarget key={x.id} item={x} onClick={onClose} className={cn('border-b border-line py-3 pl-4 text-[15px]', isPromo(x) ? 'font-semibold text-pink-ink' : 'font-medium text-ink-soft')}>
+                  {x.label}
                 </NavTarget>
               ))}
             </div>
           ))}
+          <Link to="/te-preferuarat" onClick={onClose} className={cn(rowCls, 'text-ink sm:hidden')}>
+            {t('wishlist')} <Heart className="h-5 w-5 text-ink/25" />
+          </Link>
         </nav>
-        <div className="mt-6 flex items-center justify-between">
-          <LangSwitcher align="left" />
-          <a href={`tel:${settings.phone.replace(/\s/g, '')}`} className="inline-flex items-center gap-2 text-sm font-semibold text-ink">
-            <Phone className="h-4 w-4" /> {settings.phone}
-          </a>
+
+        <div className="mt-6 flex items-start gap-3 rounded-2xl bg-sand/70 p-4 text-[13px] text-ink-soft">
+          <Truck className="mt-0.5 h-4 w-4 shrink-0 text-brand-700" />
+          <span>
+            <span className="block font-bold text-ink">{c('shipping')}</span>
+            {c('delivery')}
+          </span>
         </div>
-        <ButtonLink to="/#mjerenje" onClick={onClose} className="mt-6 w-full" size="lg" icon={<Ruler className="h-4 w-4" />}>
-          {t('bookMeasure')}
-        </ButtonLink>
       </div>
     </Drawer>
   );

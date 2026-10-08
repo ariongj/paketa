@@ -8,7 +8,8 @@ import type { SKey } from './strings';
 /* ------------------------------------------------------------------ */
 /* Extra settings (stored on `settings.ext` until the shared type has them) */
 /* ------------------------------------------------------------------ */
-export type PayProvider = 'pilot' | 'monri' | 'allsecure';
+/** pilot = demo simulator · bank = the bank's e-commerce gateway (3-D Secure) · paysera = Paysera checkout */
+export type PayProvider = 'pilot' | 'bank' | 'paysera';
 
 export interface SettingsExt {
   /** Primary domain shown in General → Domain */
@@ -25,15 +26,15 @@ export interface SettingsExt {
 }
 
 export const EXT_DEFAULTS: SettingsExt = {
-  domain: 'selca.me',
+  domain: 'paketoje.com',
   weightUnit: 'kg',
   lengthUnit: 'cm',
   payProvider: 'pilot',
   payEnv: 'test',
   capture: 'auto',
-  langDefault: 'me',
-  langFallback: 'me',
-  localDelivery: { enabled: true, fee: 0, area: 'Podgorica, Tuzi' },
+  langDefault: 'sq',
+  langFallback: 'sq',
+  localDelivery: { enabled: true, fee: 0, area: 'Mitrovicë, Vushtrri' },
 };
 
 /** The draft the settings screens edit: the shared settings + `ext`. */
@@ -129,7 +130,16 @@ export const same = (a: unknown, b: unknown) => JSON.stringify(a ?? null) === JS
 
 export const ORDER_PREFIX_RE = /^[A-Z0-9][A-Z0-9-]{0,5}$/;
 
-export const TIMEZONES = ['Europe/Podgorica', 'Europe/Tirane', 'Europe/Belgrade', 'Europe/Sarajevo', 'Europe/Zagreb', 'Europe/Vienna', 'Europe/Berlin', 'Europe/London', 'Europe/Istanbul'];
+/** Kosovo runs on the IANA zone Europe/Belgrade (CET/CEST); the rest are the region and the diaspora. */
+export const TIMEZONES = ['Europe/Belgrade', 'Europe/Tirane', 'Europe/Skopje', 'Europe/Podgorica', 'Europe/Sarajevo', 'Europe/Zagreb', 'Europe/Vienna', 'Europe/Berlin', 'Europe/Zurich', 'Europe/London', 'Europe/Istanbul'];
+
+const KOSOVO_TZ: Record<Lang, string> = { sq: 'Kosovë — Prishtinë, Mitrovicë', en: 'Kosovo — Pristina, Mitrovica', me: 'Kosovo — Priština, Mitrovica' };
+
+/** Readable zone name for the time-zone picker. */
+export function tzLabel(zone: string, lang: Lang) {
+  if (zone === 'Europe/Belgrade') return KOSOVO_TZ[lang];
+  return zone.replace('Europe/', '').replace('_', ' ');
+}
 
 /** "GMT+2" for an IANA zone (current offset). */
 export function tzOffset(zone: string, at = new Date()) {

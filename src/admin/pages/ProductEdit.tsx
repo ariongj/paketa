@@ -11,14 +11,15 @@ import { GalleryField } from '@/admin/components/media';
 import { pd } from '@/admin/components/products/dict';
 import { RowMenu, StatusLabel, missingCounts, type MenuItem } from '@/admin/components/products/parts';
 import { PricingCard } from '@/admin/components/products/PricingCard';
+import { TiersCard } from '@/admin/components/products/TiersCard';
 import { VariantsCard } from '@/admin/components/products/VariantsCard';
 import { SpecsEditor } from '@/admin/components/products/SpecsEditor';
 import { SeoCard } from '@/admin/components/products/SeoCard';
 import { DisplayCard, InstallCard, OrganizationCard, PublishingCard, ShippingCard, StatusCard, TemplateCard } from '@/admin/components/products/EditorCards';
 import { DeleteDialog } from '@/admin/components/products/DeleteDialog';
 import {
-  MAX_TRACKED, applyPricing, defaultVariants, distinct, isTracked, missingForPublish, pricingOf, skusOf, syncVariants, uniqueSlug, variantSku, variantsOf,
-  type ProductX, type Variant,
+  MAX_TRACKED, applyPricing, cleanTiers, defaultVariants, distinct, isTracked, missingForPublish, pricingOf, skusOf, syncVariants, tierRowsOf, uniqueSlug, variantSku, variantsOf,
+  type ProductX, type TierRow, type Variant,
 } from '@/admin/components/products/model';
 import { ProductCard } from '@/site/components/ProductCard';
 import { useDict, useL, useLang } from '@/i18n';
@@ -46,6 +47,8 @@ interface Form {
   manualCols: string[];
   /** keep the old URL working after a slug change */
   redirect: boolean;
+  /** volume tiers being edited (invalid rows are dropped on save) */
+  tiers: TierRow[];
 }
 
 const blankProduct = (): ProductX => ({
@@ -58,7 +61,8 @@ const blankProduct = (): ProductX => ({
   description: { me: '', sq: '', en: '' },
   price: 0,
   salePrice: null,
-  unit: 'kom',
+  unit: 'pack',
+  tiers: [],
   stock: 0,
   images: [],
   options: [],
@@ -68,8 +72,7 @@ const blankProduct = (): ProductX => ({
   featured: false,
   status: 'draft',
   quoteOnly: false,
-  leadDays: 7,
-  warrantyYears: 2,
+  leadDays: 2,
   seo: {},
   createdAt: '',
   sold: 0,
@@ -100,16 +103,22 @@ function formFrom(source: ProductX | undefined, collections: Collection[]): Form
     variants: variantsOf(p),
     manualCols: source ? collections.filter((c) => c.kind === 'manual' && c.productIds.includes(source.id)).map((c) => c.id) : [],
     redirect: true,
+    tiers: tierRowsOf(p.tiers),
   };
 }
 
-/** Form → the product as it would be stored (pricing, stock = sum of enabled variants, template ↔ quoteOnly). */
+/** Form → the product as it would be stored (pricing, valid tiers, pack data, stock = sum of enabled variants, template ↔ quoteOnly). */
 function compose(f: Form): ProductX {
   const tracked = isTracked(f.p);
   const stock = !tracked ? UNTRACKED_STOCK : f.variants.length ? f.variants.filter((v) => v.enabled).reduce((s, v) => s + v.stock, 0) : f.p.stock;
+  const pack = f.p.unit === 'pack';
+  const tiers = cleanTiers(f.tiers);
   return {
     ...f.p,
     ...applyPricing(f.price, f.compareAt),
+    packSize: pack && f.p.packSize && f.p.packSize > 0 ? Math.round(f.p.packSize) : undefined,
+    cartonPacks: pack && f.p.cartonPacks && f.p.cartonPacks > 0 ? Math.round(f.p.cartonPacks) : undefined,
+    tiers: tiers.length ? tiers : undefined,
     stock: Math.min(tracked ? MAX_TRACKED : UNTRACKED_STOCK, stock),
     quoteOnly: f.p.template === 'quote',
     variants: f.variants.length ? f.variants : undefined,
@@ -168,7 +177,7 @@ function Editor({ source }: { source?: ProductX }) {
 
   const [original, setOriginal] = useState<Form>(() => formFrom(source, collections));
   const [form, setForm] = useState<Form>(original);
-  const autoFor = (p: ProductX) => !p.slug || p.slug === slugify(p.name.me);
+  const autoFor = (p: ProductX) => !p.slug || p.slug === slugify(p.name.sq);
   const [slugAuto, setSlugAuto] = useState(() => autoFor(original.p));
   const [tried, setTried] = useState(false);
   const [deleting, setDeleting] = useState<ProductX[]>([]);
@@ -199,7 +208,7 @@ function Editor({ source }: { source?: ProductX }) {
   const validate = (f: Form): Errors => {
     const p = compose(f);
     const e: Errors = {};
-    if (!p.name.me.trim()) e.name = t('e_name');
+    if (!p.name.sq.trim()) e.name = t('e_name');
     const own = p.sku.trim().toUpperCase();
     if (own && takenSkus.has(own)) e.sku = t('e_skuDup', { sku: p.sku.trim(), name: takenSkus.get(own) ?? '' });
     const vs = f.variants.map((v) => v.sku.trim().toUpperCase()).filter(Boolean);
@@ -245,7 +254,7 @@ function Editor({ source }: { source?: ProductX }) {
     const now = new Date().toISOString();
     const pid = next0.id || uid('p');
     const seo = { title: next0.seo?.title?.trim() || undefined, description: next0.seo?.description?.trim() || undefined };
-    const slug = uniqueSlug(slugify(next0.slug) || slugify(next0.name.me) || pid, pid, allProducts);
+    const slug = uniqueSlug(slugify(next0.slug) || slugify(next0.name.sq) || pid, pid, allProducts);
     const oldSlug = source?.slug;
     const redirects = [...(source?.redirects ?? [])];
     if (oldSlug && oldSlug !== slug && f.redirect && !redirects.includes(oldSlug)) redirects.push(oldSlug);
@@ -255,7 +264,6 @@ function Editor({ source }: { source?: ProductX }) {
       slug,
       sku: next0.sku.trim(),
       price: round2(next0.price),
-      packSize: next0.unit === 'm2' ? next0.packSize || 1 : undefined,
       seo: seo.title || seo.description ? seo : undefined,
       vendor: next0.vendor?.trim() || undefined,
       redirects: redirects.filter((r) => r !== slug).length ? redirects.filter((r) => r !== slug) : undefined,
@@ -386,7 +394,7 @@ function Editor({ source }: { source?: ProductX }) {
       )}
     </span>
   );
-  const preview = useMemo<ProductX>(() => ({ ...composed, id: composed.id || 'preview', name: composed.name.me.trim() ? composed.name : { me: t('f_title'), sq: t('f_title'), en: t('f_title') } }), [composed, t]);
+  const preview = useMemo<ProductX>(() => ({ ...composed, id: composed.id || 'preview', name: composed.name.sq.trim() ? composed.name : { me: t('f_title'), sq: t('f_title'), en: t('f_title') } }), [composed, t]);
   const slugChanged = !isNew && !!source?.slug && slugify(form.p.slug) !== source.slug && !!slugify(form.p.slug);
 
   return (
@@ -443,7 +451,7 @@ function Editor({ source }: { source?: ProductX }) {
                       label={t('f_title')}
                       required
                       value={form.p.name}
-                      onChange={(name) => setForm((f) => ({ ...f, p: { ...f.p, name, slug: slugAuto ? slugify(name.me) : f.p.slug } }))}
+                      onChange={(name) => setForm((f) => ({ ...f, p: { ...f.p, name, slug: slugAuto ? slugify(name.sq) : f.p.slug } }))}
                       className={cn(errors.name && '[&_input]:border-red-500 [&_input]:ring-4 [&_input]:ring-red-500/10')}
                     />
                     <FieldError>{errors.name}</FieldError>
@@ -468,14 +476,28 @@ function Editor({ source }: { source?: ProductX }) {
                 cost={form.p.cost ?? null}
                 unit={form.p.unit}
                 packSize={form.p.packSize ?? null}
+                cartonPacks={form.p.cartonPacks ?? null}
                 vat={settings.vatRate}
                 showCost={canCost}
                 priceError={errors.price}
                 onPrice={(price) => setForm((f) => ({ ...f, price }))}
                 onCompareAt={(compareAt) => setForm((f) => ({ ...f, compareAt }))}
                 onCost={(cost) => setP({ cost: cost ?? undefined })}
-                onUnit={(unit) => setP({ unit, packSize: unit === 'm2' ? form.p.packSize || 1 : form.p.packSize })}
+                onUnit={(unit) => setP({ unit })}
                 onPackSize={(v) => setP({ packSize: v ?? undefined })}
+                onCartonPacks={(v) => setP({ cartonPacks: v ?? undefined })}
+              />
+            </div>
+
+            <div id="sec-tiers" className="scroll-mt-24">
+              <TiersCard
+                rows={form.tiers}
+                onRows={(tiers) => setForm((f) => ({ ...f, tiers }))}
+                price={form.price}
+                onSale={form.compareAt != null && form.price != null && form.compareAt > form.price}
+                unit={form.p.unit}
+                packSize={form.p.packSize ?? null}
+                cartonPacks={form.p.cartonPacks ?? null}
               />
             </div>
 
@@ -511,7 +533,7 @@ function Editor({ source }: { source?: ProductX }) {
               }}
               onResetSlug={() => {
                 setSlugAuto(true);
-                setP({ slug: slugify(form.p.name.me) });
+                setP({ slug: slugify(form.p.name.sq) });
               }}
               onSeo={(seo) => setP({ seo })}
               redirectFrom={slugChanged ? source?.slug : undefined}
@@ -549,9 +571,9 @@ function Editor({ source }: { source?: ProductX }) {
               onInstallation={(installation) => setP({ installation })}
               leadDays={form.p.leadDays ?? null}
               onLeadDays={(v) => setP({ leadDays: v ?? undefined })}
-              warranty={form.p.warrantyYears ?? null}
-              onWarranty={(v) => setP({ warrantyYears: v ?? undefined })}
               unit={form.p.unit}
+              price={form.price}
+              packSize={form.p.unit === 'pack' ? form.p.packSize ?? null : null}
             />
             <DisplayCard badges={form.p.badges} onBadges={(badges) => setP({ badges })} featured={form.p.featured} onFeatured={(featured) => setP({ featured })} />
 

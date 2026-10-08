@@ -7,8 +7,8 @@ import { useDict, useL, useLang } from '@/i18n';
 import { adm } from '@/admin/i18n';
 import { useDb } from '@/store/db';
 import { useCategories } from '@/store/hooks';
-import { isOnSale } from '@/lib/pricing';
-import { money } from '@/lib/format';
+import { basePrice, isOnSale } from '@/lib/pricing';
+import { money, perUnit, pieces } from '@/lib/format';
 import { fold } from '@/lib/search';
 import { cn, thumb } from '@/lib/utils';
 import { B } from './i18n';
@@ -98,7 +98,7 @@ function ManualPicker({ ids, onChange }: { ids: string[]; onChange: (ids: string
   const results = useMemo(() => {
     const needle = fold(q.trim());
     return products.filter(
-      (p) => p.status === 'active' && (cat === 'all' || p.categoryId === cat) && (!needle || fold(`${p.name[lang]} ${p.name.me} ${p.sku}`).includes(needle)),
+      (p) => p.status === 'active' && (cat === 'all' || p.categoryId === cat) && (!needle || fold(`${p.name[lang]} ${p.name.sq} ${p.sku}`).includes(needle)),
     );
   }, [products, q, cat, lang]);
 
@@ -111,7 +111,7 @@ function ManualPicker({ ids, onChange }: { ids: string[]; onChange: (ids: string
     [next[i], next[j]] = [next[j], next[i]];
     onChange(next);
   };
-  const price = (p: Product) => money(isOnSale(p) ? (p.salePrice as number) : p.price, lang);
+  const price = (p: Product) => `${money(basePrice(p), lang)} ${perUnit(p.unit, lang)}${p.unit === 'pack' && p.packSize ? ` · ${pieces(p.packSize, lang)}` : ''}`;
 
   return (
     <div className="space-y-4">

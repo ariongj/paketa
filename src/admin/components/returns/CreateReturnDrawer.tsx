@@ -10,10 +10,10 @@ import { customerName, matchesOrder } from '@/admin/components/orders/helpers';
 import { FulfilBadge, PayBadge } from '@/admin/components/orders/status';
 import { SelectInput, Stepper, TextInput } from '@/admin/components/orders/ui';
 import { useDict, useLang } from '@/i18n';
-import { common } from '@/i18n/common';
 import { useDb } from '@/store/db';
 import { fulfillmentOf, paymentOf, refundForLines } from '@/lib/orders';
-import { date, money, num, unitLabel } from '@/lib/format';
+import { date, money, unitLabel } from '@/lib/format';
+import { piecesNote, qtyText, unitsText } from '@/admin/components/products/units';
 import { cn } from '@/lib/utils';
 import type { Order, ReturnRequest } from '@/lib/types';
 import { rd } from './dict';
@@ -32,7 +32,6 @@ export function CreateReturnDrawer({ open, onClose, initialOrderId, onCreated }:
 
 function Form({ open, onClose, initialOrderId, onCreated }: { open: boolean; onClose: () => void; initialOrderId: string | null; onCreated: (r: ReturnRequest) => void }) {
   const t = useDict(rd, 'admin');
-  const tc = useDict(common, 'admin');
   const lang = useLang('admin');
   const orders = useDb((s) => s.orders);
   const products = useDb((s) => s.products);
@@ -72,11 +71,6 @@ function Form({ open, onClose, initialOrderId, onCreated }: { open: boolean; onC
     if (!r) return toast.error(t('needItems'));
     toast.success(t('created', { n: r.number }), { description: money(r.refundAmount, lang) });
     onCreated(r);
-  };
-
-  const unitOf = (o: Order, productId: string) => {
-    const l = o.items.find((x) => x.productId === productId);
-    return l ? (l.unit === 'm2' && l.packSize ? tc('packs') : unitLabel(l.unit, lang)) : '';
   };
 
   return (
@@ -176,17 +170,22 @@ function Form({ open, onClose, initialOrderId, onCreated }: { open: boolean; onC
                     const max = maxOf(g.productId, g.qty);
                     const n = qty[g.productId] ?? 0;
                     const name = lineName(g.productId, order, products, lang);
+                    const line = g.lines[0].line;
+                    const pcs = n > 0 ? piecesNote(line, n, lang) : '';
                     return (
                       <li key={g.productId} className={cn('flex items-center gap-3 px-4 py-3', n > 0 && 'bg-ink/[0.025]')}>
-                        <Thumb src={g.lines[0].line.image} className="h-11 w-11 rounded-lg" />
+                        <Thumb src={line.image} className="h-11 w-11 rounded-lg" />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-[13.5px] font-medium text-ink">{name}</span>
                           <span className="block truncate text-[12px] text-muted">
-                            {num(g.qty, lang)} {unitOf(order, g.productId)} · {money(g.unitNet, lang)} / {unitOf(order, g.productId)}
+                            {qtyText(line, g.qty, lang, { short: true })} · {money(g.unitNet, lang)}/{unitLabel(line.unit, lang)}
                           </span>
-                          {prev > 0 && <span className="block text-[12px] font-medium text-[#7A5D00]">{max > 0 ? t('alreadyReturned', { n: prev }) : t('nothingLeft')}</span>}
+                          {prev > 0 && <span className="block text-[12px] font-medium text-[#7A5D00]">{max > 0 ? t('alreadyReturned', { n: unitsText(prev, line.unit, lang) }) : t('nothingLeft')}</span>}
                         </span>
-                        <Stepper value={n} min={0} max={max} onChange={(v) => setQty((s) => ({ ...s, [g.productId]: v }))} ariaLabel={name} disabled={max === 0} />
+                        <span className="flex shrink-0 flex-col items-end gap-1">
+                          <Stepper value={n} min={0} max={max} onChange={(v) => setQty((s) => ({ ...s, [g.productId]: v }))} ariaLabel={name} disabled={max === 0} />
+                          {pcs && <span className="whitespace-nowrap text-[11px] tabular-nums text-muted">= {pcs}</span>}
+                        </span>
                       </li>
                     );
                   })}
@@ -221,6 +220,7 @@ function Form({ open, onClose, initialOrderId, onCreated }: { open: boolean; onC
               <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               <span>
                 {t('refundBasis')}
+                <span className="mt-1 block">{t('policy')}</span>
                 {unpaid && <span className="mt-1 block font-medium text-[#7A5D00]">{t('unpaidCreate')}</span>}
               </span>
             </p>

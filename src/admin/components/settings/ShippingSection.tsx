@@ -19,61 +19,61 @@ import { Block, Note, Panel, StateText } from './ui';
 
 const D = defineDict({
   me: {
-    zonesTitle: 'Zone i cijene dostave',
+    zonesTitle: 'Zone dostave na Kosovu',
     free: 'Besplatna dostava',
     free_h: 'Besplatna dostava je sada pravilo popusta — sa rasporedom, segmentima i pravilima kombinovanja.',
     freeOn: 'Aktivno · besplatno iznad {amount}',
     freeOff: 'Nema aktivnog pravila',
     openRule: 'Otvori pravilo',
-    pickup: 'Lično preuzimanje',
-    pickup_h: 'Lokacije sa preuzimanjem nude se na checkout-u bez troškova dostave.',
+    pickup: 'Preuzimanje u depou',
+    pickup_h: 'Depo i tačke preuzimanja nude se na checkout-u bez troškova dostave.',
     pickupAddr: 'Adresa za preuzimanje na checkout-u',
     pickupNone: 'Nijedna lokacija nema uključeno preuzimanje.',
     locations: 'Lokacije',
     local: 'Lokalna dostava',
-    local_d: 'Sopstvenim vozilima, u dogovorenom terminu.',
+    local_d: 'Našim kombijem po Mitrovici i okolini — isti ili sljedeći radni dan.',
     localFee: 'Cijena',
     localArea: 'Područje (gradovi)',
     free0: 'Besplatno',
-    taxNote: 'Cijene uključuju PDV {rate}%. Pakovanje, praćenje i otpremnice zavise od kurirskog partnera. CMS ne zamjenjuje fiskalnu specifikaciju.',
+    taxNote: 'Cijene uključuju TVSH {rate} %. Praćenje pošiljki i otpremnice zavise od kurirskog partnera; fiskalni račun izdaje se preko fiskalnog uređaja (ATK).',
   },
   sq: {
-    zonesTitle: 'Zonat dhe tarifat e dërgesës',
+    zonesTitle: 'Zonat e dërgesës në Kosovë',
     free: 'Dërgesa falas',
     free_h: 'Dërgesa falas tani është rregull zbritjeje — me orar, segmente dhe rregulla kombinimi.',
     freeOn: 'Aktive · falas mbi {amount}',
     freeOff: 'Nuk ka rregull aktiv',
     openRule: 'Hap rregullin',
-    pickup: 'Marrje në dyqan',
-    pickup_h: 'Lokacionet me marrje ofrohen në checkout pa kosto dërgese.',
+    pickup: 'Marrje në depo',
+    pickup_h: 'Depoja dhe pikat e marrjes ofrohen në checkout pa kosto dërgese.',
     pickupAddr: 'Adresa e marrjes në checkout',
     pickupNone: 'Asnjë lokacion nuk ka marrje të aktivizuar.',
     locations: 'Lokacionet',
     local: 'Dorëzim lokal',
-    local_d: 'Me automjetet tona, në orarin e dakorduar.',
+    local_d: 'Me furgonin tonë në Mitrovicë dhe rrethinë — të njëjtën ditë ose ditën e ardhshme të punës.',
     localFee: 'Tarifa',
     localArea: 'Zona (qytetet)',
     free0: 'Falas',
-    taxNote: 'Çmimet përfshijnë TVSH {rate}%. Paketimi, gjurmimi dhe fletët e paketimit varen nga partneri i dërgesës. CMS nuk zëvendëson specifikimin fiskal.',
+    taxNote: 'Çmimet përfshijnë TVSH {rate} %. Gjurmimi dhe fletëdërgesat varen nga partneri korrier; kuponi fiskal lëshohet me pajisjen fiskale (ATK).',
   },
   en: {
-    zonesTitle: 'Shipping zones & rates',
+    zonesTitle: 'Delivery zones in Kosovo',
     free: 'Free shipping',
     free_h: 'Free shipping is now a discount rule — with scheduling, segments and combination rules.',
     freeOn: 'Active · free over {amount}',
     freeOff: 'No active rule',
     openRule: 'Open rule',
-    pickup: 'Store pickup',
-    pickup_h: 'Pickup locations are offered at checkout with no shipping fee.',
+    pickup: 'Warehouse pickup',
+    pickup_h: 'The warehouse and pickup points are offered at checkout with no delivery fee.',
     pickupAddr: 'Pickup address at checkout',
     pickupNone: 'No location has pickup enabled.',
     locations: 'Locations',
     local: 'Local delivery',
-    local_d: 'With our own vans, at an agreed time.',
+    local_d: 'With our own van in Mitrovica and the surrounding area — same or next working day.',
     localFee: 'Fee',
     localArea: 'Area (cities)',
     free0: 'Free',
-    taxNote: 'Prices include {rate}% VAT. Packing, tracking and packing slips depend on the carrier partner. The CMS doesn’t replace the fiscal specification.',
+    taxNote: 'Prices include {rate} % VAT (TVSH). Tracking and delivery notes depend on the courier partner; the fiscal receipt is issued through the fiscal device (ATK).',
   },
 });
 
@@ -97,7 +97,7 @@ export function ShippingSection({ s, set, setExt, errors }: SecProps) {
 
   const patchZone = (id: string, patch: Partial<ShippingZone>) => set('shippingZones', zones.map((z) => (z.id === id ? { ...z, ...patch } : z)));
   const addZone = () => {
-    const z: ShippingZone = { id: uid('z'), name: '', cities: [], fee: 15, days: '2–3' };
+    const z: ShippingZone = { id: uid('z'), name: '', cities: [], fee: 4, days: '1–3' };
     setFocusId(z.id);
     set('shippingZones', [...zones, z]);
   };
@@ -146,10 +146,10 @@ export function ShippingSection({ s, set, setExt, errors }: SecProps) {
                     </IconBtn>
                   </div>
                   <div className="grid grid-cols-2 gap-x-3 gap-y-4 sm:grid-cols-[minmax(0,1fr)_120px_130px]">
-                    <TextField className="col-span-2 sm:col-span-1" label={tl('zoneName')} value={z.name} onChange={(v) => patchZone(z.id, { name: v })} placeholder={tl('newZone')} error={errors[`zone_${z.id}`]} autoFocus={focusId === z.id} />
+                    <TextField className="col-span-2 sm:col-span-1" label={tl('zoneName')} value={z.name} onChange={(v) => patchZone(z.id, { name: v })} placeholder="Pjesa tjetër e Kosovës" error={errors[`zone_${z.id}`]} autoFocus={focusId === z.id} />
                     <NumberField label={tl('zoneFee')} value={z.fee} onChange={(n) => patchZone(z.id, { fee: n })} trailing="€" />
                     <TextField label={tl('zoneDays')} value={z.days} onChange={(v) => patchZone(z.id, { days: v })} placeholder="1–2" />
-                    <ListField className="col-span-2 sm:col-span-3" label={tl('zoneCities')} value={z.cities} onChange={(v) => patchZone(z.id, { cities: v })} rows={2} placeholder="Podgorica, Danilovgrad, …" />
+                    <ListField className="col-span-2 sm:col-span-3" label={tl('zoneCities')} value={z.cities} onChange={(v) => patchZone(z.id, { cities: v })} rows={2} placeholder="Mitrovicë, Vushtrri, Skenderaj, …" />
                   </div>
                 </li>
               ))}
@@ -231,7 +231,7 @@ export function ShippingSection({ s, set, setExt, errors }: SecProps) {
           {local.enabled && (
             <div className="mt-4 grid gap-x-4 gap-y-4 sm:grid-cols-[140px_minmax(0,1fr)] sm:pl-14">
               <NumberField label={t('localFee')} value={local.fee} onChange={(n) => setExt('localDelivery', { ...local, fee: n })} trailing="€" hint={local.fee === 0 ? t('free0') : undefined} />
-              <TextField label={t('localArea')} value={local.area} onChange={(v) => setExt('localDelivery', { ...local, area: v })} leading={<MapPin className={ico} />} />
+              <TextField label={t('localArea')} value={local.area} onChange={(v) => setExt('localDelivery', { ...local, area: v })} leading={<MapPin className={ico} />} placeholder="Mitrovicë, Vushtrri" />
             </div>
           )}
         </Block>

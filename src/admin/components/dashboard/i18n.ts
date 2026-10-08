@@ -1,7 +1,7 @@
 import { defineDict } from '@/i18n';
 import type { Lang } from '@/lib/types';
 
-/** Strings for the store overview (ME ijekavian / SQ per the CMS proposal / EN). */
+/** Strings for the store overview (SR Latin ijekavian in `me` / SQ per the CMS proposal / EN). */
 export const D = defineDict({
   me: {
     // header + period
@@ -26,8 +26,8 @@ export const D = defineDict({
     no_compare: 'Nema podataka za poređenje',
     prev_today: 'Juče do ovog sata: {v}',
     prev_days: 'Prethodnih {n} dana: {v}',
-    net_def: 'Proizvodi i ugradnja nakon popusta i povrata, bez dostave i otkazanih narudžbi · PDV uračunat',
-    stock_hint: '{n} ili manje na stanju',
+    net_def: 'Proizvodi i štampa logotipa nakon popusta i povrata, bez dostave i otkazanih narudžbi · TVSH uračunat',
+    stock_hint: 'Do {n} pakovanja na stanju',
     contacts_unassigned: '{n} bez zaduženog',
     contacts_all_assigned: 'Svi imaju zaduženog',
     open_list: 'Otvori filtriranu listu',
@@ -99,7 +99,7 @@ export const D = defineDict({
     chart_daily: 'Po danima · {p}',
     chart_weekly: 'Po sedmicama · {p}',
     chart_total: 'Ukupno',
-    chart_note: 'bez dostave i otkazanih · PDV uračunat',
+    chart_note: 'bez dostave i otkazanih · TVSH uračunat',
     chart_aria: 'Stubičasti grafikon neto prodaje za period {p}, ukupno {total}. Koristite strelice lijevo i desno za pregled po stupcima.',
     view_chart: 'Grafikon',
     view_table: 'Tabela',
@@ -120,7 +120,7 @@ export const D = defineDict({
     status_empty: 'Nema narudžbi u ovom periodu',
     // top products
     top_title: 'Najprodavaniji proizvodi',
-    top_desc: 'Po neto prodaji · {p}',
+    top_desc: 'Po prodatim pakovanjima · {p}',
     sold: 'prodato',
     all_products: 'Svi proizvodi',
     // campaigns
@@ -164,8 +164,8 @@ export const D = defineDict({
     no_compare: 'Pa të dhëna për krahasim',
     prev_today: 'Dje deri në këtë orë: {v}',
     prev_days: '{n} ditët e mëparshme: {v}',
-    net_def: 'Produktet dhe montimi pas zbritjeve dhe kthimeve, pa dërgesë dhe pa porositë e anuluara · me TVSH',
-    stock_hint: '{n} ose më pak në stok',
+    net_def: 'Produktet dhe printimi me logo pas zbritjeve dhe kthimeve, pa dërgesë dhe pa porositë e anuluara · me TVSH',
+    stock_hint: 'Deri në {n} pako në stok',
     contacts_unassigned: '{n} pa përgjegjës',
     contacts_all_assigned: 'Të gjitha kanë përgjegjës',
     open_list: 'Hap listën e filtruar',
@@ -252,7 +252,7 @@ export const D = defineDict({
     status_total_5: 'porosi në periudhë',
     status_empty: 'Nuk ka porosi në këtë periudhë',
     top_title: 'Produktet më të shitura',
-    top_desc: 'Sipas shitjeve neto · {p}',
+    top_desc: 'Sipas pakove të shitura · {p}',
     sold: 'të shitura',
     all_products: 'Të gjitha produktet',
     camp_title: 'Fushatat aktive',
@@ -294,8 +294,8 @@ export const D = defineDict({
     no_compare: 'No data to compare',
     prev_today: 'Yesterday up to this hour: {v}',
     prev_days: 'Previous {n} days: {v}',
-    net_def: 'Products and installation after discounts and returns, excluding shipping and cancelled orders · VAT included',
-    stock_hint: '{n} or fewer in stock',
+    net_def: 'Products and logo printing after discounts and returns, excluding shipping and cancelled orders · VAT included',
+    stock_hint: '{n} packs or fewer in stock',
     contacts_unassigned: '{n} without an assignee',
     contacts_all_assigned: 'All have an assignee',
     open_list: 'Open the filtered list',
@@ -382,7 +382,7 @@ export const D = defineDict({
     status_total_5: 'orders in the period',
     status_empty: 'No orders in this period',
     top_title: 'Top products',
-    top_desc: 'By net sales · {p}',
+    top_desc: 'By packs sold · {p}',
     sold: 'sold',
     all_products: 'All products',
     camp_title: 'Active campaigns',
@@ -405,7 +405,7 @@ export const D = defineDict({
   },
 });
 
-/** Plural bucket: Montenegrin has 1 / 2–4 / 5+ forms, Albanian and English 1 / many. */
+/** Plural bucket: Serbian (`me`) has 1 / 2–4 / 5+ forms, Albanian and English 1 / many. */
 export function pluralKey(lang: Lang, n: number): '1' | '2' | '5' {
   if (lang !== 'me') return n === 1 ? '1' : '5';
   const m10 = n % 10;

@@ -26,7 +26,7 @@ import { FieldLabel, Notice, Segmented, SelectBox, StatePill, Tip, ctl } from '@
 import { MediaSlot } from '@/admin/components/store/MediaSlot';
 import { PlacementPreview, type Device } from '@/admin/components/store/PlacementPreview';
 import {
-  KIND_POSITIONS, KINDS, blankPlacement, fromLocalInput, rangeLabel, resolveHref, toLocalInput, useLeaveGuard, type LinkCtx, type PlacementX,
+  KIND_POSITIONS, KINDS, SAMPLES_HREF, blankPlacement, fromLocalInput, rangeLabel, resolveHref, toLocalInput, useLeaveGuard, type LinkCtx, type PlacementX,
 } from '@/admin/components/store/placements';
 import { readTheme } from '@/admin/components/store/theme';
 
@@ -149,7 +149,7 @@ function Editor({ base, isNew }: { base: PlacementX; isNew: boolean }) {
       toast.error(titleMissing ? t('needTitle') : imageMissing ? t('needImage') : t('dateInvalid'));
       return;
     }
-    let next: PlacementX = { ...draft, name: draft.name.trim() || plain(lt(draft.title, 'me')).slice(0, 60) };
+    let next: PlacementX = { ...draft, name: draft.name.trim() || plain(lt(draft.title, 'sq')).slice(0, 60) };
     if (!ownSchedule && next.offerId) next = { ...next, startsAt: undefined, endsAt: undefined };
     if (!next.startsAt) delete next.startsAt;
     if (!next.endsAt) delete next.endsAt;
@@ -434,7 +434,7 @@ function Editor({ base, isNew }: { base: PlacementX; isNew: boolean }) {
                     size="xs"
                     shape="rounded"
                     icon={<Plus className="h-3.5 w-3.5" />}
-                    onClick={() => set({ secondary: { label: { me: SE.me.dest_measure, sq: SE.sq.dest_measure, en: SE.en.dest_measure }, href: '/#mjerenje' } })}
+                    onClick={() => set({ secondary: { label: { me: SE.me.dest_measure, sq: SE.sq.dest_measure, en: SE.en.dest_measure }, href: SAMPLES_HREF } })}
                   >
                     {t('addSecondary')}
                   </Button>
@@ -626,8 +626,10 @@ function Destination({ label, value, onChange, ctx }: { label: string; value: st
       label: t('dest_other'),
       items: [
         { href: '/produktet', label: t('dest_all') },
-        { href: '/#mjerenje', label: t('dest_measure') },
+        { href: SAMPLES_HREF, label: t('dest_measure') },
         { href: '/sherbimet', label: t('dest_services') },
+        { href: '/referencat', label: t('dest_projects') },
+        { href: '/blog', label: t('dest_blog') },
         { href: '/kontakti', label: t('dest_contact') },
       ],
     },

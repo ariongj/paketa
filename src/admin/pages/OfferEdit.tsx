@@ -20,7 +20,7 @@ import type { OfferStatus, Placement, PlacementKind } from '@/lib/types';
 import { useChecker, useOfferData } from '@/admin/components/offers/hooks';
 import { useOfferActions } from '@/admin/components/offers/actions';
 import {
-  checkStats, emptyOffer, fullDate, KIND_POSITION, LANG_CODES, offerProducts, placementFromOffer, slotsFor, sourceOf,
+  checkStats, defaultMarkets, emptyOffer, fullDate, KIND_POSITION, LANG_CODES, offerProducts, placementFromOffer, slotsFor, sourceOf,
   type FixTarget, type OfferX, type RuleMode, type Step,
 } from '@/admin/components/offers/model';
 import { PrepareStep } from '@/admin/components/offers/PrepareStep';
@@ -85,8 +85,8 @@ function Editor({ id }: { id: string }) {
 
   /* ----------------------------- state ----------------------------- */
   const [init] = useState(() => {
-    const offer: OfferX = stored ? structuredClone(stored) : emptyOffer(me?.id ?? 'st-gent');
-    if (!offer.markets) offer.markets = ['mk-me'];
+    const offer: OfferX = stored ? structuredClone(stored) : emptyOffer(me?.id ?? 'st-driton', defaultMarkets(data.settings.markets));
+    if (!offer.markets) offer.markets = defaultMarkets(data.settings.markets);
     const linked = stored ? data.placements.filter((p) => p.offerId === stored.id).map((p) => p.id) : [];
     return { offer, linked, mode: (offer.discountId || isNew ? 'link' : 'none') as RuleMode };
   });
@@ -217,7 +217,7 @@ function Editor({ id }: { id: string }) {
   const changeStatus = (status: OfferStatus) => {
     const next = save({ status }, true);
     if (!next) return;
-    logAudit({ action: status === 'active' ? 'publish' : status === 'draft' ? 'unpublish' : 'status', object: 'offer', objectId: next.id, detail: `${next.name.me} → ${status}` });
+    logAudit({ action: status === 'active' ? 'publish' : status === 'draft' ? 'unpublish' : 'status', object: 'offer', objectId: next.id, detail: `${next.name.sq || next.name.en || next.name.me} → ${status}` });
     toast.success(status === 'paused' ? t('toast_paused') : status === 'draft' ? t('toast_draft') : t('toast_resumed'), { description: l(next.name) });
   };
 
@@ -231,7 +231,7 @@ function Editor({ id }: { id: string }) {
       if (d && d.status !== 'active') upsert('discounts', { ...d, status: 'active' });
     }
     if (o.content) for (const p of s.placements) if (p.offerId === next.id && p.status === 'draft') upsert('placements', { ...p, status: 'active' });
-    logAudit({ action: 'publish', object: 'offer', objectId: next.id, detail: next.name.me });
+    logAudit({ action: 'publish', object: 'offer', objectId: next.id, detail: next.name.sq || next.name.en || next.name.me });
     const later = new Date(next.startsAt).getTime() > Date.now();
     toast.success(later ? t('scheduledToast', { d: fullDate(next.startsAt, lang) }) : t('published'), { description: l(next.name) });
     if (!isNew) goStep(later ? 2 : 3);
@@ -246,7 +246,7 @@ function Editor({ id }: { id: string }) {
       const d = s.discounts.find((x) => x.id === next.discountId);
       if (d && d.status === 'active') upsert('discounts', { ...d, status: 'paused' });
     }
-    logAudit({ action: 'archive', object: 'offer', objectId: next.id, detail: next.name.me });
+    logAudit({ action: 'archive', object: 'offer', objectId: next.id, detail: next.name.sq || next.name.en || next.name.me });
     toast.success(t('ended'), { description: l(next.name) });
   };
 
@@ -331,7 +331,7 @@ function Editor({ id }: { id: string }) {
 
   const name = l(draft.name) || (isNew ? t('newTitle') : t('unnamed'));
   const rl = ruleLines(discount, t, lang);
-  const cl = contentLines(linked, homeBlock, !!(draft.landing.title.me || draft.landing.title.sq || draft.landing.title.en), t);
+  const cl = contentLines(linked, homeBlock, !!(draft.landing.title.sq || draft.landing.title.en || draft.landing.title.me), t);
   const pl = periodLines(draft, state, t, lang);
   const marketNames = data.settings.markets.filter((m) => draft.markets?.includes(m.id)).map((m) => l(m.name));
   const StatIcon = stats.fail ? XCircle : stats.warn ? AlertTriangle : CheckCircle2;

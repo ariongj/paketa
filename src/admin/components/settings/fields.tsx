@@ -22,17 +22,20 @@ export type SectionId = string;
 /* ------------------------------------------------------------------ */
 /* Demo placeholder detection ("Shembull" chip)                        */
 /* ------------------------------------------------------------------ */
-const SAMPLE_EXACT = ['+382 67 123 456', 'Magistralni put bb', 'Podgorica', '03XXXXXX', '40/31-XXXXX-X', '510-XXXXXXXXXXXXX-XX'];
-const SAMPLE_PART = ['+382 67 123 456', 'Magistralni put bb'];
+const SAMPLE_EXACT = ['8110000000', '330000000', '000000000'];
+/** Seeded placeholder phone numbers look like "+383 44 123 456" / "+383 49 000 000". */
+const SAMPLE_PART = ['123 456', '000 000', '123456'];
 
 /**
- * True when a contact/legal value is still a seeded demo placeholder.
- * A capital X counts as a placeholder digit unless it starts an Albanian word (Xh…, Xe…).
+ * True when a contact/legal value is still a seeded demo placeholder (NUI, Nr. TVSH, phone, bank account).
+ * A capital X counts as a placeholder digit unless it starts an Albanian word (Xh…, Xe…) or is the
+ * Kosovo IBAN country code ("XK05 1212 …").
  */
 export function isExample(value?: string | null) {
   const v = (value ?? '').trim();
   if (!v) return false;
-  return SAMPLE_EXACT.includes(v) || SAMPLE_PART.some((p) => v.includes(p)) || /X(?![a-zçë])/.test(v);
+  const body = v.replace(/^XK\d{2}/, '');
+  return SAMPLE_EXACT.includes(v.replace(/\s+/g, '')) || SAMPLE_PART.some((p) => v.includes(p)) || /X(?![a-zçë])/.test(body);
 }
 
 export const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());

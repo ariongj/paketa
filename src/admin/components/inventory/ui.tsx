@@ -24,8 +24,9 @@ import { useDict, useLang } from '@/i18n';
 import type { MovementReason, PurchaseOrderStatus } from '@/lib/types';
 import { num } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { piecesNote, unitWord } from '@/admin/components/products/units';
 import { inv } from './dict';
-import type { StockState } from './helpers';
+import type { StockState, UnitLike } from './helpers';
 
 type Icon = ComponentType<{ className?: string; strokeWidth?: number }>;
 
@@ -111,6 +112,30 @@ export function ReasonLabel({ reason, className }: { reason: MovementReason; cla
       {t(`r_${reason}`)}
     </span>
   );
+}
+
+/* ------------------------------------------------------------------ */
+/* Quantities: packs first, pieces as muted secondary text             */
+/* ------------------------------------------------------------------ */
+
+/** "120 pako" — the number with its plural-aware unit word in small muted type (no unit when `of` is missing). */
+export function UnitQty({ n, of, sign, className, unitClassName }: { n: number; of?: UnitLike | null; sign?: boolean; className?: string; unitClassName?: string }) {
+  const lang = useLang('admin');
+  return (
+    <span className={cn('whitespace-nowrap tabular-nums', className)}>
+      {sign && n > 0 ? '+' : ''}
+      {num(n, lang)}
+      {of && <span className={cn('ml-1 text-[11.5px] font-medium text-muted', unitClassName)}>{unitWord(of.unit, n, lang)}</span>}
+    </span>
+  );
+}
+
+/** Secondary pieces line for pack products ("6.000 copë"); renders nothing for other units or a zero quantity. */
+export function PiecesLine({ of, qty, className }: { of?: UnitLike | null; qty: number; className?: string }) {
+  const lang = useLang('admin');
+  const text = of && qty ? piecesNote(of, Math.abs(qty), lang) : '';
+  if (!text) return null;
+  return <span className={cn('block whitespace-nowrap text-[11px] font-normal leading-tight tabular-nums text-muted', className)}>{text}</span>;
 }
 
 /** +120 / −3 with an in/out arrow (symbol, not only colour). */

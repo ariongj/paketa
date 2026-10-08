@@ -8,6 +8,7 @@ import { useDict, useL, useLang } from '@/i18n';
 import { basePrice } from '@/lib/pricing';
 import { fold } from '@/lib/search';
 import { money } from '@/lib/format';
+import { packSizeText, unitWord } from '@/admin/components/products/units';
 import { cn } from '@/lib/utils';
 import type { Category, Collection, Product } from '@/lib/types';
 import { cd } from './dict';
@@ -118,7 +119,9 @@ export function ProductPicker({ products, categories, selected, onAdd }: { produ
                         <span className={cn('block truncate text-[13.5px] font-medium', added ? 'text-muted' : 'text-ink')}>{l(p.name)}</span>
                         <span className="flex items-center gap-1.5 text-[12px] text-muted">
                           <span className="font-mono">{p.sku}</span>
-                          <span>· {money(basePrice(p), lang)}</span>
+                          <span>
+                            · {money(basePrice(p), lang)} / {unitWord(p.unit, 1, lang)}
+                          </span>
                           {p.status !== 'active' && <span>· {t('notPublic')}</span>}
                         </span>
                       </span>
@@ -188,7 +191,12 @@ export function ManualList({ ids, products, onChange, sortable, disabled }: { id
             <span className="block truncate text-[13.5px] font-medium text-ink">{p ? l(p.name) : id}</span>
             <span className="flex flex-wrap items-center gap-x-1.5 text-[12px] text-muted">
               {p && <span className="font-mono">{p.sku}</span>}
-              {p && <span>· {money(basePrice(p), lang)}</span>}
+              {p && (
+                <span>
+                  · {money(basePrice(p), lang)} / {unitWord(p.unit, 1, lang)}
+                </span>
+              )}
+              {p && packSizeText(p, lang) && <span className="max-sm:hidden">· {packSizeText(p, lang)}</span>}
             </span>
           </span>
           {p && p.status !== 'active' && <StatusLabel status={p.status} className="max-sm:hidden" />}
@@ -231,9 +239,10 @@ export function PreviewTile({ product, category }: { product: Product; category?
       <p className="mt-1.5 line-clamp-2 text-[12.5px] font-medium leading-snug text-ink">{l(product.name)}</p>
       <p className="text-[12px] tabular-nums text-muted">
         <span className="font-semibold text-ink">{money(basePrice(product), lang)}</span>
+        <span> / {unitWord(product.unit, 1, lang)}</span>
         {sale && <span className="ml-1 line-through">{money(product.price, lang)}</span>}
       </p>
-      {category && <p className="truncate text-[11.5px] text-muted">{l(category.name)}</p>}
+      {(category || packSizeText(product, lang)) && <p className="truncate text-[11.5px] text-muted">{[category && l(category.name), packSizeText(product, lang)].filter(Boolean).join(' · ')}</p>}
     </div>
   );
 }

@@ -1,7 +1,13 @@
 // CMS v2 editorial model (PDF p.36 "Faqe dhe blog"): visibility draft / hidden / published + publish date,
 // author, excerpt, photo, tags, SEO and template. The extra fields are optional and stored on the existing
 // page / post records (older records simply lack them), so the storefront keeps working unchanged.
-import type { CmsPage, L10n, Post } from '@/lib/types';
+import type { CmsPage, L10n, Lang, Post } from '@/lib/types';
+
+/** Language order of every editorial tab strip / status list: SQ (default), EN, SR — the `me` key holds Serbian. */
+export const ED_LANGS: Lang[] = ['sq', 'en', 'me'];
+export const LANG_SHORT: Record<Lang, string> = { sq: 'SQ', en: 'EN', me: 'SR' };
+/** The primary (required) text of a localized value — Albanian, falling back like lt(). */
+export const primaryText = (v: L10n | undefined) => (v ? v.sq.trim() || v.en.trim() || v.me.trim() : '');
 
 /** Stored visibility. `published: false` = draft; `published: true` + `hidden` = reachable only by direct link. */
 export type Visibility = 'published' | 'hidden' | 'draft';

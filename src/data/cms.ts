@@ -1,14 +1,15 @@
 // CMS v2 demo data — collections, discounts, offers, placements, staff, appointments, segments,
 // inventory, purchasing, drafts, returns, quotes, menus, content models and the audit log.
 // Everything is relative to `now` so the demo always looks current, and coherent with the
-// SELCA catalogue (doors, windows, floors, tiles, bathroom, kitchens) and Montenegro.
+// Paketoje catalogue (cups, lids, food containers, desserts, sauce cups, cutlery, straws) and Kosovo.
+// T(me, sq, en): `me` holds Serbian (Latin).
 import type {
   AuditEntry, Booking, Collection, ContentModel, Discount, DraftOrder, HomeSection, HomeVersion, Inquiry, InventoryMovement, L10n,
   Menu, Offer, Order, Placement, Product, Project, PurchaseOrder, Quote, ReturnRequest, Segment, Service, Staff,
 } from '@/lib/types';
 import { defaultOptions } from '@/lib/pricing';
 import { refundForLines } from '@/lib/orders';
-import { round2 } from '@/lib/utils';
+import { round2, slugify } from '@/lib/utils';
 
 const T = (me: string, sq: string, en: string): L10n => ({ me, sq, en });
 const E = (): L10n => ({ me: '', sq: '', en: '' });
@@ -18,51 +19,67 @@ const iso = (now: Date, days: number, hours = 0) => new Date(now.getTime() + day
 /* ================================================================== */
 /* Products — tags, vendors, costs, barcodes, incoming, one archived   */
 /* ================================================================== */
-const COST_FACTOR: Record<string, number> = { 'cat-vrata': 0.58, 'cat-prozori': 0.55, 'cat-podovi': 0.6, 'cat-keramika': 0.57, 'cat-kupatilo': 0.56, 'cat-kuhinje': 0.52 };
-
-const EXTRAS: Record<string, { tags: string[]; vendor: string; incoming?: number; unavailable?: number; channels?: ('online' | 'pos')[] }> = {
-  'p-vrata-linea': { tags: ['sobna', 'hrast', 'novo'], vendor: 'Porta Lux' },
-  'p-vrata-classica': { tags: ['sobna', 'bijela'], vendor: 'Porta Lux' },
-  'p-vrata-flat': { tags: ['sobna', 'orah', 'premium'], vendor: 'Porta Lux', incoming: 10 },
-  'p-vrata-loft': { tags: ['klizna', 'industrijski'], vendor: 'Porta Lux' },
-  'p-vrata-vetro': { tags: ['staklo', 'novo'], vendor: 'Porta Lux', unavailable: 1 },
-  'p-vrata-guardian': { tags: ['sigurnosna', 'ulazna', 'rc3'], vendor: 'SecurDoor', incoming: 4 },
-  'p-kvaka-linea': { tags: ['okov', 'pribor'], vendor: 'Maniglia', incoming: 60 },
-  'p-pvc-bijeli': { tags: ['pvc', 'energetska-efikasnost'], vendor: 'Profilo 76', channels: ['online'] },
-  'p-pvc-antracit': { tags: ['pvc', 'antracit'], vendor: 'Profilo 76', channels: ['online'] },
-  'p-alu-slim': { tags: ['alu', 'premium'], vendor: 'AluMare', channels: ['online'] },
-  'p-hs-panorama': { tags: ['alu', 'klizna', 'po-mjeri'], vendor: 'AluMare', channels: ['online'] },
-  'p-skure': { tags: ['alu', 'zastita-od-sunca'], vendor: 'AluMare', channels: ['online'] },
-  'p-laminat-nordic': { tags: ['laminat', 'svijetlo'], vendor: 'Alpe Floor' },
-  'p-laminat-rustic': { tags: ['laminat', 'akcija'], vendor: 'Alpe Floor' },
-  'p-laminat-grey': { tags: ['laminat', 'akcija'], vendor: 'Alpe Floor', incoming: 80 },
-  'p-parket-natur': { tags: ['parket', 'akcija', 'podno-grijanje'], vendor: 'Hrast & Co.' },
-  'p-parket-bianco': { tags: ['parket', 'podno-grijanje'], vendor: 'Hrast & Co.' },
-  'p-spc-aquastop': { tags: ['vinil', 'vodootporno', 'akcija'], vendor: 'AquaStep' },
-  'p-calacatta': { tags: ['porculan', 'mermer'], vendor: 'Ceramica Adria' },
-  'p-statuario': { tags: ['porculan', 'mermer'], vendor: 'Ceramica Adria' },
-  'p-beton': { tags: ['porculan', 'beton', 'terasa'], vendor: 'Ceramica Adria' },
-  'p-metro': { tags: ['zidna', 'kupatilo'], vendor: 'Ceramica Adria' },
-  'p-lisboa': { tags: ['dekor'], vendor: 'Ceramica Adria' },
-  'p-terrazzo': { tags: ['teraco'], vendor: 'Ceramica Adria' },
-  'p-kada-nera': { tags: ['kada', 'premium'], vendor: 'Pietra Bagno' },
-  'p-kada-ellipse': { tags: ['kada'], vendor: 'Bagno Studio', unavailable: 1 },
-  'p-walkin': { tags: ['tus', 'staklo'], vendor: 'Bagno Studio' },
-  'p-tus-rain': { tags: ['tus', 'termostat'], vendor: 'Bagno Studio' },
-  'p-umivaonik-stone': { tags: ['umivaonik', 'kamen'], vendor: 'Pietra Bagno' },
-  'p-slavina-nero': { tags: ['baterija', 'crna'], vendor: 'Bagno Studio' },
-  'p-ogledalo-luna': { tags: ['ogledalo', 'led'], vendor: 'Bagno Studio' },
-  'p-ormaric-oak': { tags: ['namjestaj', 'hrast'], vendor: 'Bagno Studio' },
-  'p-kuhinja-bianca': { tags: ['kuhinja', 'po-mjeri'], vendor: 'SELCA radionica', channels: ['online'] },
-  'p-kuhinja-noce': { tags: ['kuhinja', 'po-mjeri', 'premium'], vendor: 'SELCA radionica', channels: ['online'] },
-  'p-kuhinja-nero': { tags: ['kuhinja', 'po-mjeri'], vendor: 'SELCA radionica', channels: ['online'] },
-  'p-kvarc': { tags: ['radna-ploca', 'kvarc'], vendor: 'Quarzo Lux' },
-  'p-slavina-pro': { tags: ['baterija', 'crna'], vendor: 'Bagno Studio' },
+/** Purchase cost as a share of the regular pack price, per category (55–65 %). */
+const COST_FACTOR: Record<string, number> = {
+  'cat-gota': 0.58, 'cat-kapake': 0.55, 'cat-ene': 0.62, 'cat-embelsira': 0.6, 'cat-salca': 0.56,
+  'cat-takem': 0.63, 'cat-shkopinj': 0.57, 'cat-karton': 0.6, 'cat-etiketa': 0.55,
 };
 
-/** EAN-13 with the Montenegrin GS1 prefix 389 and a valid check digit. */
-function ean13(n: number) {
-  const body = `389${String(100000000 + n * 7919).slice(-9)}`;
+const V_PET = 'Furnitor PET & PP — Turqi';
+const V_PP = 'Furnitor enësh PP — Greqi';
+const V_PAPER = 'Furnitor letre & kartoni — Maqedoni e Veriut';
+const V_CUT = 'Furnitor takëmesh & shkopinjsh — Bullgari';
+const V_PRINT = 'Paketoje — printim me logo';
+
+const COLD = ['f95', 'pije-te-ftohta', 'kafiteri'];
+const EXTRAS: Record<string, { tags: string[]; vendor: string; incoming?: number; unavailable?: number; channels?: ('online' | 'pos')[] }> = {
+  'p-gota-f95-250': { tags: COLD, vendor: V_PET },
+  'p-gota-f95-300': { tags: [...COLD, 'catering'], vendor: V_PET },
+  'p-gota-f95-350': { tags: COLD, vendor: V_PET },
+  'p-gota-f95-400': { tags: [...COLD, 'logo'], vendor: V_PET },
+  'p-gota-f95-500': { tags: [...COLD, 'smoothie'], vendor: V_PET, incoming: 60 },
+  'p-kapak-sheshte': { tags: ['f95', 'kapak', 'kafiteri'], vendor: V_PET },
+  'p-kapak-kupole': { tags: ['f95', 'kapak', 'smoothie'], vendor: V_PET },
+  'p-kapak-clip': { tags: ['f95', 'kapak', 'take-away'], vendor: V_PET },
+  'p-kapak-bodega': { tags: ['bodega', 'kapak', 'embelsira'], vendor: V_PET },
+  'p-kuti-dy-ndarje': { tags: ['fast-food', 'take-away', 'ndarje'], vendor: V_PP },
+  'p-ene-mikrovale-500': { tags: ['mikrovale', 'take-away', 'restorant'], vendor: V_PP },
+  'p-ene-mikrovale-750': { tags: ['mikrovale', 'take-away', 'oferte'], vendor: V_PP },
+  'p-ene-sushi-mesme': { tags: ['sushi', 'kapak-transparent'], vendor: V_PET },
+  'p-ene-sushi-500': { tags: ['sushi', 'hermetike'], vendor: V_PET },
+  'p-ene-sallate-750': { tags: ['sallate', 'kristal'], vendor: V_PET },
+  'p-ene-sallate-1000': { tags: ['sallate', 'kristal', 'catering'], vendor: V_PET },
+  'p-gote-venus': { tags: ['embelsira', 'pasticeri', 'e-re'], vendor: V_PET, unavailable: 2 },
+  'p-gote-ps': { tags: ['embelsira', 'pasticeri'], vendor: V_PET },
+  'p-gote-bodega-250': { tags: ['embelsira', 'bodega', 'logo'], vendor: V_PET },
+  'p-kuti-torte-230': { tags: ['torte', 'pasticeri'], vendor: V_PAPER, incoming: 64, unavailable: 1 },
+  'p-ene-torte-kupole': { tags: ['torte', 'pasticeri'], vendor: V_PAPER, incoming: 40 },
+  'p-kuti-trekendeshe-gold': { tags: ['torte', 'gold', 'pasticeri'], vendor: V_PAPER, incoming: 60 },
+  'p-luge-akullore-roze': { tags: ['akullore', 'luge', 'e-re'], vendor: V_CUT },
+  'p-luge-akullore-lux': { tags: ['akullore', 'luge', 'premium'], vendor: V_CUT, incoming: 30 },
+  'p-salce-1oz': { tags: ['salca', 'fast-food', 'dergesa'], vendor: V_PET },
+  'p-salce-2oz': { tags: ['salca', 'fast-food', 'dergesa'], vendor: V_PET },
+  'p-set-ps-zi': { tags: ['takem', 'set', 'fast-food'], vendor: V_CUT },
+  'p-set-ps-bardhe': { tags: ['takem', 'set', 'catering'], vendor: V_CUT },
+  'p-set-pp-zi': { tags: ['takem', 'set', 'pp'], vendor: V_CUT },
+  'p-set-lux-zi': { tags: ['takem', 'set', 'premium', 'oferte'], vendor: V_CUT },
+  'p-pirun-bardhe': { tags: ['takem', 'pirun'], vendor: V_CUT },
+  'p-thike-bardhe': { tags: ['takem', 'thike'], vendor: V_CUT },
+  'p-luge-bardhe': { tags: ['takem', 'luge'], vendor: V_CUT },
+  'p-pirun-bardhe-100': { tags: ['takem', 'pirun', 'format-i-vjeter'], vendor: V_CUT },
+  'p-shkop-22': { tags: ['shkopinj', 'kafiteri'], vendor: V_CUT },
+  'p-shkop-24': { tags: ['shkopinj', 'kafiteri', 'smoothie'], vendor: V_CUT },
+  'p-luge-kafe-standard': { tags: ['kafe', 'kafiteri'], vendor: V_CUT },
+  'p-luge-kafe-gjate': { tags: ['kafe', 'kafiteri'], vendor: V_CUT },
+  'p-gote-letre-logo': { tags: ['logo', 'kafe', 'me-porosi'], vendor: V_PRINT, channels: ['online'] },
+  'p-kuti-burger-logo': { tags: ['logo', 'kraft', 'fast-food', 'me-porosi'], vendor: V_PRINT, channels: ['online'] },
+  'p-etiketa-logo': { tags: ['logo', 'etiketa', 'me-porosi'], vendor: V_PRINT, channels: ['online'] },
+};
+
+/** Internal in-store EAN-13 (restricted-circulation prefix 2 + the SKU number) with a valid check digit. */
+function ean13(sku: string, fallback: number) {
+  const n = Number(sku.replace(/\D/g, '')) || fallback;
+  const body = `2${String(n).padStart(11, '0')}`;
   const sum = body.split('').reduce((s, d, i) => s + Number(d) * (i % 2 ? 3 : 1), 0);
   return body + ((10 - (sum % 10)) % 10);
 }
@@ -76,7 +93,7 @@ export function enrichProducts(products: Product[]): Product[] {
       cost: round2(p.price * (COST_FACTOR[p.categoryId] ?? 0.6)),
       vendor: x?.vendor,
       tags: x?.tags ?? [],
-      barcode: ean13(i + 1),
+      barcode: ean13(p.sku, 900 + i),
       incoming: x?.incoming ?? 0,
       unavailable: x?.unavailable ?? 0,
       template: p.quoteOnly ? 'quote' : 'standard',
@@ -85,97 +102,131 @@ export function enrichProducts(products: Product[]): Product[] {
   });
 }
 
-/** Discontinued line: archived after it had sales (orders keep their copy). */
-export const ARCHIVED_PRODUCT = 'p-statuario';
+/** Discontinued line (old 100-piece fork pack): archived after it had sales (orders keep their copy). */
+export const ARCHIVED_PRODUCT = 'p-pirun-bardhe-100';
 
 /* ================================================================== */
 /* Collections                                                         */
 /* ================================================================== */
+const CUPS = ['p-gota-f95-250', 'p-gota-f95-300', 'p-gota-f95-350', 'p-gota-f95-400', 'p-gota-f95-500'];
+const F95_LIDS = ['p-kapak-kupole', 'p-kapak-sheshte', 'p-kapak-clip'];
+
 export function buildCollections(now: Date): Collection[] {
   return [
     {
-      id: 'col-podovi-akcija',
-      slug: 'podovi-na-akciji',
-      title: T('Podovi na akciji', 'Dysheme në ofertë', 'Flooring on sale'),
+      id: 'col-kafiteri',
+      slug: 'per-kafiteri',
+      title: T('Za kafiće i barove', 'Për kafiteri & bare', 'For cafés & bars'),
       description: T(
-        'Laminat, parket i SPC vinil iz jesenje akcije — popust se obračunava automatski u korpi.',
-        'Laminat, parket dhe vinil SPC nga oferta e vjeshtës — zbritja llogaritet automatikisht në shportë.',
-        'Laminate, parquet and SPC vinyl from the autumn sale — the discount is applied automatically in the cart.',
+        'Sve za hladne napitke za poneti: čaše F95 od 250 do 500 ml, odgovarajući poklopci, slamke i kašičice za kafu.',
+        'Gjithçka për pije të ftohta take-away: gota F95 nga 250 deri 500 ml, kapakët përkatës, shkopinj dhe lugë kafeje.',
+        'Everything for cold drinks to go: F95 cups from 250 to 500 ml, matching lids, straws and coffee spoons.',
       ),
-      image: '/images/cat/podovi.webp',
-      kind: 'smart',
-      productIds: [],
-      match: 'all',
-      rules: [
-        { field: 'category', op: 'eq', value: 'cat-podovi' },
-        { field: 'tag', op: 'eq', value: 'akcija' },
-      ],
-      sort: 'price-asc',
-      published: true,
-      seo: { title: 'Podovi na akciji — SELCA', description: 'Laminat, parket i vinil po akcijskim cijenama uz stručno postavljanje.' },
-      createdAt: iso(now, -9),
-    },
-    {
-      id: 'col-premium-kupatilo',
-      slug: 'premium-kupatilo',
-      title: T('Premium kupatilo', 'Banjo premium', 'Premium bathroom'),
-      description: T(
-        'Samostojeće kade, walk-in tuševi i namještaj iznad 300 € — za kupatilo kao mali spa.',
-        'Vaska të lira, dushe walk-in dhe mobilje mbi 300 € — për një banjo si spa e vogël.',
-        'Freestanding tubs, walk-in showers and furniture above €300 — for a bathroom like a little spa.',
-      ),
-      image: '/images/hero/bath.webp',
-      kind: 'smart',
-      productIds: [],
-      match: 'all',
-      rules: [
-        { field: 'category', op: 'eq', value: 'cat-kupatilo' },
-        { field: 'price', op: 'gt', value: '300' },
-      ],
-      sort: 'price-desc',
-      published: true,
-      createdAt: iso(now, -40),
-    },
-    {
-      id: 'col-jesenja-akcija',
-      slug: 'jesenja-akcija',
-      title: T('Jesenja akcija', 'Oferta e vjeshtës', 'Autumn sale'),
-      description: T('Ručno odabrani proizvodi sa sniženom cijenom ove jeseni.', 'Produkte të përzgjedhura me çmim të ulur këtë vjeshtë.', 'Hand-picked products with reduced prices this autumn.'),
-      image: '/images/cat/keramika.webp',
+      image: '/images/hero/iced.webp',
       kind: 'manual',
-      productIds: ['p-laminat-nordic', 'p-beton', 'p-vrata-classica', 'p-kada-ellipse', 'p-tus-rain', 'p-slavina-nero', 'p-vrata-guardian'],
+      productIds: [...CUPS, ...F95_LIDS, 'p-shkop-22', 'p-shkop-24', 'p-luge-kafe-standard', 'p-luge-kafe-gjate'],
       match: 'all',
       rules: [],
       sort: 'manual',
       published: true,
-      createdAt: iso(now, -12),
+      seo: { title: 'Paketim për kafiteri — gota F95, kapakë, shkopinj | Paketoje', description: 'Gota plastike F95, kapakë, shkopinj dhe lugë kafeje me çmime shumice. Dërgesë 24h në Mitrovicë.' },
+      createdAt: iso(now, -62),
+    },
+    {
+      id: 'col-fastfood',
+      slug: 'per-fast-food',
+      title: T('Za brzu hranu', 'Për fast food', 'For fast food'),
+      description: T(
+        'Kutije sa dvije pregrade, posude za mikrotalasnu, čašice za sos i setovi pribora — za dostavu bez prosipanja.',
+        'Kuti me dy ndarje, enë për mikrovalë, gota salce dhe sete takëmesh — për dërgesa pa derdhje.',
+        'Two-compartment boxes, microwave containers, sauce cups and cutlery sets — for spill-free delivery.',
+      ),
+      image: '/images/misc/fries.webp',
+      kind: 'manual',
+      productIds: ['p-kuti-dy-ndarje', 'p-ene-mikrovale-500', 'p-ene-mikrovale-750', 'p-salce-1oz', 'p-salce-2oz', 'p-set-ps-zi', 'p-set-ps-bardhe', 'p-set-pp-zi', 'p-set-lux-zi'],
+      match: 'all',
+      rules: [],
+      sort: 'manual',
+      published: true,
+      createdAt: iso(now, -58),
+    },
+    {
+      id: 'col-pasticeri',
+      slug: 'per-pasticeri',
+      title: T('Za poslastičarnice', 'Për pastiçeri', 'For pastry shops'),
+      description: T(
+        'Čaše za desert, kutije za torte, gold kutije za parče torte i kašičice za sladoled — trenutno −10 % automatski u korpi.',
+        'Gota ëmbëlsirash, kuti tortash, kuti gold për copë torte dhe lugë akulloreje — tani −10 % automatikisht në shportë.',
+        'Dessert cups, cake boxes, gold slice boxes and ice-cream spoons — now −10 % automatically in the cart.',
+      ),
+      image: '/images/misc/donuts.webp',
+      kind: 'smart',
+      productIds: [],
+      match: 'all',
+      rules: [{ field: 'category', op: 'eq', value: 'cat-embelsira' }],
+      sort: 'bestselling',
+      published: true,
+      seo: { title: 'Paketim për pastiçeri dhe akullore | Paketoje', description: 'Gota ëmbëlsirash, kuti tortash dhe lugë akulloreje — −10 % automatikisht në shportë.' },
+      createdAt: iso(now, -19),
+    },
+    {
+      id: 'col-sushi',
+      slug: 'sushi-poke',
+      title: T('Suši i poke', 'Sushi & poke', 'Sushi & poke'),
+      description: T(
+        'Posude za suši sa providnim poklopcem, hermetičke posude, posude za poke i čašice za soja sos.',
+        'Enë sushi me kapak transparent, enë hermetike, enë për poke dhe gota për salcë soje.',
+        'Sushi trays with clear lids, airtight containers, poke bowls and soy-sauce cups.',
+      ),
+      image: '/images/misc/sushi.webp',
+      kind: 'manual',
+      productIds: ['p-ene-sushi-mesme', 'p-ene-sushi-500', 'p-ene-sallate-750', 'p-salce-1oz', 'p-salce-2oz'],
+      match: 'all',
+      rules: [],
+      sort: 'manual',
+      published: true,
+      createdAt: iso(now, -40),
     },
     {
       id: 'col-bestseleri',
-      slug: 'bestseleri',
-      title: T('Bestseleri', 'Më të shiturat', 'Bestsellers'),
-      description: T('Proizvodi koje naši kupci najčešće biraju.', 'Produktet që klientët tanë zgjedhin më shpesh.', 'The products our customers choose most often.'),
-      image: '/images/p/laminat-nordic-2.webp',
-      kind: 'manual',
-      productIds: ['p-laminat-nordic', 'p-calacatta', 'p-parket-natur', 'p-beton', 'p-pvc-bijeli', 'p-slavina-nero', 'p-vrata-classica', 'p-walkin'],
+      slug: 'me-te-shiturat',
+      title: T('Najprodavanije', 'Më të shiturat', 'Bestsellers'),
+      description: T('Proizvodi koje lokali najčešće naručuju iz mjeseca u mjesec.', 'Produktet që lokalet porositin më shpesh, muaj pas muaji.', 'The products venues reorder most, month after month.'),
+      image: '/images/p/pak-104-1.webp',
+      kind: 'smart',
+      productIds: [],
       match: 'all',
-      rules: [],
+      rules: [{ field: 'badge', op: 'eq', value: 'bestseller' }],
       sort: 'bestselling',
       published: true,
-      createdAt: iso(now, -60),
+      createdAt: iso(now, -90),
     },
     {
-      id: 'col-novi-stan',
-      slug: 'za-novi-stan',
-      title: T('Za novi stan', 'Për banesën e re', 'For your new apartment'),
+      id: 'col-nen-3',
+      slug: 'nen-3-euro',
+      title: T('Ispod 3 €', 'Nën 3 €', 'Under €3'),
+      description: T('Pakovanja ispod 3 € — čaše, poklopci, pribor i kašičice za svaki dan.', 'Pako nën 3 € — gota, kapakë, takëm dhe lugë për çdo ditë.', 'Packs under €3 — cups, lids, cutlery and spoons for every day.'),
+      image: '/images/cat/shkopinj.webp',
+      kind: 'smart',
+      productIds: [],
+      match: 'all',
+      rules: [{ field: 'price', op: 'lt', value: '3' }],
+      sort: 'price-asc',
+      published: true,
+      createdAt: iso(now, -33),
+    },
+    {
+      id: 'col-delivery',
+      slug: 'paketim-per-dergesa',
+      title: T('Ambalaža za dostavu', 'Paketim për dërgesa', 'Delivery packaging'),
       description: T(
-        'Sve što treba za useljenje — od vrata i prozora do poda, kupatila i kuhinje.',
-        'Gjithçka për t’u vendosur — nga dyert dhe dritaret te dyshemeja, banjo dhe kuzhina.',
-        'Everything you need to move in — from doors and windows to floors, bathroom and kitchen.',
+        'Komplet za restorane koji rade dostavu: posude koje se dobro zatvaraju, čašice za sos, pribor i clip poklopci.',
+        'Paketa për restorantet me dërgesa: enë që mbyllen mirë, gota salce, takëm dhe kapakë clip.',
+        'A kit for restaurants that deliver: tight-closing containers, sauce cups, cutlery and clip lids.',
       ),
-      image: '/images/projects/stan-hrast.webp',
+      image: '/images/hero/delivery.webp',
       kind: 'manual',
-      productIds: ['p-vrata-linea', 'p-pvc-bijeli', 'p-laminat-rustic', 'p-calacatta', 'p-walkin', 'p-slavina-nero', 'p-ogledalo-luna', 'p-kuhinja-bianca'],
+      productIds: ['p-kuti-dy-ndarje', 'p-ene-mikrovale-500', 'p-ene-mikrovale-750', 'p-salce-1oz', 'p-set-ps-zi', 'p-gota-f95-400', 'p-kapak-clip'],
       match: 'all',
       rules: [],
       sort: 'manual',
@@ -188,163 +239,177 @@ export function buildCollections(now: Date): Collection[] {
 /* ================================================================== */
 /* Discounts — all 4 types, code + automatic, every lifecycle state    */
 /* ================================================================== */
-const DOORS = ['p-vrata-linea', 'p-vrata-classica', 'p-vrata-flat', 'p-vrata-loft', 'p-vrata-vetro', 'p-vrata-guardian'];
 const ALL_LINES = { scope: 'all' as const, ids: [] };
 const NO_MIN = { type: 'none' as const, value: 0 };
 const EVERYONE = { type: 'all' as const };
 
-/** End of the autumn floor sale — same moment as the homepage promo countdown. */
-export const autumnSaleEnd = (now: Date) => new Date(now.getTime() + 12 * DAY + 5 * 3600000).toISOString();
+/** End of the autumn cold-drinks campaign (4 packs of F95 cups → 1 pack of lids free) — usable for a homepage countdown. */
+export const autumnSaleEnd = (now: Date) => new Date(now.getTime() + 23 * DAY + 5 * 3600000).toISOString();
+
+/** Black Friday (4th Friday of November, local midnight) — this year, or next year once it has passed. */
+export function blackFriday(now: Date): Date {
+  const at = (y: number) => {
+    const d = new Date(y, 10, 1);
+    d.setDate(1 + ((5 - d.getDay() + 7) % 7) + 21);
+    return d;
+  };
+  const d = at(now.getFullYear());
+  return d.getTime() + 4 * DAY < now.getTime() ? at(now.getFullYear() + 1) : d;
+}
 
 export function buildDiscounts(now: Date): Discount[] {
+  const bf = blackFriday(now);
   return [
     {
-      id: 'd-selca10',
-      title: 'Dobrodošlica — SELCA10',
+      id: 'd-mireseerdhe',
+      title: 'Mirëseardhje — MIRESEERDHE (porosia e parë)',
       publicTitle: T('Dobrodošlica −10%', 'Mirëseardhje −10%', 'Welcome −10%'),
       kind: 'order',
       method: 'code',
-      code: 'SELCA10',
+      code: 'MIRESEERDHE',
       valueType: 'percent',
       value: 10,
       appliesTo: ALL_LINES,
-      minimum: { type: 'amount', value: 100 },
+      minimum: { type: 'amount', value: 30 },
       audience: EVERYONE,
       combines: { products: true, order: false, shipping: true },
-      oncePerCustomer: false,
-      startsAt: iso(now, -120),
+      oncePerCustomer: true,
+      startsAt: iso(now, -200),
       status: 'active',
       uses: 0,
-      createdAt: iso(now, -120),
-      tags: ['dobrodoslica'],
+      createdAt: iso(now, -200),
+      tags: ['mireseardhje', 'klient-i-ri'],
     },
     {
-      id: 'd-podovi15',
-      title: 'Jesen — podovi −15% (automatski)',
-      publicTitle: T('Jesenja akcija podova −15%', 'Oferta e vjeshtës për dysheme −15%', 'Autumn flooring sale −15%'),
+      id: 'd-kafe15',
+      title: 'Kafiteri −15% — KAFE15',
+      publicTitle: T('Za kafiće −15%', 'Për kafiteri −15%', 'Café range −15%'),
       kind: 'products',
-      method: 'auto',
+      method: 'code',
+      code: 'KAFE15',
       valueType: 'percent',
       value: 15,
-      appliesTo: { scope: 'collections', ids: ['col-podovi-akcija'] },
+      appliesTo: { scope: 'collections', ids: ['col-kafiteri'] },
       minimum: NO_MIN,
       audience: EVERYONE,
-      combines: { products: true, order: true, shipping: true },
-      startsAt: iso(now, -9),
-      endsAt: autumnSaleEnd(now),
+      combines: { products: true, order: false, shipping: true },
+      usageLimit: 300,
+      startsAt: iso(now, -45),
       status: 'active',
       uses: 0,
-      createdAt: iso(now, -10),
-      tags: ['jesen', 'podovi'],
+      createdAt: iso(now, -46),
+      tags: ['kafiteri'],
     },
     {
-      id: 'd-vrata-kvaka',
-      title: 'Kupi 3 vrata — kvaka gratis',
-      publicTitle: T('Uz 3 sobna vrata kvaka gratis', 'Me 3 dyer doreza falas', 'Buy 3 doors, get a handle free'),
+      id: 'd-gota-kapak',
+      title: 'Gota F95: 4 pako → 1 pako kapakë falas (automatike)',
+      publicTitle: T('4 pak. čaša F95 → 1 pak. poklopaca gratis', '4 pako gota F95 → 1 pako kapakë falas', '4 packs of F95 cups → 1 pack of lids free'),
       kind: 'bxgy',
       method: 'auto',
       valueType: 'percent',
       value: 100,
       appliesTo: ALL_LINES,
       minimum: NO_MIN,
-      bxgy: { buyIds: DOORS, buyScope: 'products', buyQty: 3, getIds: ['p-kvaka-linea'], getScope: 'products', getQty: 1, getType: 'free', getValue: 100, maxUses: 4 },
+      bxgy: { buyIds: CUPS, buyScope: 'products', buyQty: 4, getIds: F95_LIDS, getScope: 'products', getQty: 1, getType: 'free', getValue: 100, maxUses: 5 },
       audience: EVERYONE,
       combines: { products: true, order: true, shipping: true },
-      startsAt: iso(now, -30),
+      startsAt: iso(now, -60),
+      endsAt: autumnSaleEnd(now),
       status: 'active',
       uses: 0,
-      createdAt: iso(now, -31),
-      tags: ['vrata'],
+      createdAt: iso(now, -61),
+      tags: ['pije-te-ftohta', 'kafiteri'],
     },
     {
-      id: 'd-dostava300',
-      title: 'Besplatna dostava preko 300 €',
-      publicTitle: T('Besplatna dostava preko 300 €', 'Transport falas mbi 300 €', 'Free delivery over €300'),
+      id: 'd-dergesa50',
+      title: 'Transport falas mbi 50 €',
+      publicTitle: T('Besplatna dostava preko 50 €', 'Transport falas mbi 50 €', 'Free delivery over €50'),
       kind: 'shipping',
       method: 'auto',
       valueType: 'percent',
       value: 100,
       appliesTo: ALL_LINES,
-      minimum: { type: 'amount', value: 300 },
+      minimum: { type: 'amount', value: 50 },
       shipping: { zoneIds: [] },
       audience: EVERYONE,
       combines: { products: true, order: true, shipping: false },
-      startsAt: iso(now, -200),
+      startsAt: iso(now, -300),
       status: 'active',
       uses: 0,
-      createdAt: iso(now, -200),
+      createdAt: iso(now, -300),
+      tags: ['dergesa'],
     },
     {
-      id: 'd-jesen25',
-      title: 'Jesen — 25 € preko 250 €',
-      publicTitle: T('Jesenji popust 25 €', 'Zbritje vjeshte 25 €', 'Autumn €25 off'),
-      kind: 'order',
-      method: 'code',
-      code: 'JESEN25',
-      valueType: 'fixed',
-      value: 25,
-      appliesTo: ALL_LINES,
-      minimum: { type: 'amount', value: 250 },
-      audience: EVERYONE,
-      combines: { products: true, order: false, shipping: true },
-      usageLimit: 200,
-      startsAt: iso(now, -10),
-      endsAt: iso(now, 20),
-      status: 'active',
-      uses: 0,
-      createdAt: iso(now, -11),
-      tags: ['jesen'],
-    },
-    {
-      id: 'd-bf-vrata',
-      title: 'Black Friday — vrata −20%',
-      publicTitle: T('Black Friday: vrata −20%', 'Black Friday: dyer −20%', 'Black Friday: doors −20%'),
+      id: 'd-pasticeri10',
+      title: 'Pastiçeri −10% (automatike)',
+      publicTitle: T('Poslastičarnice −10%', 'Pastiçeri −10%', 'Pastry range −10%'),
       kind: 'products',
       method: 'auto',
       valueType: 'percent',
-      value: 20,
-      appliesTo: { scope: 'products', ids: DOORS },
+      value: 10,
+      appliesTo: { scope: 'collections', ids: ['col-pasticeri'] },
       minimum: NO_MIN,
       audience: EVERYONE,
       combines: { products: true, order: true, shipping: true },
-      startsAt: iso(now, 21),
-      endsAt: iso(now, 28),
+      startsAt: iso(now, -18),
+      endsAt: iso(now, 24),
+      status: 'active',
+      uses: 0,
+      createdAt: iso(now, -19),
+      tags: ['pasticeri'],
+    },
+    {
+      id: 'd-blackfriday',
+      title: 'Black Friday — BLACKFRIDAY −20%',
+      publicTitle: T('Black Friday −20%', 'Black Friday −20%', 'Black Friday −20%'),
+      kind: 'order',
+      method: 'code',
+      code: 'BLACKFRIDAY',
+      valueType: 'percent',
+      value: 20,
+      appliesTo: ALL_LINES,
+      minimum: { type: 'amount', value: 20 },
+      audience: EVERYONE,
+      combines: { products: false, order: false, shipping: true },
+      usageLimit: 500,
+      startsAt: bf.toISOString(),
+      endsAt: new Date(bf.getTime() + 4 * DAY).toISOString(),
       status: 'active',
       uses: 0,
       createdAt: iso(now, -2),
-      tags: ['black-friday', 'vrata'],
+      tags: ['black-friday'],
     },
     {
-      id: 'd-ljeto15',
-      title: 'Ljetna rasprodaja — LJETO15',
-      publicTitle: T('Ljetna rasprodaja −15%', 'Ulje vere −15%', 'Summer sale −15%'),
+      id: 'd-vera10',
+      title: 'Vera — VERA10',
+      publicTitle: T('Ljeto −10%', 'Vera −10%', 'Summer −10%'),
       kind: 'order',
       method: 'code',
-      code: 'LJETO15',
+      code: 'VERA10',
       valueType: 'percent',
-      value: 15,
+      value: 10,
       appliesTo: ALL_LINES,
-      minimum: { type: 'amount', value: 200 },
+      minimum: { type: 'amount', value: 25 },
       audience: EVERYONE,
       combines: { products: true, order: false, shipping: true },
-      startsAt: iso(now, -75),
-      endsAt: iso(now, -25),
+      startsAt: iso(now, -128),
+      endsAt: iso(now, -37),
       status: 'active',
       uses: 0,
-      createdAt: iso(now, -76),
-      tags: ['ljeto'],
+      createdAt: iso(now, -130),
+      tags: ['vera'],
     },
     {
-      id: 'd-vip50',
-      title: 'VIP kupci — 50 € preko 600 €',
-      publicTitle: T('VIP popust 50 €', 'Zbritje VIP 50 €', 'VIP €50 off'),
+      id: 'd-vip',
+      title: 'Klientë VIP — 15 € mbi 150 €',
+      publicTitle: T('VIP popust 15 €', 'Zbritje VIP 15 €', 'VIP €15 off'),
       kind: 'order',
       method: 'code',
-      code: 'VIP50',
+      code: 'VIP15',
       valueType: 'fixed',
-      value: 50,
+      value: 15,
       appliesTo: ALL_LINES,
-      minimum: { type: 'amount', value: 600 },
+      minimum: { type: 'amount', value: 150 },
       audience: { type: 'segment', segmentId: 'seg-vip' },
       combines: { products: true, order: false, shipping: true },
       oncePerCustomer: true,
@@ -368,7 +433,7 @@ export function countDiscountUses(discounts: Discount[], orders: Order[]): Disco
 }
 
 /* ================================================================== */
-/* Offers (p.30 mock-up: active / active / draft / scheduled)          */
+/* Offers (active / active / draft / scheduled)                        */
 /* ================================================================== */
 const ZERO = { visits: 0, ctaClicks: 0, codeUses: 0, orders: 0, revenue: 0, discountTotal: 0 };
 
@@ -389,113 +454,123 @@ export function buildOffers(now: Date, discounts: Discount[], orders: Order[]): 
   };
   return [
     {
-      id: 'of-jesen',
-      slug: 'jesenja-akcija-podova',
-      name: T('Jesenja akcija podova', 'Oferta e vjeshtës për dysheme', 'Autumn flooring sale'),
+      id: 'of-pije-te-ftohta',
+      slug: 'pije-te-ftohta',
+      name: T('Hladni napici — poklopci gratis', 'Pije të ftohta — kapakë falas', 'Cold drinks — free lids'),
       description: T(
-        'Automatski −15% na odabrane laminate, parket i SPC vinil. Prikazuje se u banneru kataloga, traci obavještenja i promo bloku početne.',
-        'Automatikisht −15% për laminate, parket dhe vinil SPC të përzgjedhur. Shfaqet në banerin e katalogut, shiritin e njoftimeve dhe bllokun promo të ballinës.',
-        'Automatic −15% on selected laminate, parquet and SPC vinyl. Shown in the catalogue banner, announcement bar and homepage promo block.',
+        'Automatski: za svaka 4 pakovanja čaša F95 jedno pakovanje poklopaca gratis (do 5 po narudžbi). Prikazuje se u banneru kataloga, traci obavještenja i promo bloku početne.',
+        'Automatike: për çdo 4 pako gota F95 një pako kapakë falas (deri në 5 për porosi). Shfaqet në banerin e katalogut, shiritin e njoftimeve dhe bllokun promo të ballinës.',
+        'Automatic: one pack of lids free for every 4 packs of F95 cups (up to 5 per order). Shown in the catalogue banner, announcement bar and homepage promo block.',
       ),
       status: 'active',
-      startsAt: d('d-podovi15').startsAt,
-      endsAt: d('d-podovi15').endsAt,
-      discountId: 'd-podovi15',
-      collectionId: 'col-podovi-akcija',
+      startsAt: d('d-gota-kapak').startsAt,
+      endsAt: d('d-gota-kapak').endsAt,
+      discountId: 'd-gota-kapak',
+      collectionId: 'col-kafiteri',
       productIds: [],
-      badge: T('Akcija −15%', 'Ofertë −15%', 'Sale −15%'),
-      image: '/images/cat/podovi.webp',
+      badge: T('Poklopci gratis', 'Kapakë falas', 'Free lids'),
+      image: '/images/misc/drinks.webp',
       landing: {
-        title: T('Jesen je za *nove podove*', 'Vjeshta është për *dysheme të reja*', 'Autumn is for *new floors*'),
+        title: T('Na svaka *4 pakovanja čaša* — poklopci gratis', 'Për çdo *4 pako gota* — kapakë falas', 'For every *4 packs of cups* — free lids'),
         text: T(
-          'Do kraja akcije odabrani podovi su 15% jeftiniji — popust vidite odmah u korpi, bez koda. Mjerenje je besplatno.',
-          'Deri në fund të ofertës dyshemetë e përzgjedhura janë 15% më lirë — zbritjen e shihni menjëherë në shportë, pa kod. Matja është falas.',
-          'Until the sale ends, selected floors are 15% off — you see the discount straight away in the cart, no code needed. Measuring is free.',
+          'Dodajte čaše F95 i poklopce u korpu — besplatno pakovanje poklopaca obračunava se automatski, bez koda. Važi i uz cijene za veleprodaju.',
+          'Shtoni gotat F95 dhe kapakët në shportë — pakoja falas e kapakëve llogaritet automatikisht, pa kod. Vlen edhe me çmimet e shumicës.',
+          'Add F95 cups and lids to the cart — the free pack of lids is applied automatically, no code needed. Works with wholesale prices too.',
         ),
       },
       placements: ['banner', 'announcement', 'home-block'],
-      owner: 'st-drita',
-      utm: 'utm_source=selca&utm_medium=banner&utm_campaign=jesen-podovi',
-      metrics: metrics('d-podovi15', 38, 260),
-      createdAt: iso(now, -10),
+      owner: 'st-blerta',
+      utm: 'utm_source=paketoje&utm_medium=banner&utm_campaign=pije-te-ftohta',
+      metrics: metrics('d-gota-kapak', 34, 220),
+      createdAt: iso(now, -61),
     },
     {
-      id: 'of-dobrodoslica',
-      slug: 'dobrodoslica-selca10',
-      name: T('Dobrodošlica — SELCA10', 'Mirëseardhje — SELCA10', 'Welcome — SELCA10'),
+      id: 'of-mireseerdhe',
+      slug: 'mireseerdhe',
+      name: T('Dobrodošlica — MIRESEERDHE', 'Mirëseardhje — MIRESEERDHE', 'Welcome — MIRESEERDHE'),
       description: T(
-        'Kod SELCA10 daje 10% na narudžbe od 100 € (poslije popusta na proizvode). Kombinuje se sa popustima na proizvode i dostavu.',
-        'Kodi SELCA10 jep 10% për porosi nga 100 € (pas zbritjeve të produkteve). Kombinohet me zbritje produktesh dhe dërgese.',
-        'Code SELCA10 gives 10% on orders from €100 (after product discounts). Combines with product and shipping discounts.',
+        'Kod MIRESEERDHE daje 10 % na prvu narudžbu od 30 € (jednom po kupcu). Kombinuje se sa popustima na proizvode i besplatnom dostavom.',
+        'Kodi MIRESEERDHE jep 10 % në porosinë e parë nga 30 € (një herë për klient). Kombinohet me zbritjet e produkteve dhe transportin falas.',
+        'Code MIRESEERDHE gives 10 % off a first order from €30 (once per customer). Combines with product discounts and free delivery.',
       ),
       status: 'active',
-      startsAt: d('d-selca10').startsAt,
-      discountId: 'd-selca10',
+      startsAt: d('d-mireseerdhe').startsAt,
+      discountId: 'd-mireseerdhe',
       productIds: [],
-      badge: T('−10% uz SELCA10', '−10% me SELCA10', '−10% with SELCA10'),
+      badge: T('−10% uz MIRESEERDHE', '−10% me MIRESEERDHE', '−10% with MIRESEERDHE'),
       image: '/images/misc/about.webp',
       landing: {
-        title: T('Dobro došli u *SELCA*', 'Mirë se vini në *SELCA*', 'Welcome to *SELCA*'),
+        title: T('Dobro došli u *Paketoje*', 'Mirë se vini në *Paketoje*', 'Welcome to *Paketoje*'),
         text: T(
-          'Za prvu kupovinu unesite kod SELCA10 u korpi i ostvarite 10% popusta na narudžbe od 100 €.',
-          'Për blerjen e parë shkruani kodin SELCA10 në shportë dhe përfitoni 10% zbritje për porosi nga 100 €.',
-          'For your first purchase enter code SELCA10 in the cart and get 10% off orders from €100.',
+          'Za prvu narudžbu unesite kod MIRESEERDHE u korpi i ostvarite 10 % popusta na narudžbe od 30 €. Dostava za 24 sata u Mitrovici.',
+          'Për porosinë e parë shkruani kodin MIRESEERDHE në shportë dhe përfitoni 10 % zbritje për porosi nga 30 €. Dërgesë brenda 24 orësh në Mitrovicë.',
+          'For your first order enter code MIRESEERDHE in the cart and get 10 % off orders from €30. 24-hour delivery in Mitrovica.',
         ),
       },
       placements: ['banner', 'home-block'],
-      owner: 'st-drita',
-      utm: 'utm_source=selca&utm_medium=landing&utm_campaign=dobrodoslica',
-      metrics: metrics('d-selca10', 46, 900),
-      createdAt: iso(now, -120),
+      owner: 'st-blerta',
+      utm: 'utm_source=paketoje&utm_medium=landing&utm_campaign=mireseerdhe',
+      metrics: metrics('d-mireseerdhe', 42, 640),
+      createdAt: iso(now, -200),
     },
     {
-      id: 'of-kupatilo',
-      slug: 'nova-kupatila-2026',
-      name: T('Nova kupatila 2026', 'Banjot e reja 2026', 'New bathrooms 2026'),
+      id: 'of-pasticeri',
+      slug: 'per-pasticeri',
+      name: T('Sezona torti — poslastičarnice −10 %', 'Sezoni i tortave — pastiçeri −10 %', 'Cake season — pastry shops −10 %'),
       description: T(
-        'Editorijalna kampanja bez popusta: nova kolekcija premium kupatila na početnoj i u slideru.',
-        'Fushatë editoriale pa zbritje: koleksioni i ri i banjove premium në ballinë dhe në slider.',
-        'Editorial campaign without a discount: the new premium bathroom collection on the homepage and slider.',
+        'Kampanja za poslastičarnice prije praznika: stranica ponude i slajd su u pripremi; popust −10 % na kolekciju već radi automatski.',
+        'Fushatë për pastiçeritë para festave: faqja e ofertës dhe slide-i janë në përgatitje; zbritja −10 % në koleksion funksionon tashmë automatikisht.',
+        'A pre-holiday campaign for pastry shops: the offer page and slide are being prepared; the −10 % collection discount already runs automatically.',
       ),
       status: 'draft',
-      startsAt: iso(now, 7),
-      collectionId: 'col-premium-kupatilo',
+      startsAt: iso(now, 6),
+      endsAt: d('d-pasticeri10').endsAt,
+      discountId: 'd-pasticeri10',
+      collectionId: 'col-pasticeri',
       productIds: [],
-      badge: T('Novo', 'E re', 'New'),
-      image: '/images/projects/kupatilo-travertin.webp',
+      badge: T('Poslastičarnice −10%', 'Pastiçeri −10%', 'Pastry −10%'),
+      image: '/images/projects/pasticeri.webp',
       landing: {
-        title: T('Kupatilo kao *mali spa*', 'Banjo si një *spa e vogël*', 'A bathroom like a *little spa*'),
-        text: T('Samostojeće kade, walk-in tuševi i kamen — pogledajte novu kolekciju.', 'Vaska të lira, dushe walk-in dhe gur — shikoni koleksionin e ri.', 'Freestanding tubs, walk-in showers and stone — see the new collection.'),
+        title: T('Kutije i čaše za *slatke praznike*', 'Kuti dhe gota për *festa të ëmbla*', 'Boxes and cups for *sweet holidays*'),
+        text: T(
+          'Kutije za torte, gold kutije za parče torte i čaše za desert — 10 % jeftinije, automatski u korpi.',
+          'Kuti tortash, kuti gold për copë torte dhe gota ëmbëlsirash — 10 % më lirë, automatikisht në shportë.',
+          'Cake boxes, gold slice boxes and dessert cups — 10 % off, automatically in the cart.',
+        ),
       },
       placements: ['hero', 'home-block'],
-      owner: 'st-ana',
-      utm: 'utm_source=selca&utm_medium=hero&utm_campaign=kupatila-2026',
+      owner: 'st-elira',
+      utm: 'utm_source=paketoje&utm_medium=hero&utm_campaign=sezoni-tortave',
       metrics: { ...ZERO },
       createdAt: iso(now, -1),
     },
     {
       id: 'of-blackfriday',
-      slug: 'black-friday-vrata',
-      name: T('Black Friday — vrata −20%', 'Black Friday — dyer −20%', 'Black Friday — doors −20%'),
+      slug: 'black-friday',
+      name: T('Black Friday −20 %', 'Black Friday −20 %', 'Black Friday −20 %'),
       description: T(
-        'Planirano: sedam dana −20% na sva sobna, klizna i sigurnosna vrata. Slajd i traka se uključuju sami sa početkom akcije.',
-        'E planifikuar: shtatë ditë −20% për të gjitha dyert. Slide-i dhe shiriti aktivizohen vetë me fillimin e ofertës.',
-        'Scheduled: seven days of −20% on all doors. The slide and bar switch on by themselves when the sale starts.',
+        'Planirano: četiri dana −20 % na cijelu narudžbu uz kod BLACKFRIDAY. Slajd i traka se uključuju sami sa početkom akcije.',
+        'E planifikuar: katër ditë −20 % në tërë porosinë me kodin BLACKFRIDAY. Slide-i dhe shiriti aktivizohen vetë me fillimin e ofertës.',
+        'Scheduled: four days of −20 % on the whole order with code BLACKFRIDAY. The slide and bar switch on by themselves when the sale starts.',
       ),
       status: 'active',
-      startsAt: d('d-bf-vrata').startsAt,
-      endsAt: d('d-bf-vrata').endsAt,
-      discountId: 'd-bf-vrata',
-      productIds: DOORS,
+      startsAt: d('d-blackfriday').startsAt,
+      endsAt: d('d-blackfriday').endsAt,
+      discountId: 'd-blackfriday',
+      productIds: [],
       badge: T('Black Friday −20%', 'Black Friday −20%', 'Black Friday −20%'),
-      image: '/images/hero/arch.webp',
+      image: '/images/misc/kraft-cups.webp',
       landing: {
-        title: T('Black Friday: *sva vrata −20%*', 'Black Friday: *të gjitha dyert −20%*', 'Black Friday: *all doors −20%*'),
-        text: T('Sedam dana, besplatno mjerenje i ugradnja našim timovima.', 'Shtatë ditë, matje falas dhe montim nga ekipet tona.', 'Seven days, free measuring and fitting by our own crews.'),
+        title: T('Black Friday: *−20 % na sve*', 'Black Friday: *−20 % në gjithçka*', 'Black Friday: *−20 % on everything*'),
+        text: T(
+          'Četiri dana, kod BLACKFRIDAY u korpi — idealno za zalihe za praznike. Važi uz cijene za veleprodaju i besplatnu dostavu preko 50 €.',
+          'Katër ditë, kodi BLACKFRIDAY në shportë — ideale për stok para festave. Vlen me çmimet e shumicës dhe transportin falas mbi 50 €.',
+          'Four days, code BLACKFRIDAY in the cart — ideal for stocking up before the holidays. Works with wholesale prices and free delivery over €50.',
+        ),
       },
       placements: ['hero', 'announcement'],
-      owner: 'st-drita',
-      utm: 'utm_source=selca&utm_medium=hero&utm_campaign=black-friday-vrata',
+      owner: 'st-blerta',
+      utm: 'utm_source=paketoje&utm_medium=hero&utm_campaign=black-friday',
       metrics: { ...ZERO },
       createdAt: iso(now, -2),
     },
@@ -514,7 +589,7 @@ export function buildPlacements(home: HomeSection[]): Placement[] {
     id: `pl-${s.id}`,
     kind: 'slide',
     position: 'home-hero',
-    name: [`Hero — dnevni boravak`, `Hero — kuhinje po mjeri`, `Hero — kupatila`][i] ?? `Hero ${i + 1}`,
+    name: ['Hero — eko kraft', 'Hero — pije të ftohta: gota & kapakë', 'Hero — enë take-away'][i] ?? `Hero ${i + 1}`,
     eyebrow: s.eyebrow,
     title: s.title,
     subtitle: s.subtitle,
@@ -522,9 +597,9 @@ export function buildPlacements(home: HomeSection[]): Placement[] {
     secondary: s.secondary,
     image: s.image,
     alt: [
-      T('Svijetli dnevni boravak sa hrastovim podom', 'Dhomë ndenjeje e ndritshme me dysheme lisi', 'Bright living room with oak flooring'),
-      T('Kuhinja po mjeri sa ostrvom', 'Kuzhinë me porosi me ishull', 'Made-to-measure kitchen with island'),
-      T('Kupatilo sa samostojećom kadom', 'Banjo me vaskë të lirë', 'Bathroom with freestanding tub'),
+      T('Kraft kutija, papirna čaša, posuda za supu i drveni pribor', 'Kuti kraft, gotë letre, enë supe dhe takëm druri', 'Kraft box, paper cup, soup container and wooden cutlery'),
+      T('Smoothie u providnoj čaši sa slamkom', 'Smoothie në gotë të tejdukshme me shkop', 'Smoothie in a clear cup with a straw'),
+      T('Salate u crnim posudama za poneti', 'Sallata në enë të zeza take-away', 'Salads in black take-away containers'),
     ][i] ?? E(),
     overlay: 35,
     order: i + 1,
@@ -534,7 +609,7 @@ export function buildPlacements(home: HomeSection[]): Placement[] {
     id,
     kind: 'announcement',
     position: 'bar',
-    name: `Traka — ${title.me.slice(0, 32)}`,
+    name: `Shiriti — ${title.sq.slice(0, 36)}`,
     eyebrow: E(),
     title,
     subtitle: E(),
@@ -552,18 +627,18 @@ export function buildPlacements(home: HomeSection[]): Placement[] {
       id: 'pl-s4',
       kind: 'slide',
       position: 'home-hero',
-      name: 'Hero — Black Friday vrata',
+      name: 'Hero — Black Friday −20%',
       eyebrow: T('Black Friday', 'Black Friday', 'Black Friday'),
-      title: T('Sva vrata *−20%*.', 'Të gjitha dyert *−20%*.', 'All doors *−20%*.'),
+      title: T('Sve *−20 %*.', 'Gjithçka *−20 %*.', 'Everything *−20 %*.'),
       subtitle: T(
-        'Sobna, klizna i sigurnosna vrata uz besplatno mjerenje i ugradnju — samo sedam dana.',
-        'Dyer të brendshme, rrëshqitëse dhe sigurie me matje dhe montim falas — vetëm shtatë ditë.',
-        'Interior, sliding and security doors with free measuring and fitting — seven days only.',
+        'Četiri dana sa kodom BLACKFRIDAY — čaše, poklopci, posude i pribor za praznične gužve.',
+        'Katër ditë me kodin BLACKFRIDAY — gota, kapakë, enë dhe takëm për ngarkesën e festave.',
+        'Four days with code BLACKFRIDAY — cups, lids, containers and cutlery for the holiday rush.',
       ),
-      cta: { label: T('Pogledajte vrata', 'Shikoni dyert', 'Shop doors'), href: '/produktet/vrata' },
-      secondary: { label: T('Besplatno mjerenje', 'Matje falas', 'Free measurement'), href: '/#mjerenje' },
-      image: '/images/hero/arch.webp',
-      alt: T('Moderan ulaz sa drvenim vratima', 'Hyrje moderne me derë druri', 'Modern entrance with a wooden door'),
+      cta: { label: T('Pogledajte proizvode', 'Shikoni produktet', 'Shop products'), href: '/produktet' },
+      secondary: { label: T('Detalji ponude', 'Detajet e ofertës', 'Offer details'), href: '/oferta/black-friday' },
+      image: '/images/misc/kraft-cups.webp',
+      alt: T('Dvije kraft čaše sa crnim poklopcem', 'Dy gota kraft me kapak të zi', 'Two kraft cups with black lids'),
       overlay: 45,
       offerId: 'of-blackfriday',
       order: 4,
@@ -574,16 +649,20 @@ export function buildPlacements(home: HomeSection[]): Placement[] {
       kind: 'slide',
       position: 'home-hero',
       status: 'draft',
-      name: 'Hero — nova kupatila (draft)',
-      eyebrow: T('Novo u salonu', 'E re në sallon', 'New in the showroom'),
-      title: T('Kamen, svjetlo i *tišina*.', 'Gur, dritë dhe *qetësi*.', 'Stone, light and *calm*.'),
-      subtitle: T('Nova kolekcija premium kupatila — od kade do posljednje slavine.', 'Koleksioni i ri i banjove premium — nga vaska te rubineti i fundit.', 'The new premium bathroom collection — from the tub to the last tap.'),
-      cta: { label: T('Pogledajte kolekciju', 'Shikoni koleksionin', 'See the collection'), href: '/produktet/kupatilo' },
-      image: '/images/projects/kupatilo-travertin.webp',
-      alt: T('Kupatilo od travertina sa walk-in tušem', 'Banjo me travertin dhe dush walk-in', 'Travertine bathroom with walk-in shower'),
+      name: 'Hero — sezoni i tortave (draft)',
+      eyebrow: T('Za poslastičarnice', 'Për pastiçeri', 'For pastry shops'),
+      title: T('Slatko, upakovano *kako treba*.', 'E ëmbël, e paketuar *si duhet*.', 'Sweet, packed *properly*.'),
+      subtitle: T(
+        'Kutije za torte, gold kutije za parče torte i čaše za desert — −10 % automatski u korpi.',
+        'Kuti tortash, kuti gold për copë torte dhe gota ëmbëlsirash — −10 % automatikisht në shportë.',
+        'Cake boxes, gold slice boxes and dessert cups — −10 % automatically in the cart.',
+      ),
+      cta: { label: T('Pogledajte kolekciju', 'Shikoni koleksionin', 'See the collection'), href: '/koleksioni/per-pasticeri' },
+      image: '/images/projects/pasticeri.webp',
+      alt: T('Krofne u kraft kutiji', 'Donuts në kuti kraft', 'Doughnuts in a kraft box'),
       textAlign: 'center',
       overlay: 40,
-      offerId: 'of-kupatilo',
+      offerId: 'of-pasticeri',
       order: 5,
     },
     {
@@ -591,15 +670,15 @@ export function buildPlacements(home: HomeSection[]): Placement[] {
       id: 'pl-b1',
       kind: 'banner',
       position: 'catalog',
-      name: 'Katalog — jesenja akcija podova',
-      eyebrow: T('Jesenja akcija', 'Oferta e vjeshtës', 'Autumn sale'),
-      title: T('Odabrani podovi *−15%*', 'Dysheme të përzgjedhura *−15%*', 'Selected floors *−15%*'),
-      subtitle: T('Popust se obračunava automatski u korpi — bez koda.', 'Zbritja llogaritet automatikisht në shportë — pa kod.', 'The discount is applied automatically in the cart — no code needed.'),
-      cta: { label: T('Pogledajte podove', 'Shikoni dyshemetë', 'Shop flooring'), href: '/produktet/podovi' },
-      image: '/images/cat/podovi.webp',
-      alt: T('Hrastov laminat u dnevnom boravku', 'Laminat lisi në dhomën e ndenjes', 'Oak laminate in a living room'),
+      name: 'Katalogu — pije të ftohta: kapakë falas',
+      eyebrow: T('Hladni napici', 'Pije të ftohta', 'Cold drinks'),
+      title: T('4 pak. čaša → *poklopci gratis*', '4 pako gota → *kapakë falas*', '4 packs of cups → *free lids*'),
+      subtitle: T('Obračunava se automatski u korpi — bez koda, do 5 pakovanja po narudžbi.', 'Llogaritet automatikisht në shportë — pa kod, deri në 5 pako për porosi.', 'Applied automatically in the cart — no code, up to 5 packs per order.'),
+      cta: { label: T('Za kafiće', 'Për kafiteri', 'Café range'), href: '/koleksioni/per-kafiteri' },
+      image: '/images/misc/drinks.webp',
+      alt: T('Tri smoothieja sa crnim slamkama', 'Tre smoothie me shkopinj të zinj', 'Three smoothies with black straws'),
       overlay: 30,
-      offerId: 'of-jesen',
+      offerId: 'of-pije-te-ftohta',
       order: 1,
     },
     {
@@ -607,21 +686,21 @@ export function buildPlacements(home: HomeSection[]): Placement[] {
       id: 'pl-b2',
       kind: 'banner',
       position: 'catalog',
-      name: 'Katalog — SELCA10 dobrodošlica',
-      eyebrow: T('Za prvu kupovinu', 'Për blerjen e parë', 'For your first order'),
-      title: T('−10% uz kod *SELCA10*', '−10% me kodin *SELCA10*', '−10% with code *SELCA10*'),
-      subtitle: T('Za narudžbe od 100 € — kombinuje se sa besplatnom dostavom.', 'Për porosi nga 100 € — kombinohet me transportin falas.', 'On orders from €100 — combines with free delivery.'),
+      name: 'Katalogu — MIRESEERDHE −10%',
+      eyebrow: T('Za prvu narudžbu', 'Për porosinë e parë', 'For your first order'),
+      title: T('−10 % uz kod *MIRESEERDHE*', '−10 % me kodin *MIRESEERDHE*', '−10 % with code *MIRESEERDHE*'),
+      subtitle: T('Za narudžbe od 30 € — kombinuje se sa besplatnom dostavom preko 50 €.', 'Për porosi nga 30 € — kombinohet me transportin falas mbi 50 €.', 'On orders from €30 — combines with free delivery over €50.'),
       cta: { label: T('Kupujte sada', 'Blini tani', 'Shop now'), href: '/produktet' },
       image: '/images/misc/about.webp',
-      alt: T('SELCA salon', 'Salloni SELCA', 'SELCA showroom'),
+      alt: T('Police sa kartonima u skladištu', 'Rafte me kartona në depo', 'Warehouse shelves stacked with cartons'),
       overlay: 40,
-      offerId: 'of-dobrodoslica',
+      offerId: 'of-mireseerdhe',
       order: 2,
     },
-    ann('pl-a1', 1, T('Besplatno mjerenje i stručna ugradnja širom Crne Gore', 'Matje falas dhe montim profesional në gjithë Malin e Zi', 'Free measurement & expert installation across Montenegro'), undefined, '/#mjerenje'),
-    ann('pl-a2', 2, T('Besplatna dostava za narudžbe preko 300 €', 'Transport falas për porosi mbi 300 €', 'Free delivery on orders over €300'), undefined, '/faqe/dostava-i-ugradnja'),
-    ann('pl-a3', 3, T('Jesenja akcija: odabrani podovi −15%, automatski u korpi', 'Oferta e vjeshtës: dysheme të përzgjedhura −15%, automatikisht në shportë', 'Autumn sale: selected floors −15%, applied in the cart'), 'of-jesen', '/produktet/podovi'),
-    ann('pl-a4', 4, T('Black Friday: sva vrata −20% — samo sedam dana', 'Black Friday: të gjitha dyert −20% — vetëm shtatë ditë', 'Black Friday: all doors −20% — seven days only'), 'of-blackfriday', '/produktet/vrata'),
+    ann('pl-a1', 1, T('Besplatni uzorci za lokale · dostava za 24h u Mitrovici', 'Mostra falas për lokale · dërgesë 24h në Mitrovicë', 'Free samples for venues · 24h delivery in Mitrovica'), undefined, '/sherbimet'),
+    ann('pl-a2', 2, T('Besplatna dostava za narudžbe preko 50 € širom Kosova', 'Transport falas për porosi mbi 50 € në gjithë Kosovën', 'Free delivery on orders over €50 across Kosovo'), undefined, '/produktet'),
+    ann('pl-a3', 3, T('4 pakovanja čaša F95 → 1 pakovanje poklopaca gratis, automatski', '4 pako gota F95 → 1 pako kapakë falas, automatikisht', '4 packs of F95 cups → 1 pack of lids free, automatically'), 'of-pije-te-ftohta', '/koleksioni/per-kafiteri'),
+    ann('pl-a4', 4, T('Black Friday: −20 % na sve uz kod BLACKFRIDAY', 'Black Friday: −20 % në gjithçka me kodin BLACKFRIDAY', 'Black Friday: −20 % on everything with code BLACKFRIDAY'), 'of-blackfriday', '/oferta/black-friday'),
   ];
 }
 
@@ -629,85 +708,108 @@ export function buildPlacements(home: HomeSection[]): Placement[] {
 /* Staff, services, bookings                                           */
 /* ================================================================== */
 export const STAFF: Staff[] = [
-  { id: 'st-gent', name: 'Gent Lulaj', email: 'gent@selca.me', role: 'owner', color: '#1a1a1a', active: true, phone: '+382 67 123 456', title: T('Vlasnik', 'Pronar', 'Owner') },
-  { id: 'st-arta', name: 'Arta Gjokaj', email: 'arta@selca.me', role: 'manager', color: '#6b5b95', active: true, phone: '+382 67 210 334', title: T('Menadžerka prodaje', 'Menaxhere shitjesh', 'Sales manager') },
-  { id: 'st-drita', name: 'Drita Camaj', email: 'drita@selca.me', role: 'marketing', color: '#b5651d', active: true, title: T('Marketing', 'Marketing', 'Marketing') },
-  { id: 'st-milica', name: 'Milica Vuković', email: 'info@selca.me', role: 'reception', color: '#2f7d6d', active: true, phone: '+382 20 610 200', title: T('Recepcija salona', 'Recepsioni i sallonit', 'Showroom reception') },
-  { id: 'st-blerim', name: 'Blerim Dedaj', email: 'blerim@selca.me', role: 'orders', color: '#3d5a80', active: true, phone: '+382 69 330 118', title: T('Tehničar — mjerenje i montaža', 'Teknik — matje dhe montim', 'Technician — measuring & fitting') },
-  { id: 'st-ana', name: 'Ana Perović', email: 'ana@selca.me', role: 'editor', color: '#9c6644', active: true, title: T('Urednica sadržaja', 'Redaktore përmbajtjeje', 'Content editor') },
+  { id: 'st-driton', name: 'Driton Gashi', email: 'driton@paketoje.com', role: 'owner', color: '#1f2937', active: true, phone: '+383 44 100 200', title: T('Vlasnik', 'Pronar', 'Owner') },
+  { id: 'st-teuta', name: 'Teuta Berisha', email: 'teuta@paketoje.com', role: 'manager', color: '#6b5b95', active: true, phone: '+383 44 100 201', title: T('Menadžerka prodaje', 'Menaxhere shitjesh', 'Sales manager') },
+  { id: 'st-blerta', name: 'Blerta Krasniqi', email: 'blerta@paketoje.com', role: 'marketing', color: '#c2410c', active: true, title: T('Marketing i dizajn', 'Marketing & dizajn', 'Marketing & design') },
+  { id: 'st-ardita', name: 'Ardita Shala', email: 'info@paketoje.com', role: 'reception', color: '#0f766e', active: true, phone: '+383 44 100 202', title: T('Prodaja i recepcija', 'Shitje & recepsion', 'Sales & reception') },
+  { id: 'st-valon', name: 'Valon Morina', email: 'valon@paketoje.com', role: 'orders', color: '#1d4ed8', active: true, phone: '+383 44 100 203', title: T('Narudžbe i skladište', 'Porositë & depoja', 'Orders & warehouse') },
+  { id: 'st-elira', name: 'Elira Hoxha', email: 'elira@paketoje.com', role: 'editor', color: '#a16207', active: true, title: T('Urednica sadržaja', 'Redaktore përmbajtjeje', 'Content editor') },
 ];
 
 export const SERVICES: Service[] = [
   {
-    id: 'sv-mjerenje',
-    name: T('Besplatno mjerenje', 'Matje falas', 'Free measurement'),
-    description: T('Tehničar dolazi na adresu, mjeri i savjetuje.', 'Tekniku vjen në adresë, mat dhe këshillon.', 'A technician visits, measures and advises.'),
-    durationMin: 60,
-    capacity: 1,
-    price: 0,
-    color: '#3d5a80',
-    staffIds: ['st-blerim', 'st-gent'],
-    location: 'onsite',
-  },
-  {
-    id: 'sv-konsultacija',
-    name: T('Konsultacija u salonu', 'Konsultim në sallon', 'Showroom consultation'),
-    description: T('Izbor materijala uz uzorke i 3D prikaz.', 'Zgjedhja e materialeve me mostra dhe pamje 3D.', 'Choosing materials with samples and a 3D render.'),
-    durationMin: 45,
+    id: 'sv-mostra',
+    name: T('Besplatni uzorci u vašem lokalu', 'Mostra falas në lokalin tuaj', 'Free samples at your venue'),
+    description: T(
+      'Dolazimo sa uzorcima čaša, poklopaca i posuda i pomažemo da izaberete prave veličine.',
+      'Vijmë me mostra gotash, kapakësh dhe enësh dhe ju ndihmojmë të zgjidhni madhësitë e duhura.',
+      'We bring samples of cups, lids and containers and help you pick the right sizes.',
+    ),
+    durationMin: 30,
     capacity: 2,
-    color: '#2f7d6d',
-    staffIds: ['st-arta', 'st-milica', 'st-gent'],
-    location: 'loc-pg',
+    price: 0,
+    color: '#0f766e',
+    staffIds: ['st-ardita', 'st-valon', 'st-teuta'],
+    location: 'onsite',
   },
   {
-    id: 'sv-montaza',
-    name: T('Montaža', 'Montim', 'Installation'),
-    description: T('Ugradnja vrata, prozora ili poda — termin za montažni tim.', 'Montimi i dyerve, dritareve ose dyshemesë — termin për ekipën.', 'Fitting doors, windows or floors — a slot for the crew.'),
-    durationMin: 180,
+    id: 'sv-dizajn',
+    name: T('Konsultacija za štampu logotipa', 'Konsulencë për printim me logo', 'Logo-print design consultation'),
+    description: T(
+      'Logo, boje i pozicija na čaši ili kutiji — probni dizajn i ponuda u roku od 48 sati.',
+      'Logoja, ngjyrat dhe pozicioni në gotë ose kuti — dizajn provë dhe ofertë brenda 48 orësh.',
+      'Logo, colours and placement on the cup or box — a proof and a quote within 48 hours.',
+    ),
+    durationMin: 45,
     capacity: 1,
-    color: '#b5651d',
-    staffIds: ['st-blerim'],
-    location: 'onsite',
+    color: '#c2410c',
+    staffIds: ['st-blerta', 'st-teuta'],
+    location: 'loc-depo',
+  },
+  {
+    id: 'sv-takim',
+    name: T('B2B sastanak — veleprodaja', 'Takim B2B — shitje me shumicë', 'B2B wholesale meeting'),
+    description: T(
+      'Mjesečne količine, cijene po kartonu, rokovi dostave i plaćanje na fakturu.',
+      'Sasi mujore, çmime për karton, afatet e dërgesës dhe pagesa me faturë.',
+      'Monthly volumes, carton pricing, delivery schedules and invoice payment.',
+    ),
+    durationMin: 60,
+    capacity: 2,
+    color: '#1f2937',
+    staffIds: ['st-driton', 'st-teuta'],
+    location: 'loc-depo',
   },
 ];
 
 const BOOKING_PEOPLE: [string, string, string][] = [
-  ['Jelena Radović', '+382 67 441 902', 'Podgorica'],
-  ['Arben Kalaj', '+382 68 220 517', 'Tuzi'],
-  ['Petar Ivanović', '+382 69 715 330', 'Nikšić'],
-  ['Lindita Gjonaj', '+382 67 908 114', 'Ulcinj'],
-  ['Stefan Perović', '+382 68 510 276', 'Podgorica'],
-  ['Amra Hadžić', '+382 69 304 681', 'Bar'],
-  ['Valentina Dreshaj', '+382 67 655 209', 'Podgorica'],
-  ['Nikola Bulatović', '+382 68 147 993', 'Danilovgrad'],
-  ['Teodora Marković', '+382 69 822 460', 'Budva'],
-  ['Besnik Camaj', '+382 67 390 845', 'Tuzi'],
-  ['Maja Vujošević', '+382 68 674 152', 'Podgorica'],
-  ['Edin Mujović', '+382 69 251 738', 'Rožaje'],
-  ['Ivana Kovačević', '+382 67 118 506', 'Cetinje'],
-  ['Driton Lulgjuraj', '+382 68 963 027', 'Ulcinj'],
-  ['Filip Nikač', '+382 69 437 615', 'Podgorica'],
-  ['Elira Dedvukaj', '+382 67 582 394', 'Tuzi'],
+  ['Arianit Kelmendi', '+383 44 218 774', 'Vushtrri'],
+  ['Gentrit Hyseni', '+383 49 330 512', 'Prishtinë'],
+  ['Erza Bislimi', '+383 45 671 209', 'Vushtrri'],
+  ['Valdrin Murati', '+383 44 905 316', 'Mitrovicë'],
+  ['Shqipe Latifi', '+383 49 128 650', 'Mitrovicë'],
+  ['Albion Zymberi', '+383 44 760 431', 'Ferizaj'],
+  ['Njomza Ibrahimi', '+383 45 502 117', 'Prishtinë'],
+  ['Arben Uka', '+383 44 337 905', 'Prishtinë'],
+  ['Lirije Behrami', '+383 49 846 223', 'Prishtinë'],
+  ['Besart Gjocaj', '+383 44 615 378', 'Mitrovicë'],
+  ['Marija Lazić', '+383 45 290 664', 'Mitrovicë'],
+  ['Hana Shabani', '+383 44 471 052', 'Mitrovicë'],
+  ['Ilir Rexha', '+383 49 563 819', 'Prishtinë'],
+  ['Edonis Smajli', '+383 44 822 140', 'Vushtrri'],
+  ['Dren Mulliqi', '+383 45 718 336', 'Mitrovicë'],
+  ['Vesna Todorović', '+383 44 639 205', 'Zveçan'],
+  ['Arbnora Hajdari', '+383 49 274 581', 'Skenderaj'],
+  ['Leart Fetahu', '+383 44 158 903', 'Prishtinë'],
 ];
+
+const VENUE_STREETS: Record<string, string[]> = {
+  Mitrovicë: ['Rr. Mbretëresha Teutë', 'Rr. Adem Jashari', 'Rr. Isa Boletini', 'Rr. Nënë Tereza'],
+  Prishtinë: ['Bulevardi Nënë Tereza', 'Rr. Agim Ramadani', 'Rr. Fehmi Agani', 'Bulevardi Bill Clinton'],
+  Vushtrri: ['Rr. Adem Jashari', 'Rr. Dëshmorët e Kombit'],
+  Zveçan: ['Ul. Nemanjina'],
+};
 
 /** [day offset from this Monday, hour, minute, service, staff, note] — no overlaps per staff member. */
 const SLOTS: [number, number, number, string, string, string][] = [
-  [0, 9, 0, 'sv-konsultacija', 'st-arta', 'Izbor sobnih vrata za kuću'],
-  [0, 11, 0, 'sv-mjerenje', 'st-blerim', 'Prozori — stan 80 m²'],
-  [1, 10, 0, 'sv-mjerenje', 'st-gent', 'Laminat, 3 sobe i hodnik'],
-  [1, 13, 0, 'sv-montaza', 'st-blerim', 'Ugradnja 5 sobnih vrata'],
-  [2, 9, 0, 'sv-konsultacija', 'st-milica', 'Keramika za kupatilo'],
-  [2, 9, 30, 'sv-konsultacija', 'st-arta', 'Kuhinja po mjeri — 3D prikaz'],
-  [3, 8, 0, 'sv-montaza', 'st-blerim', 'Postavljanje parketa 32 m²'],
-  [3, 12, 0, 'sv-mjerenje', 'st-blerim', 'Kupatilo — walk-in tuš'],
-  [4, 9, 0, 'sv-konsultacija', 'st-gent', 'Sigurnosna vrata — ponuda'],
-  [4, 15, 0, 'sv-mjerenje', 'st-gent', 'Dritare 9 copë'],
-  [7, 9, 0, 'sv-mjerenje', 'st-blerim', 'Porculan 60 × 120, 45 m²'],
-  [7, 11, 0, 'sv-konsultacija', 'st-arta', 'Klizna HS vrata — PVC ili ALU'],
-  [8, 8, 0, 'sv-montaza', 'st-blerim', 'Ugradnja PVC prozora, 7 kom'],
-  [9, 10, 0, 'sv-konsultacija', 'st-milica', 'Kupatilo — izbor sanitarija'],
-  [10, 12, 0, 'sv-mjerenje', 'st-gent', 'Kuhinja — mjerenje prostora'],
-  [11, 9, 0, 'sv-montaza', 'st-blerim', 'Montaža kuhinje Linea Bianca'],
+  [0, 9, 30, 'sv-mostra', 'st-ardita', 'Kafiteri e re — gota F95 400/500 ml + kapakë kupolë'],
+  [0, 11, 0, 'sv-takim', 'st-driton', 'Furnizim mujor për 3 lokale fast food — çmime për karton'],
+  [1, 10, 0, 'sv-dizajn', 'st-blerta', 'Logo 1 ngjyrë në gota F95 400 ml — skica dhe Pantone'],
+  [1, 13, 30, 'sv-mostra', 'st-valon', 'Restorant — enë mikrovalë 500/750 ml dhe kuti me dy ndarje'],
+  [2, 9, 0, 'sv-mostra', 'st-ardita', 'Pastiçeri — gota Venus/PS dhe kuti tortash'],
+  [2, 9, 30, 'sv-dizajn', 'st-teuta', 'Kuti kraft burgeri me logo — formati dhe printimi'],
+  [2, 14, 0, 'sv-takim', 'st-driton', 'Catering — çmime shumice për sezonin e dasmave'],
+  [3, 10, 0, 'sv-mostra', 'st-valon', 'Sushi bar — enë sushi me kapak transparent'],
+  [3, 11, 30, 'sv-takim', 'st-teuta', 'Rrjet kafiterish — marrëveshje vjetore për gota & kapakë'],
+  [4, 9, 30, 'sv-dizajn', 'st-blerta', 'Etiketa me logo në rrotull për pastiçeri'],
+  [4, 13, 0, 'sv-mostra', 'st-ardita', 'Akullore — lugë rozë dhe gota PS'],
+  [7, 9, 30, 'sv-mostra', 'st-ardita', 'Restorant — enë sallatash 750/1000 ml'],
+  [7, 11, 0, 'sv-takim', 'st-driton', 'Dy pika smoothie — gota 500 ml, kapakë kupolë, shkopinj'],
+  [8, 10, 0, 'sv-dizajn', 'st-blerta', 'Gota letre me logo për kafiteri — dizajn 2 ngjyra'],
+  [8, 14, 0, 'sv-mostra', 'st-ardita', 'Bar kafe — gota F95 300 ml dhe lugë kafeje'],
+  [9, 10, 30, 'sv-mostra', 'st-valon', 'Kafiteri — kapakë clip dhe shkopinj 24 cm'],
+  [10, 12, 0, 'sv-takim', 'st-teuta', 'Catering — porosi për eventet e fundvitit'],
+  [11, 9, 30, 'sv-mostra', 'st-ardita', 'Fast food — gota salce 1/2 oz dhe sete takëmesh'],
 ];
 
 function mondayOf(now: Date) {
@@ -718,9 +820,12 @@ function mondayOf(now: Date) {
   return d;
 }
 
+/** Inquiry → the service it books: samples → visit, logo print → design consultation, the rest → B2B meeting. */
+const serviceFor = (q: Inquiry) => (q.type === 'measurement' ? 'sv-mostra' : q.service === 'Printim me logo' ? 'sv-dizajn' : 'sv-takim');
+
 /**
  * Bookings for this and next week. Scheduled inquiries are linked to future bookings of the matching
- * service (measurement → Besplatno mjerenje, others → Konsultacija) and get the same date.
+ * service (samples → sample visit, logo print → design consultation, wholesale → B2B meeting) and get the same date.
  */
 export function buildBookings(now: Date, inquiries: Inquiry[]): { bookings: Booking[]; inquiries: Inquiry[] } {
   const monday = mondayOf(now);
@@ -732,7 +837,8 @@ export function buildBookings(now: Date, inquiries: Inquiry[]): { bookings: Book
     const end = start.getTime() + service.durationMin * 60000;
     const [customerName, phone, city] = BOOKING_PEOPLE[i % BOOKING_PEOPLE.length];
     const past = end < now.getTime();
-    const status: Booking['status'] = past ? (i === 4 ? 'noshow' : i === 5 ? 'cancelled' : 'done') : i === 13 || i === 14 ? 'pending' : 'confirmed';
+    const status: Booking['status'] = past ? (i === 4 ? 'noshow' : i === 5 ? 'cancelled' : 'done') : i === 13 || i === 15 ? 'pending' : 'confirmed';
+    const streets = VENUE_STREETS[city] ?? ['Rr. Adem Jashari', 'Rr. Skënderbeu'];
     return {
       id: `bk-${101 + i}`,
       serviceId,
@@ -744,9 +850,9 @@ export function buildBookings(now: Date, inquiries: Inquiry[]): { bookings: Book
       durationMin: service.durationMin,
       status,
       note,
-      location: service.location ?? 'loc-pg',
-      ...(service.location === 'onsite' ? { address: `${['Njegoševa', 'Ulica Slobode', 'Bulevar Revolucije', 'Mediteranska'][i % 4]} ${12 + i * 3}` } : {}),
-      createdAt: new Date(start.getTime() - (3 + (i % 5)) * DAY).toISOString(),
+      location: service.location ?? 'loc-depo',
+      ...(service.location === 'onsite' ? { address: `${streets[i % streets.length]} ${4 + ((i * 7) % 60)}` } : {}),
+      createdAt: new Date(start.getTime() - (2 + (i % 5)) * DAY).toISOString(),
     };
   });
 
@@ -754,7 +860,7 @@ export function buildBookings(now: Date, inquiries: Inquiry[]): { bookings: Book
   const free = (svc: string) => bookings.filter((b) => b.serviceId === svc && !b.inquiryId && new Date(b.start).getTime() > now.getTime() && b.status !== 'cancelled');
   for (const q of out.sort((a, b) => a.createdAt.localeCompare(b.createdAt))) {
     if (q.status !== 'scheduled') continue;
-    const slot = free(q.type === 'measurement' ? 'sv-mjerenje' : 'sv-konsultacija')[0];
+    const slot = free(serviceFor(q))[0];
     if (!slot) {
       q.status = 'contacted';
       q.scheduledAt = undefined;
@@ -766,54 +872,62 @@ export function buildBookings(now: Date, inquiries: Inquiry[]): { bookings: Book
     slot.email = q.email;
     slot.city = q.city;
     slot.status = 'confirmed';
+    if (q.company) slot.note = `${q.company} — ${slot.note}`;
+    if (slot.location === 'onsite') {
+      const streets = VENUE_STREETS[q.city ?? ''] ?? ['Rr. Adem Jashari'];
+      slot.address = `${streets[0]} ${8 + (Number(q.id.replace(/\D/g, '')) % 40)}`;
+    }
     q.scheduledAt = slot.start;
   }
   return { bookings, inquiries: out.sort((a, b) => b.createdAt.localeCompare(a.createdAt)) };
 }
 
 /* ================================================================== */
-/* Inquiries — CMS v2 fields + two extra (B2B quote, delivery question) */
+/* Inquiries — CMS v2 fields + two extra (café-chain quote, delivery)   */
 /* ================================================================== */
 export function enrichInquiries(now: Date, inquiries: Inquiry[]): Inquiry[] {
   const out: Inquiry[] = inquiries.map((q, i) => ({
     ...q,
     source: q.type === 'measurement' ? 'measurement' : q.type === 'quote' ? 'quote' : 'web-form',
-    assignee: q.status === 'new' ? undefined : q.type === 'measurement' ? (i % 2 ? 'st-gent' : 'st-blerim') : q.type === 'quote' ? 'st-arta' : 'st-milica',
-    tags: [q.service ? q.service.toLowerCase() : 'opste', ...(q.type === 'quote' ? ['ponuda'] : [])],
+    assignee:
+      q.status === 'new' ? undefined : q.type === 'measurement' ? (i % 2 ? 'st-valon' : 'st-ardita') : q.type === 'quote' ? (q.service === 'Printim me logo' ? 'st-blerta' : 'st-teuta') : 'st-ardita',
+    tags: [q.service ? slugify(q.service) : 'pergjithshme', ...(q.type === 'quote' ? ['oferte'] : []), ...(q.company ? ['b2b'] : [])],
+    ...(q.type === 'quote' && q.status === 'contacted' ? { followUpAt: iso(now, 1) } : {}),
   }));
   out.push(
     {
       id: 'inq_120',
       createdAt: iso(now, -4, -3),
       type: 'quote',
-      name: 'Vesna Bulatović',
-      company: 'Hotel Montenegrina d.o.o.',
-      phone: '+382 67 552 301',
-      email: 'nabavka.montenegrina@example.com',
-      city: 'Budva',
-      service: 'Prozori',
-      productId: 'p-pvc-antracit',
-      message: 'Ponuda za 30 PVC prozora u antracitu (120 × 140) sa ugradnjom i demontažom starih, za renoviranje hotela prije sezone.',
+      name: 'Arbnor Avdyli',
+      company: 'Kafeteritë Aroma sh.p.k.',
+      phone: '+383 44 552 301',
+      email: 'prokurimi.aroma@example.com',
+      city: 'Prishtinë',
+      service: 'Printim me logo',
+      productId: 'p-gota-f95-400',
+      message:
+        'Kemi 4 kafiteri (3 në Prishtinë, 1 në Fushë Kosovë). Na duhet ofertë për gota F95 400 dhe 500 ml me logon tonë në 2 ngjyra — rreth 20.000 copë për 3 muaj — plus kapakë kupolë. A mund të na dërgoni edhe një provë të printimit?',
       status: 'contacted',
       seen: true,
-      source: 'phone',
-      assignee: 'st-arta',
-      tags: ['b2b', 'prozori', 'hotel'],
+      source: 'quote',
+      assignee: 'st-teuta',
+      tags: ['b2b', 'logo', 'kafiteri'],
       followUpAt: iso(now, 2),
     },
     {
       id: 'inq_121',
       createdAt: iso(now, 0, -5),
       type: 'contact',
-      name: 'Ardit Gjokaj',
-      phone: '+382 68 419 207',
-      email: 'ardit.gjokaj@example.com',
-      city: 'Plav',
-      message: 'Da li dostavljate u Plav i koliko traje isporuka za laminat sa stanja?',
+      name: 'Gresa Kurteshi',
+      phone: '+383 49 419 207',
+      email: 'gresa.kurteshi@example.com',
+      city: 'Pejë',
+      message: 'Përshëndetje, a dërgoni në Pejë dhe sa kushton transporti për 3 kartona me gota 400 ml? A mund të paguaj me para në dorë?',
       status: 'new',
       seen: false,
       source: 'web-form',
-      tags: ['dostava'],
+      tags: ['dergesa'],
     },
   );
   return out.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -826,30 +940,40 @@ export const SEGMENTS: Segment[] = [
   {
     id: 'seg-vip',
     name: T('VIP kupci', 'Klientë VIP', 'VIP customers'),
-    description: T('Potrošili više od 4.000 €.', 'Kanë shpenzuar mbi 4.000 €.', 'Spent more than €4,000.'),
+    description: T('Potrošili više od 300 €.', 'Kanë shpenzuar mbi 300 €.', 'Spent more than €300.'),
     match: 'all',
-    rules: [{ field: 'spent', op: 'gt', value: '4000' }],
+    rules: [{ field: 'spent', op: 'gt', value: '300' }],
   },
   {
     id: 'seg-povratni',
     name: T('Povratni kupci', 'Klientë që kthehen', 'Returning customers'),
-    description: T('Više od jedne narudžbe.', 'Më shumë se një porosi.', 'More than one order.'),
+    description: T('3 ili više narudžbi.', '3 ose më shumë porosi.', '3 or more orders.'),
     match: 'all',
-    rules: [{ field: 'orders', op: 'gt', value: '1' }],
+    rules: [{ field: 'orders', op: 'gt', value: '2' }],
   },
   {
-    id: 'seg-primorje',
-    name: T('Primorje', 'Bregdeti', 'Coast'),
-    description: T('Kupci iz primorskih opština.', 'Klientë nga komunat bregdetare.', 'Customers from coastal municipalities.'),
+    id: 'seg-mitrovice',
+    name: T('Mitrovica', 'Mitrovicë', 'Mitrovica'),
+    description: T('Kupci iz Mitrovice — dostava za 24h ili preuzimanje u skladištu.', 'Klientë nga Mitrovica — dërgesë 24h ose marrje në depo.', 'Customers in Mitrovica — 24h delivery or warehouse pickup.'),
+    match: 'all',
+    rules: [{ field: 'city', op: 'eq', value: 'Mitrovicë' }],
+  },
+  {
+    id: 'seg-prishtine',
+    name: T('Priština i okolina', 'Prishtina & rrethina', 'Prishtina area'),
+    description: T('Kupci iz Prištine i Kosova Polja.', 'Klientë nga Prishtina dhe Fushë Kosova.', 'Customers in Prishtina and Fushë Kosovë.'),
     match: 'any',
-    rules: ['Bar', 'Ulcinj', 'Budva', 'Kotor', 'Tivat', 'Herceg Novi'].map((c) => ({ field: 'city' as const, op: 'eq' as const, value: c })),
+    rules: [
+      { field: 'city', op: 'eq', value: 'Prishtinë' },
+      { field: 'city', op: 'eq', value: 'Fushë Kosovë' },
+    ],
   },
   {
-    id: 'seg-shqip',
-    name: T('Kupci na albanskom', 'Klientë në shqip', 'Albanian-speaking customers'),
-    description: T('Naručivali na albanskom jeziku — za kampanje na SQ.', 'Kanë porositur në shqip — për fushata në SQ.', 'Ordered in Albanian — for SQ campaigns.'),
+    id: 'seg-sr',
+    name: T('Kupci na srpskom', 'Klientë në serbisht', 'Serbian-speaking customers'),
+    description: T('Naručivali na srpskom — za kampanje na SR.', 'Kanë porositur në serbisht — për fushata në SR.', 'Ordered in Serbian — for SR campaigns.'),
     match: 'all',
-    rules: [{ field: 'lang', op: 'eq', value: 'sq' }],
+    rules: [{ field: 'lang', op: 'eq', value: 'me' }],
   },
 ];
 
@@ -861,34 +985,36 @@ export function buildPurchaseOrders(now: Date): PurchaseOrder[] {
     {
       id: 'po-014',
       number: 'PO-2026-014',
-      supplier: 'Alpe Floor GmbH',
-      location: 'loc-tz',
+      supplier: V_PET,
+      location: 'loc-depo',
       status: 'partial',
       lines: [
-        { productId: 'p-laminat-grey', ordered: 200, received: 120, rejected: 0, cost: 6.9 },
-        { productId: 'p-laminat-nordic', ordered: 150, received: 150, rejected: 0, cost: 6.2 },
-        { productId: 'p-laminat-rustic', ordered: 100, received: 96, rejected: 4, cost: 9.4 },
+        { productId: 'p-gota-f95-400', ordered: 200, received: 200, rejected: 0, cost: 1.38 },
+        { productId: 'p-gota-f95-500', ordered: 160, received: 100, rejected: 0, cost: 1.66 },
+        { productId: 'p-kapak-kupole', ordered: 120, received: 120, rejected: 0, cost: 1.08 },
+        { productId: 'p-kapak-clip', ordered: 100, received: 94, rejected: 6, cost: 1.08 },
       ],
-      reference: 'AF-55721',
-      note: 'Ostatak Grey Stone Oak stiže drugim kamionom. 4 paketa Rustic odbijena — oštećeni uglovi.',
-      expectedAt: iso(now, 3),
-      createdAt: iso(now, -12),
+      reference: 'TR-2026-0815',
+      note: '60 pako gota 500 ml vijnë me kamionin e dytë. 6 pako kapakë clip u refuzuan — karton i shtypur gjatë transportit.',
+      expectedAt: iso(now, 4),
+      createdAt: iso(now, -14),
     },
     {
       id: 'po-015',
       number: 'PO-2026-015',
-      supplier: 'Porta Lux d.o.o.',
-      location: 'loc-pg',
+      supplier: V_PAPER,
+      location: 'loc-depo',
       status: 'sent',
       lines: [
-        { productId: 'p-vrata-flat', ordered: 10, received: 0, rejected: 0, cost: 205 },
-        { productId: 'p-vrata-guardian', ordered: 4, received: 0, rejected: 0, cost: 690 },
-        { productId: 'p-kvaka-linea', ordered: 60, received: 0, rejected: 0, cost: 15.5 },
+        { productId: 'p-kuti-trekendeshe-gold', ordered: 60, received: 0, rejected: 0, cost: 2.62 },
+        { productId: 'p-kuti-torte-230', ordered: 64, received: 0, rejected: 0, cost: 4.1 },
+        { productId: 'p-ene-torte-kupole', ordered: 40, received: 0, rejected: 0, cost: 1.75 },
+        { productId: 'p-luge-akullore-lux', ordered: 30, received: 0, rejected: 0, cost: 5.9 },
       ],
-      reference: 'PL-2026/0932',
-      note: 'Za Black Friday akciju vrata.',
-      expectedAt: iso(now, 9),
-      createdAt: iso(now, -3),
+      reference: 'MK-2026/0418',
+      note: 'Para sezonit të tortave të fundvitit — kutitë e tortave 230 mm janë në stok të ulët, lugët luksoze janë jashtë stokut.',
+      expectedAt: iso(now, 8),
+      createdAt: iso(now, -2),
     },
   ];
 }
@@ -905,23 +1031,25 @@ export function buildMovements(now: Date, orders: Order[], returns: ReturnReques
     ...(ref ? { ref } : {}),
   });
   const list: InventoryMovement[] = [
-    mv('mv-1', 'p-ogledalo-luna', -1, 'damaged', -2, 'st-blerim', 'Napuklo staklo pri istovaru — otpis'),
-    mv('mv-2', 'p-vrata-vetro', -1, 'damaged', -4, 'st-blerim', 'Ogrebotina na staklu — izloženo u salonu'),
-    mv('mv-3', 'p-laminat-grey', 120, 'received', -5, 'st-arta', 'Alpe Floor GmbH', 'PO-2026-014'),
-    mv('mv-4', 'p-laminat-nordic', 150, 'received', -5, 'st-arta', 'Alpe Floor GmbH', 'PO-2026-014'),
-    mv('mv-5', 'p-laminat-rustic', 96, 'received', -5, 'st-arta', 'Alpe Floor GmbH — 4 paketa odbijena', 'PO-2026-014'),
-    mv('mv-6', 'p-calacatta', -3, 'count', -7, 'st-arta', 'Inventura — razlika u magacinu Tuzi'),
-    mv('mv-7', 'p-parket-natur', 2, 'count', -7, 'st-arta', 'Inventura — pronađena 2 paketa'),
-    mv('mv-9', 'p-beton', -4, 'correction', -11, 'st-gent', 'Uzorci za izložbeni prostor'),
+    mv('mv-1', 'p-kuti-torte-230', -1, 'damaged', -3, 'st-valon', 'Pako e shtypur gjatë shkarkimit — u shlye'),
+    mv('mv-2', 'p-gota-f95-400', -3, 'correction', -4, 'st-ardita', 'Mostra falas për 6 kafiteri (3 pako)'),
+    mv('mv-3', 'p-gota-f95-400', 200, 'received', -6, 'st-valon', V_PET, 'PO-2026-014'),
+    mv('mv-4', 'p-gota-f95-500', 100, 'received', -6, 'st-valon', `${V_PET} — 60 pako vijnë me kamionin e dytë`, 'PO-2026-014'),
+    mv('mv-5', 'p-kapak-kupole', 120, 'received', -6, 'st-valon', V_PET, 'PO-2026-014'),
+    mv('mv-6', 'p-kapak-clip', 94, 'received', -6, 'st-valon', `${V_PET} — 6 pako u refuzuan (karton i shtypur)`, 'PO-2026-014'),
+    mv('mv-7', 'p-salce-1oz', -4, 'count', -9, 'st-teuta', 'Inventari mujor — diferencë në raftin B3'),
+    mv('mv-8', 'p-shkop-24', 2, 'count', -9, 'st-teuta', 'Inventari mujor — u gjetën 2 pako'),
+    mv('mv-9', 'p-luge-akullore-lux', -3, 'damaged', -15, 'st-valon', 'Pako të lagura nga shiu gjatë shkarkimit'),
+    mv('mv-10', 'p-gote-venus', -2, 'correction', -11, 'st-elira', 'Mostra për vitrinën në depo'),
   ];
   // restocked returns
   for (const r of returns) {
     if (!r.restocked) continue;
     const rec = r.timeline.find((t) => t.status === 'received');
-    for (const l of r.lines) list.push({ id: `mv-${r.id}-${l.productId}`, productId: l.productId, delta: l.qty, reason: 'return', at: rec?.at ?? r.createdAt, by: rec?.by ?? 'st-blerim', note: 'Vraćeno neoštećeno', ref: r.number });
+    for (const l of r.lines) list.push({ id: `mv-${r.id}-${l.productId}`, productId: l.productId, delta: l.qty, reason: 'return', at: rec?.at ?? r.createdAt, by: rec?.by ?? 'st-valon', note: 'Pako të pahapura — u kthyen në stok', ref: r.number });
   }
   // the most recent web orders as 'sale' movements
-  let n = 10;
+  let n = 20;
   for (const o of orders.slice(0, 6)) {
     for (const l of o.items) {
       if (!l.productId) continue;
@@ -945,43 +1073,41 @@ export function buildDrafts(now: Date, products: Product[]): DraftOrder[] {
       .sort()
       .map((k) => `${k}=${o[k]}`)
       .join('&')}|${inst ? 'i' : ''}`;
-  const classica = opts('p-vrata-classica');
-  const kvaka = opts('p-kvaka-linea');
-  const rustic = opts('p-laminat-rustic');
+  const line = (id: string, qty: number, installation = false) => {
+    const o = opts(id);
+    return { key: key(id, o, installation), productId: id, qty, options: o, installation };
+  };
   return [
     {
       id: 'dr-1001',
       number: 'D-1001',
       createdAt: iso(now, -1, -2),
-      customer: { firstName: 'Bojana', lastName: 'Kalaj', company: 'Apartmani Bojana d.o.o.', pib: '03187254', email: 'bojana.kalaj@example.com', phone: '+382 69 412 778', city: 'Ulcinj', address: 'Ulica Skenderbega 14' },
-      items: [
-        { key: key('p-vrata-classica', classica, true), productId: 'p-vrata-classica', qty: 12, options: classica, installation: true },
-        { key: key('p-kvaka-linea', kvaka, false), productId: 'p-kvaka-linea', qty: 12, options: kvaka, installation: false },
-      ],
-      customLines: [{ title: 'Demontaža i odvoz starih vrata', price: 15, qty: 12 }],
-      discountCodes: ['SELCA10'],
+      customer: { firstName: 'Arbër', lastName: 'Bytyqi', company: 'Kafiteria Lumi', pib: '811402375', email: 'kafiterialumi@example.com', phone: '+383 44 512 803', city: 'Mitrovicë', address: 'Rr. Mbretëresha Teutë 14' },
+      items: [line('p-gota-f95-400', 40, true), line('p-kapak-kupole', 20), line('p-shkop-24', 4)],
+      customLines: [{ title: 'Klishe printimi për logon (njëherë)', price: 25, qty: 1 }],
+      discountCodes: [],
       delivery: 'delivery',
       payment: 'bank',
-      note: 'Apartmani — 12 jedinica, ugradnja u novembru prije sezone. Plaćanje avansno po predračunu.',
-      tags: ['b2b', 'ulcinj'],
+      note: 'Porosi mujore + 2 kartona gota me logo (1 ngjyrë) për sezonin e ri. Logoja u aprovua me e-mail; faturë me NUI, pagesë me transfer bankar.',
+      tags: ['b2b', 'kafiteri', 'logo'],
       status: 'open',
-      createdBy: 'st-arta',
+      createdBy: 'st-teuta',
       lang: 'sq',
     },
     {
       id: 'dr-1002',
       number: 'D-1002',
-      createdAt: iso(now, -4, -1),
-      customer: { firstName: 'Arben', lastName: 'Gjonaj', email: 'arben.gjonaj@example.com', phone: '+382 68 220 517', city: 'Tuzi', address: 'Ulica 13. jula 41' },
-      items: [{ key: key('p-laminat-rustic', rustic, true), productId: 'p-laminat-rustic', qty: 30, options: rustic, installation: true }],
-      customLines: [{ title: 'Lajsne i prelazne lajsne (komplet)', price: 120, qty: 1 }],
-      discountCodes: [],
+      createdAt: iso(now, -3, -1),
+      customer: { firstName: 'Dragan', lastName: 'Kostić', company: 'Ketering Slavlje', pib: '811067452', email: 'ketering.slavlje@example.com', phone: '+383 45 318 607', city: 'Graçanicë', address: 'Ul. Kralja Milutina 52' },
+      items: [line('p-set-ps-bardhe', 10), line('p-ene-mikrovale-750', 10), line('p-kuti-dy-ndarje', 6), line('p-gota-f95-300', 20), line('p-kapak-sheshte', 10), line('p-salce-1oz', 5)],
+      customLines: [{ title: 'Dërgesë me orar të caktuar (dita e eventit)', price: 10, qty: 1 }],
+      discountCodes: ['MIRESEERDHE'],
       delivery: 'delivery',
-      payment: 'cod',
-      note: 'Predračun poslat e-mailom. Kupac dolazi u salon po uzorke lajsni.',
-      tags: ['podovi'],
+      payment: 'bank',
+      note: 'Dasmë me rreth 400 të ftuar të shtunën — fatura proforma u dërgua me e-mail, pritet pagesa paraprake.',
+      tags: ['b2b', 'catering', 'event'],
       status: 'invoice_sent',
-      createdBy: 'st-gent',
+      createdBy: 'st-ardita',
       lang: 'me',
     },
   ];
@@ -990,61 +1116,73 @@ export function buildDrafts(now: Date, products: Product[]): DraftOrder[] {
 /** Two returns from real generated orders; the refunded one is also recorded on its order. */
 export function buildReturns(now: Date, orders: Order[]): { returns: ReturnRequest[]; orders: Order[] } {
   const age = (o: Order) => (now.getTime() - new Date(o.createdAt).getTime()) / DAY;
-  const pieceLine = (o: Order) => o.items.find((l) => l.unit === 'kom' || l.unit === 'set');
-  const old = orders.find((o) => o.status === 'completed' && age(o) > 20 && pieceLine(o));
-  const recent = orders.find((o) => o !== old && (o.status === 'shipped' || o.status === 'installation' || o.status === 'completed') && age(o) < 15 && pieceLine(o));
+  const isCup = (id: string) => CUPS.includes(id);
+  const cupLine = (o: Order, min: number) => o.items.find((l) => isCup(l.productId) && l.qty >= min && !l.installation);
+  const old =
+    orders.find((o) => o.status === 'completed' && age(o) > 20 && age(o) < 80 && cupLine(o, 20)) ??
+    orders.find((o) => o.status === 'completed' && age(o) > 20 && cupLine(o, 4)) ??
+    orders.find((o) => o.status === 'completed' && age(o) > 20 && o.items.length > 0);
+  const recentLine = (o: Order) => o.items.find((l) => l.productId === 'p-kapak-sheshte' && l.qty >= 2) ?? o.items.find((l) => l.unit === 'pack' && l.qty >= 2 && !l.installation);
+  const recent =
+    orders.find((o) => o !== old && o.status === 'completed' && age(o) > 1 && age(o) < 5 && o.items.some((l) => l.productId === 'p-kapak-sheshte' && l.qty >= 2)) ??
+    orders.find((o) => o !== old && (o.status === 'completed' || o.status === 'shipped') && age(o) > 1 && age(o) < 6 && recentLine(o));
   const returns: ReturnRequest[] = [];
   let out = orders;
   if (old) {
-    const line = pieceLine(old)!;
-    const lines = [{ productId: line.productId, qty: 1 }];
+    const line = cupLine(old, 4) ?? old.items[0];
+    // one damaged carton (or the whole line when it is smaller than a carton)
+    const lines = [{ productId: line.productId, qty: Math.min(line.qty, 20) }];
     const amount = refundForLines(old, lines);
-    const t0 = new Date(Math.min(now.getTime() - 12 * DAY, new Date(old.createdAt).getTime() + 6 * DAY));
+    const t0 = new Date(new Date(old.createdAt).getTime() + 2 * DAY);
     const at = (h: number) => new Date(t0.getTime() + h * 3600000).toISOString();
     returns.push({
       id: 'rt-1001',
       number: 'RT-1001',
       orderId: old.id,
       lines,
-      reason: 'Oštećeno pri transportu — kupac traži povrat novca',
+      reason: 'Kartoni arriti i shtypur gjatë transportit — gota të çara, klienti dërgoi foto dhe kërkon rimbursim',
       status: 'refunded',
       refundAmount: amount,
-      restock: true,
-      restocked: true,
+      restock: false,
       createdAt: at(0),
       timeline: [
-        { at: at(0), status: 'requested', by: 'st-milica', note: 'Prijava telefonom, poslate fotografije' },
-        { at: at(5), status: 'approved', by: 'st-arta' },
-        { at: at(50), status: 'received', by: 'st-blerim', note: 'Preuzeto na adresi, vraćeno na stanje' },
-        { at: at(54), status: 'refunded', by: 'st-arta' },
+        { at: at(0), status: 'requested', by: 'st-ardita', note: 'Lajmërim me telefon + foto në WhatsApp' },
+        { at: at(3), status: 'approved', by: 'st-teuta', note: 'Dëmtim në transport — rimbursim i plotë i kartonit' },
+        { at: at(26), status: 'received', by: 'st-valon', note: 'Kartoni u mor me dërgesën e radhës — i dëmtuar, nuk kthehet në stok' },
+        { at: at(29), status: 'refunded', by: 'st-teuta' },
       ],
     });
     out = out.map((o) =>
       o.id === old.id
         ? {
             ...o,
-            refunds: [{ id: 'rf-1001', at: at(54), amount, lineIds: [String(o.items.indexOf(line))], note: 'RT-1001', by: 'st-arta' }],
+            refunds: [{ id: 'rf-1001', at: at(29), amount, lineIds: [String(o.items.indexOf(line))], note: 'RT-1001', by: 'st-teuta' }],
             payment: { ...o.payment, status: 'paid', refunded: amount },
-            timeline: [...o.timeline, { at: at(54), status: 'payment', note: `Refund ${amount.toFixed(2)} € (RT-1001)`, by: 'admin' }],
+            timeline: [...o.timeline, { at: at(29), status: 'payment', note: `Rimbursim ${amount.toFixed(2)} € (RT-1001)`, by: 'st-teuta' }],
           }
         : o,
     );
   }
   if (recent) {
-    const line = pieceLine(recent)!;
-    const lines = [{ productId: line.productId, qty: 1 }];
-    const at = iso(now, 0, -20);
+    const line = recentLine(recent)!;
+    const qty = Math.min(line.qty, 4);
+    const lines = [{ productId: line.productId, qty }];
+    const delivered = recent.fulfillment?.deliveredAt ?? recent.fulfillment?.shippedAt ?? recent.createdAt;
+    const at = new Date(Math.min(now.getTime() - 3600000, Math.max(now.getTime() - 20 * 3600000, new Date(delivered).getTime() + 2 * 3600000))).toISOString();
+    const wrongLid = line.productId === 'p-kapak-sheshte';
     returns.push({
       id: 'rt-1002',
       number: 'RT-1002',
       orderId: recent.id,
       lines,
-      reason: 'Pogrešna nijansa — kupac želi zamjenu ili povrat',
+      reason: wrongLid
+        ? `Gabim në porosi: kapak i sheshtë në vend të kupolës — ${qty} pako të pahapura në paketimin origjinal`
+        : `Porositën më shumë se ç'u duhej — ${qty} pako të pahapura në paketimin origjinal, brenda 5 ditëve`,
       status: 'requested',
       refundAmount: refundForLines(recent, lines),
       restock: true,
       createdAt: at,
-      timeline: [{ at, status: 'requested', by: 'web', note: 'Zahtjev preko e-maila sa brojem narudžbe' }],
+      timeline: [{ at, status: 'requested', by: 'web', note: 'Kërkesë me e-mail në refund@paketoje.com me numrin e porosisë' }],
     });
   }
   return { returns, orders: out };
@@ -1052,43 +1190,45 @@ export function buildReturns(now: Date, orders: Order[]): { returns: ReturnReque
 
 export function buildQuotes(now: Date): Quote[] {
   const terms = T(
-    'Cijene uključuju PDV 21%. Avans 40%, ostatak po ugradnji. Rok isporuke 3–4 sedmice od potvrde.',
-    'Çmimet përfshijnë TVSH 21%. Avans 40%, pjesa tjetër pas montimit. Afati i dërgesës 3–4 javë nga konfirmimi.',
-    'Prices include 21% VAT. 40% deposit, balance on installation. Delivery 3–4 weeks from confirmation.',
+    'Cijene uključuju PDV 18 %. Za štampu logotipa avans 50 %, ostatak prije isporuke. Izrada 7–10 radnih dana od odobrenja probnog dizajna. Besplatna dostava na Kosovu.',
+    'Çmimet përfshijnë TVSH 18 %. Për printimin me logo avans 50 %, pjesa tjetër para dërgesës. Prodhimi 7–10 ditë pune nga aprovimi i dizajnit provë. Dërgesë falas në Kosovë.',
+    'Prices include 18 % VAT. Logo print: 50 % deposit, balance before delivery. Production 7–10 working days from proof approval. Free delivery within Kosovo.',
   );
   return [
     {
       id: 'q-031',
       number: 'Q-2026-031',
       inquiryId: 'inq_120',
-      customer: { name: 'Vesna Bulatović', company: 'Hotel Montenegrina d.o.o.', email: 'nabavka.montenegrina@example.com', phone: '+382 67 552 301' },
+      customer: { name: 'Arbnor Avdyli', company: 'Kafeteritë Aroma sh.p.k.', email: 'prokurimi.aroma@example.com', phone: '+383 44 552 301' },
       lines: [
-        { productId: 'p-pvc-antracit', title: 'PVC prozor Thermo 76 — antracit, 120 × 140', qty: 30, price: 229 },
-        { title: 'Ugradnja — RAL montaža sa trakama', qty: 30, price: 45 },
-        { title: 'Demontaža i odvoz starih prozora', qty: 30, price: 12 },
+        { productId: 'p-gota-f95-400', title: 'Gota F95 400 ml me logo, printim 2 ngjyra — pako 50 copë', qty: 200, price: 4.05 },
+        { productId: 'p-gota-f95-500', title: 'Gota F95 500 ml me logo, printim 2 ngjyra — pako 50 copë', qty: 200, price: 4.45 },
+        { productId: 'p-kapak-kupole', title: 'Kapak kupolë F95 — pako 100 copë', qty: 200, price: 1.84 },
+        { title: 'Klishe dhe dizajn provë për printim (njëherë)', qty: 1, price: 60 },
       ],
       validUntil: iso(now, 14),
       terms,
       version: 2,
       status: 'sent',
       createdAt: iso(now, -3),
-      owner: 'st-arta',
+      owner: 'st-teuta',
     },
     {
       id: 'q-032',
       number: 'Q-2026-032',
-      customer: { name: 'Dejan Marković', company: 'Gradnja Plus d.o.o.', email: 'dejan.markovic@example.com', phone: '+382 68 300 415' },
+      inquiryId: 'inq_107',
+      customer: { name: 'Labinot Rama', company: 'Fast Food Kroni', email: 'fastfoodkroni@example.com', phone: '+383 45 437 019' },
       lines: [
-        { productId: 'p-vrata-classica', title: 'Sobna vrata Classica — bijela, 80 cm', qty: 48, price: 179 },
-        { productId: 'p-kvaka-linea', title: 'Kvaka Linea na rozeti', qty: 48, price: 29 },
-        { title: 'Ugradnja sobnih vrata', qty: 48, price: 40 },
+        { productId: 'p-kuti-burger-logo', title: 'Kuti kraft për burger me logo, printim 1 ngjyrë', qty: 3000, price: 0.24 },
+        { productId: 'p-kuti-burger-logo', title: 'Kuti kraft për patate (M) me logo, printim 1 ngjyrë', qty: 3000, price: 0.16 },
+        { title: 'Klishe printimi (njëherë)', qty: 1, price: 45 },
       ],
       validUntil: iso(now, 30),
       terms,
       version: 1,
       status: 'draft',
       createdAt: iso(now, -1),
-      owner: 'st-gent',
+      owner: 'st-blerta',
     },
   ];
 }
@@ -1096,58 +1236,56 @@ export function buildQuotes(now: Date): Quote[] {
 /* ================================================================== */
 /* Menus & content models                                              */
 /* ================================================================== */
+const CATEGORY_LINKS: [string, L10n][] = [
+  ['cat-gota', T('Čaše', 'Gota', 'Cups')],
+  ['cat-kapake', T('Poklopci', 'Kapakë', 'Lids')],
+  ['cat-ene', T('Posude za hranu', 'Enë ushqimi', 'Food containers')],
+  ['cat-embelsira', T('Deserti i sladoled', 'Ëmbëlsira & akullore', 'Desserts & ice cream')],
+  ['cat-salca', T('Čašice za sos', 'Gota për salca', 'Sauce cups')],
+  ['cat-takem', T('Pribor i setovi', 'Takëm & sete', 'Cutlery & sets')],
+  ['cat-shkopinj', T('Slamke i kašičice', 'Shkopinj & lugë kafeje', 'Straws & stirrers')],
+];
+
 export function buildMenus(): Menu[] {
-  const cat = (id: string, label: L10n) => ({ id: `mi-${id}`, label, type: 'category' as const, target: id });
+  const cat = (prefix: string) => CATEGORY_LINKS.map(([id, label]) => ({ id: `mi-${prefix}${id}`, label, type: 'category' as const, target: id }));
   const url = (id: string, label: L10n, target: string, children?: Menu['items']) => ({ id, label, type: 'url' as const, target, ...(children ? { children } : {}) });
   const page = (id: string, label: L10n) => ({ id: `mi-${id}`, label, type: 'page' as const, target: id });
   return [
     {
       id: 'menu-main',
       handle: 'main',
-      title: 'Glavni meni',
+      title: 'Menuja kryesore',
       items: [
-        url('mi-products', T('Proizvodi', 'Produktet', 'Products'), '/produktet', [
-          cat('cat-vrata', T('Vrata', 'Dyer', 'Doors')),
-          cat('cat-prozori', T('Prozori', 'Dritare', 'Windows')),
-          cat('cat-podovi', T('Podovi', 'Dysheme', 'Flooring')),
-          cat('cat-keramika', T('Keramika', 'Pllaka', 'Tiles')),
-          cat('cat-kupatilo', T('Kupatilo', 'Banjo', 'Bathroom')),
-          cat('cat-kuhinje', T('Kuhinje', 'Kuzhina', 'Kitchens')),
-          url('mi-sale', T('Akcija', 'Ofertë', 'Sale'), '/produktet?akcija=1'),
-        ]),
-        url('mi-services', T('Usluge', 'Shërbimet', 'Services'), '/sherbimet'),
-        url('mi-projects', T('Realizacije', 'Realizimet', 'Projects'), '/referencat'),
-        url('mi-about', T('O nama', 'Rreth nesh', 'About'), '/rreth-nesh'),
-        url('mi-blog', T('Savjeti', 'Këshilla', 'Advice'), '/blog'),
-        url('mi-contact', T('Kontakt', 'Kontakt', 'Contact'), '/kontakti'),
+        url('mi-products', T('Proizvodi', 'Produktet', 'Products'), '/produktet', cat('')),
+        url('mi-business', T('Za biznis', 'Për biznese', 'For business'), '/sherbimet'),
+        url('mi-projects', T('Reference', 'Referencat', 'References'), '/referencat'),
+        url('mi-blog', T('Blog', 'Blog', 'Blog'), '/blog'),
+        url('mi-contact', T('Kontakt', 'Kontakti', 'Contact'), '/kontakti'),
       ],
     },
     {
       id: 'menu-footer',
       handle: 'footer',
-      title: 'Podnožje',
+      title: 'Fundi i faqes',
       items: [
-        url('mi-f-shop', T('Kupovina', 'Blerja', 'Shop'), '/produktet', [
-          cat('cat-vrata', T('Vrata', 'Dyer', 'Doors')),
-          cat('cat-prozori', T('Prozori', 'Dritare', 'Windows')),
-          cat('cat-podovi', T('Podovi', 'Dysheme', 'Flooring')),
-          cat('cat-keramika', T('Keramika', 'Pllaka', 'Tiles')),
-          cat('cat-kupatilo', T('Kupatilo', 'Banjo', 'Bathroom')),
-          cat('cat-kuhinje', T('Kuhinje', 'Kuzhina', 'Kitchens')),
-          url('mi-f-sale', T('Akcija', 'Ofertë', 'Sale'), '/produktet?akcija=1'),
+        url('mi-f-shop', T('Proizvodi', 'Produktet', 'Products'), '/produktet', cat('f-')),
+        url('mi-f-business', T('Za biznis', 'Për biznese', 'For business'), '/sherbimet', [
+          url('mi-f-services', T('Usluge za lokale', 'Shërbimet për lokale', 'Services for venues'), '/sherbimet'),
+          page('pg-printimi', T('Štampa logotipa', 'Printim me logo', 'Logo printing')),
+          page('pg-shumice', T('Veleprodaja', 'Shitje me shumicë', 'Wholesale')),
+          url('mi-f-projects', T('Reference', 'Referencat', 'References'), '/referencat'),
         ]),
-        url('mi-f-company', T('Kompanija', 'Kompania', 'Company'), '/rreth-nesh', [
-          url('mi-f-about', T('O nama', 'Rreth nesh', 'About'), '/rreth-nesh'),
-          url('mi-f-services', T('Usluge', 'Shërbimet', 'Services'), '/sherbimet'),
-          url('mi-f-projects', T('Realizacije', 'Realizimet', 'Projects'), '/referencat'),
-          url('mi-f-blog', T('Savjeti', 'Këshilla', 'Advice'), '/blog'),
-          url('mi-f-contact', T('Kontakt', 'Kontakt', 'Contact'), '/kontakti'),
+        url('mi-f-company', T('Paketoje', 'Paketoje', 'Paketoje'), '/rreth-nesh', [
+          url('mi-f-about', T('O nama', 'Rreth nesh', 'About us'), '/rreth-nesh'),
+          url('mi-f-blog', T('Blog', 'Blog', 'Blog'), '/blog'),
+          url('mi-f-contact', T('Kontakt', 'Kontakti', 'Contact'), '/kontakti'),
         ]),
-        url('mi-f-help', T('Kupcima', 'Për klientët', 'Customer care'), '', [
-          page('pg-dostava', T('Dostava i ugradnja', 'Dërgesa dhe montimi', 'Delivery & installation')),
-          page('pg-uslovi', T('Uslovi kupovine', 'Kushtet e blerjes', 'Terms of purchase')),
-          page('pg-reklamacije', T('Reklamacije i povrat', 'Reklamacionet dhe kthimi', 'Returns & complaints')),
-          page('pg-privatnost', T('Politika privatnosti', 'Politika e privatësisë', 'Privacy policy')),
+        url('mi-f-help', T('Pomoć', 'Ndihmë', 'Help'), '', [
+          page('pg-dostava', T('Dostava', 'Dërgesa', 'Delivery')),
+          page('pg-pagesa', T('Plaćanje', 'Pagesa', 'Payment')),
+          page('pg-kthimet', T('Povrat i reklamacije', 'Kthimet & rimbursimi', 'Returns & refunds')),
+          page('pg-kushtet', T('Uslovi korišćenja', 'Kushtet e përdorimit', 'Terms & conditions')),
+          page('pg-privatesia', T('Politika privatnosti', 'Politika e privatësisë', 'Privacy policy')),
         ]),
       ],
     },
@@ -1160,13 +1298,13 @@ export function buildContentModels(projects: Project[], home: HomeSection[], loc
   return [
     {
       id: 'cm-projekti',
-      name: T('Projekti', 'Projektet', 'Projects'),
+      name: T('Reference', 'Referencat', 'References'),
       source: 'projects',
       fields: [
         { key: 'title', label: T('Naziv', 'Titulli', 'Title'), type: 'text' },
-        { key: 'location', label: T('Lokacija', 'Vendndodhja', 'Location'), type: 'text' },
+        { key: 'location', label: T('Tip lokala / grad', 'Lloji i lokalit / qyteti', 'Venue type / city'), type: 'text' },
         { key: 'year', label: T('Godina', 'Viti', 'Year'), type: 'number' },
-        { key: 'tags', label: T('Kategorije', 'Kategoritë', 'Categories'), type: 'choice' },
+        { key: 'tags', label: T('Ambalaža', 'Paketimi', 'Packaging'), type: 'choice' },
         { key: 'summary', label: T('Opis', 'Përshkrimi', 'Summary'), type: 'text' },
         { key: 'image', label: T('Fotografija', 'Fotografia', 'Photo'), type: 'image' },
         { key: 'featured', label: T('Izdvojeno', 'E veçuar', 'Featured'), type: 'boolean' },
@@ -1185,7 +1323,7 @@ export function buildContentModels(projects: Project[], home: HomeSection[], loc
     },
     {
       id: 'cm-usluge',
-      name: T('Usluge', 'Shërbimet', 'Services'),
+      name: T('Usluge za biznis', 'Shërbimet për biznese', 'Business services'),
       source: 'home.services',
       fields: [
         { key: 'image', label: T('Fotografija', 'Fotografia', 'Photo'), type: 'image' },
@@ -1220,8 +1358,8 @@ export function buildHomeHistory(now: Date, home: HomeSection[]): HomeVersion[] 
     .filter((s) => s.type !== 'promo')
     .map((s) => (s.type === 'blog' ? { ...s, enabled: false } : s));
   return [
-    { at: iso(now, -6, -4), by: 'st-ana', sections: v1 },
-    { at: iso(now, -21, -2), by: 'st-drita', sections: v2 },
+    { at: iso(now, -6, -4), by: 'st-elira', sections: v1 },
+    { at: iso(now, -21, -2), by: 'st-blerta', sections: v2 },
   ];
 }
 
@@ -1236,29 +1374,33 @@ export function buildAudit(now: Date, orders: Order[]): AuditEntry[] {
     objectId,
     ...(detail ? { detail } : {}),
   });
+  const confirmed = orders.find((x) => x.status === 'confirmed') ?? o(3);
+  const shipped = orders.find((x) => x.status === 'shipped' || x.status === 'completed') ?? o(8);
+  const refunded = orders.find((x) => x.refunds?.some((f) => f.id === 'rf-1001'));
   const list: AuditEntry[] = [
-    a(1, 0.4, 'st-gent', 'login', 'staff', 'st-gent', 'Prijava u CMS'),
-    a(2, 1.2, 'st-arta', 'status', 'order', o(3).id, `${o(3).number}: new → confirmed`),
-    a(3, 3, 'st-milica', 'assign', 'inquiry', 'inq_120', 'Vesna Bulatović → Arta Gjokaj'),
-    a(4, 20, 'st-arta', 'create', 'draft', 'dr-1001', 'D-1001'),
-    a(5, 26, 'st-blerim', 'fulfil', 'order', o(8).id, o(8).number),
-    a(6, 30, 'st-milica', 'create', 'booking', 'bk-103', 'Mjerenje — utorak 10:00'),
-    a(7, 47, 'st-drita', 'create', 'offer', 'of-blackfriday', 'Black Friday — vrata −20%'),
-    a(8, 48, 'st-drita', 'create', 'discount', 'd-bf-vrata', 'Black Friday — vrata −20%'),
-    a(9, 50, 'st-drita', 'create', 'placement', 'pl-s4', 'Hero — Black Friday vrata'),
-    a(10, 70, 'st-gent', 'archive', 'product', 'p-statuario', 'Porculan Statuario Gold 60 × 60'),
-    a(11, 74, 'st-arta', 'send', 'quote', 'q-031', 'Q-2026-031 v2'),
-    a(12, 96, 'st-blerim', 'adjust', 'inventory', 'p-vrata-vetro', 'SC-VR-105 −1 (damaged)'),
-    a(13, 98, 'st-gent', 'send', 'draft', 'dr-1002', 'D-1002 — predračun'),
-    a(14, 120, 'st-arta', 'receive', 'purchaseOrder', 'po-014', 'PO-2026-014: +366'),
-    a(15, 146, 'st-ana', 'publish', 'home', 'home', 'Početna — promo blok jesen'),
-    a(16, 150, 'st-ana', 'update', 'page', 'pg-dostava', 'Dostava i ugradnja'),
-    a(17, 200, 'st-gent', 'update', 'settings', 'settings', 'shippingZones'),
-    a(18, 214, 'st-gent', 'publish', 'offer', 'of-jesen', 'Jesenja akcija podova'),
-    a(19, 216, 'st-drita', 'create', 'discount', 'd-podovi15', 'Jesen — podovi −15% (automatski)'),
-    a(20, 218, 'st-drita', 'create', 'collection', 'col-podovi-akcija', 'Podovi na akciji'),
-    a(21, 230, 'st-arta', 'refund', 'return', 'rt-1001', 'RT-1001'),
-    a(22, 240, 'st-drita', 'create', 'discount', 'd-jesen25', 'JESEN25'),
+    a(1, 0.4, 'st-driton', 'login', 'staff', 'st-driton', 'Hyrje në CMS'),
+    a(2, 1.2, 'st-ardita', 'status', 'order', confirmed.id, `${confirmed.number}: new → confirmed`),
+    a(3, 3, 'st-ardita', 'assign', 'inquiry', 'inq_120', 'Arbnor Avdyli → Teuta Berisha'),
+    a(4, 26, 'st-teuta', 'create', 'draft', 'dr-1001', 'D-1001 — Kafiteria Lumi'),
+    a(5, 27, 'st-valon', 'fulfil', 'order', shipped.id, shipped.number),
+    a(6, 30, 'st-ardita', 'create', 'booking', 'bk-103', 'Takim dizajni — e martë 10:00'),
+    a(7, 47, 'st-blerta', 'create', 'offer', 'of-blackfriday', 'Black Friday −20 %'),
+    a(8, 48, 'st-blerta', 'create', 'discount', 'd-blackfriday', 'BLACKFRIDAY −20%'),
+    a(9, 50, 'st-blerta', 'create', 'placement', 'pl-s4', 'Hero — Black Friday −20%'),
+    a(10, 70, 'st-driton', 'archive', 'product', 'p-pirun-bardhe-100', 'Pirunj plastikë të bardhë – pako 100 copë (PAK-505)'),
+    a(11, 72, 'st-teuta', 'send', 'quote', 'q-031', 'Q-2026-031 v2 — Kafeteritë Aroma'),
+    a(12, 73, 'st-valon', 'adjust', 'inventory', 'p-kuti-torte-230', 'PAK-306 −1 (damaged)'),
+    a(13, 74, 'st-ardita', 'send', 'draft', 'dr-1002', 'D-1002 — faturë proforma'),
+    a(14, 144, 'st-valon', 'receive', 'purchaseOrder', 'po-014', 'PO-2026-014: +514 pako'),
+    a(15, 148, 'st-elira', 'publish', 'home', 'home', 'Ballina — blloku promo i vjeshtës'),
+    a(16, 152, 'st-elira', 'update', 'page', 'pg-dostava', 'Dërgesa'),
+    a(17, 200, 'st-driton', 'update', 'settings', 'settings', 'shippingZones'),
+    a(18, 456, 'st-blerta', 'create', 'collection', 'col-pasticeri', 'Për pastiçeri'),
+    a(19, 1100, 'st-blerta', 'create', 'discount', 'd-kafe15', 'KAFE15'),
+    a(20, 1440, 'st-driton', 'publish', 'offer', 'of-pije-te-ftohta', 'Pije të ftohta — kapakë falas'),
+    a(21, 1462, 'st-blerta', 'create', 'discount', 'd-gota-kapak', 'Gota F95: 4 pako → 1 pako kapakë falas'),
+    a(22, 1488, 'st-blerta', 'create', 'collection', 'col-kafiteri', 'Për kafiteri & bare'),
   ];
-  return list;
+  if (refunded?.refunds?.[0]) list.push({ id: 'au-23', at: refunded.refunds[0].at, actor: 'st-teuta', action: 'refund', object: 'return', objectId: 'rt-1001', detail: `RT-1001 — ${refunded.number}` });
+  return list.sort((x, y) => y.at.localeCompare(x.at));
 }

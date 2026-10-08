@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router';
 import { toast } from 'sonner';
 import {
   Archive, ArchiveRestore, ArrowRight, Ban, CalendarClock, CheckCircle2, ChevronLeft, ChevronRight, ExternalLink, Lock, Mail, MapPin, PackageCheck, PackageX,
-  Phone, Plus, Printer, RotateCcw, SearchX, Store, Tag, Truck, Wrench, X,
+  Phone, Plus, Printer, RotateCcw, SearchX, Store, Tag, Truck, X,
 } from 'lucide-react';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/misc';
@@ -12,10 +12,11 @@ import { OrderTimeline } from '@/admin/components/orders/OrderTimeline';
 import { FulfilDialog } from '@/admin/components/orders/FulfilDialog';
 import { RefundDialog } from '@/admin/components/orders/RefundDialog';
 import {
-  PAY_ICON, archivePatch, archivedAtOf, channelOf, customerLink, customerName, discountName, installationAmount, isCarrierKey, localizeLine, mapsUrl,
+  PAY_ICON, archivePatch, archivedAtOf, carrierKey, channelOf, customerLink, customerName, discountName, fulfilState, hasPrint, installationAmount, localizeLine, mapsUrl,
   pluralKey, qtyLabel,
 } from '@/admin/components/orders/helpers';
-import { ArchivedBadge, CancelledBadge, FulfilBadge, PayBadge, ReturnBadge, StatusGlyph } from '@/admin/components/orders/status';
+import { ArchivedBadge, CancelledBadge, FulfilBadge, LogoChip, PayBadge, PrintBadge, ReturnBadge, StatusGlyph, TierChip } from '@/admin/components/orders/status';
+import { StatusStepper } from '@/admin/components/orders/StatusStepper';
 import { ActionMenu, CodeChip, Eyebrow, SumRow, Tip, type MenuItem } from '@/admin/components/orders/ui';
 import { od } from '@/admin/components/orders/dict';
 import { adm } from '@/admin/i18n';
@@ -23,7 +24,7 @@ import { LANGS, defineDict, useDict, useLang } from '@/i18n';
 import { common } from '@/i18n/common';
 import { useDb } from '@/store/db';
 import { useCan, useSettings } from '@/store/hooks';
-import { fulfillmentOf, orderLineNet, paymentOf, refundedOf } from '@/lib/orders';
+import { orderLineNet, paymentOf, refundedOf } from '@/lib/orders';
 import { zoneForCity } from '@/lib/pricing';
 import { customerKeyOf } from '@/lib/crm';
 import { date, dateTime, money, perUnit } from '@/lib/format';
@@ -58,13 +59,16 @@ const T = defineDict({
     colQty: 'Količina',
     colTotal: 'Ukupno',
     sku: 'Šifra',
-    installation: 'Ugradnja {price}',
+    installation: 'Štampa logotipa {price}',
     custom: 'Posebna stavka',
     orderStatus: 'Status narudžbe',
     prepare: 'Pripremi isporuku',
     confirm: 'Potvrdi narudžbu',
     startProcessing: 'Počni pripremu',
-    scheduleInstall: 'Zakaži ugradnju',
+    sendToPrint: 'Pošalji u štampu',
+    printHint: 'Narudžba sadrži štampu logotipa — prije slanja ide u štampu (7–10 radnih dana).',
+    inPrintHint: 'U štampi — kada je štampa gotova, pripremite isporuku.',
+    progress: 'Tok narudžbe',
     markDelivered: 'Označi kao isporučeno',
     advanced: 'Status: „{s}“',
     shippedOn: 'Poslato {date}',
@@ -76,7 +80,6 @@ const T = defineDict({
     itemsCount: '{n}',
     shippingRow: 'Dostava · {method}',
     freeBy: 'Besplatno: {name}',
-    freeInstall: 'Besplatno uz ugradnju',
     total: 'Ukupno',
     vat: 'Uključen PDV {rate}%',
     paidByCustomer: 'Platio kupac',
@@ -113,7 +116,7 @@ const T = defineDict({
     noDiscount: 'Bez popusta',
     returns: 'Povrati',
     company: 'Firma',
-    pib: 'PIB',
+    pib: 'NUI',
     notFound: 'Narudžba nije pronađena',
     notFoundText: 'Možda je obrisana ili link nije ispravan.',
     backToOrders: 'Nazad na narudžbe',
@@ -143,13 +146,16 @@ const T = defineDict({
     colQty: 'Sasi',
     colTotal: 'Totali',
     sku: 'Kodi',
-    installation: 'Montimi {price}',
+    installation: 'Printim me logo {price}',
     custom: 'Artikull custom',
     orderStatus: 'Statusi i porosisë',
     prepare: 'Përgatit dërgesën',
     confirm: 'Konfirmo porosinë',
     startProcessing: 'Fillo përgatitjen',
-    scheduleInstall: 'Cakto montimin',
+    sendToPrint: 'Dërgo në printim',
+    printHint: 'Porosia përmban printim me logo — para dërgimit kalon në printim (7–10 ditë pune).',
+    inPrintHint: 'Në printim — kur printimi të përfundojë, përgatitni dërgesën.',
+    progress: 'Rrjedha e porosisë',
     markDelivered: 'Shëno si të dorëzuar',
     advanced: 'Statusi: „{s}“',
     shippedOn: 'Dërguar më {date}',
@@ -160,7 +166,6 @@ const T = defineDict({
     itemsCount: '{n}',
     shippingRow: 'Dërgesa · {method}',
     freeBy: 'Falas: {name}',
-    freeInstall: 'Falas me montim',
     total: 'Totali',
     vat: 'TVSH {rate}% e përfshirë',
     paidByCustomer: 'Paguar nga klienti',
@@ -196,7 +201,7 @@ const T = defineDict({
     noDiscount: 'Pa zbritje',
     returns: 'Kthimet',
     company: 'Kompania',
-    pib: 'NIPT',
+    pib: 'NUI',
     notFound: 'Porosia nuk u gjet',
     notFoundText: 'Mund të jetë fshirë ose lidhja nuk është e saktë.',
     backToOrders: 'Kthehu te porositë',
@@ -226,13 +231,16 @@ const T = defineDict({
     colQty: 'Qty',
     colTotal: 'Total',
     sku: 'SKU',
-    installation: 'Installation {price}',
+    installation: 'Logo print {price}',
     custom: 'Custom item',
     orderStatus: 'Order status',
     prepare: 'Prepare shipment',
     confirm: 'Confirm order',
     startProcessing: 'Start preparing',
-    scheduleInstall: 'Book installation',
+    sendToPrint: 'Send to print',
+    printHint: 'This order includes a logo print — it goes to print before shipping (7–10 working days).',
+    inPrintHint: 'In print — once printing is done, prepare the shipment.',
+    progress: 'Order progress',
     markDelivered: 'Mark as delivered',
     advanced: 'Status: “{s}”',
     shippedOn: 'Shipped {date}',
@@ -243,7 +251,6 @@ const T = defineDict({
     itemsCount: '{n}',
     shippingRow: 'Delivery · {method}',
     freeBy: 'Free: {name}',
-    freeInstall: 'Free with installation',
     total: 'Total',
     vat: 'Includes {rate}% VAT',
     paidByCustomer: 'Paid by customer',
@@ -279,7 +286,7 @@ const T = defineDict({
     noDiscount: 'No discount',
     returns: 'Returns',
     company: 'Company',
-    pib: 'Tax ID',
+    pib: 'Business no. (NUI)',
     notFound: 'Order not found',
     notFoundText: 'It may have been deleted or the link is incorrect.',
     backToOrders: 'Back to orders',
@@ -335,7 +342,7 @@ function OrderView({ order }: { order: Order }) {
   const [refundOpen, setRefundOpen] = useState(false);
 
   const pay = paymentOf(order);
-  const ful = fulfillmentOf(order);
+  const ful = fulfilState(order);
   const cancelled = order.status === 'cancelled';
   const archivedAt = archivedAtOf(order);
   const refundable = round2(order.total - refundedOf(order)) > 0 && (pay === 'paid' || pay === 'partially_refunded');
@@ -392,6 +399,7 @@ function OrderView({ order }: { order: Order }) {
           <span className="flex flex-wrap items-center gap-1.5">
             <PayBadge state={pay} />
             {cancelled ? <CancelledBadge /> : <FulfilBadge state={ful} />}
+            {order.status === 'installation' && <PrintBadge />}
             {archivedAt && <ArchivedBadge />}
           </span>
         }
@@ -433,6 +441,11 @@ function OrderView({ order }: { order: Order }) {
 
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-5">
+          {!cancelled && (
+            <Card title={t('progress')}>
+              <StatusStepper order={order} />
+            </Card>
+          )}
           <ItemsCard order={order} t={t} onFulfil={() => setFulfilOpen(true)} />
           <PaymentCard order={order} t={t} onRefund={() => setRefundOpen(true)} refundable={refundable} />
         </div>
@@ -477,15 +490,23 @@ function ItemsCard({ order, t, onFulfil }: { order: Order; t: Dict; onFulfil: ()
   const products = useDb((s) => s.products);
   const discounts = useDb((s) => s.discounts);
   const setOrderStatus = useDb((s) => s.setOrderStatus);
-  const ful = fulfillmentOf(order);
+  const updateOrder = useDb((s) => s.updateOrder);
+  const ful = fulfilState(order);
   const s = order.status;
   const editable = can('orders', 'edit') && s !== 'cancelled' && s !== 'completed';
-  const hasInstallation = order.items.some((l) => l.installation && l.installationPrice > 0);
+  const print = hasPrint(order);
   const f = order.fulfillment;
 
   const advance = (next: OrderStatus) => {
     setOrderStatus(order.id, next);
     toast.success(t('advanced', { s: tc(`status_${next}`) }));
+  };
+  // "Në printim" comes before shipping — keep the fulfilment untouched (the store stamps a ship date for this status).
+  const toPrint = () => {
+    const before = order.fulfillment;
+    setOrderStatus(order.id, 'installation');
+    updateOrder(order.id, { fulfillment: before });
+    toast.success(t('advanced', { s: tc('status_installation') }));
   };
 
   return (
@@ -494,6 +515,7 @@ function ItemsCard({ order, t, onFulfil }: { order: Order; t: Dict; onFulfil: ()
         <span className="flex flex-wrap items-center gap-2">
           {t('items')}
           {s === 'cancelled' ? <CancelledBadge /> : <FulfilBadge state={ful} />}
+          {s === 'installation' && <PrintBadge />}
         </span>
       }
       actions={
@@ -528,10 +550,16 @@ function ItemsCard({ order, t, onFulfil }: { order: Order; t: Dict; onFulfil: ()
                       {l.custom ? t('custom') : `${t('sku')} ${l.sku}`}
                       {loc.options && <> · {loc.options}</>}
                     </p>
+                    <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] tabular-nums text-ink-soft">
+                      <span>{qtyLabel(l, lang)}</span>
+                      <TierChip pct={l.tierPct} />
+                    </p>
                     {inst > 0 && (
-                      <p className="mt-1 inline-flex items-center gap-1.5 text-[12.5px] text-ink-soft">
-                        <Wrench className="h-3.5 w-3.5" />
-                        {t('installation', { price: `${money(l.installationPrice, lang)} ${perUnit(l.unit, lang)}` })} = {money(inst, lang)}
+                      <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px] tabular-nums text-ink-soft">
+                        <LogoChip />
+                        <span>
+                          {money(l.installationPrice, lang)} {perUnit(l.unit, lang)} = {money(inst, lang)}
+                        </span>
                       </p>
                     )}
                     {allocations.length > 0 && (
@@ -551,7 +579,7 @@ function ItemsCard({ order, t, onFulfil }: { order: Order; t: Dict; onFulfil: ()
                   </div>
                   <div className="flex shrink-0 items-baseline justify-between gap-6 sm:justify-end">
                     <span className="text-[13px] tabular-nums text-ink-soft">
-                      {qtyLabel(l, lang, tc('packs'))} × {money(l.unitPrice, lang)}
+                      {money(l.unitPrice, lang)} <span className="text-[12px] text-muted">{perUnit(l.unit, lang)}</span>
                     </span>
                     <span className="min-w-[88px] text-right tabular-nums">
                       {net < gross - 0.004 && <span className="block text-[12px] text-muted line-through">{money(gross, lang)}</span>}
@@ -572,9 +600,14 @@ function ItemsCard({ order, t, onFulfil }: { order: Order; t: Dict; onFulfil: ()
             <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
               <Truck className="h-4 w-4 text-ink" />
               <span>{t('shippedOn', { date: date(f.shippedAt, lang, { day: 'numeric', month: 'short' }) })}</span>
-              {f.carrier && <span>· {isCarrierKey(f.carrier) ? to(`carrier_${f.carrier}`) : f.carrier}</span>}
+              {f.carrier && <span>· {carrierKey(f.carrier) ? to(`carrier_${carrierKey(f.carrier)!}`) : f.carrier}</span>}
               {f.tracking && <span>· {t('trackingNo', { n: f.tracking })}</span>}
               {f.deliveredAt && <span>· {t('deliveredOn', { date: date(f.deliveredAt, lang, { day: 'numeric', month: 'short' }) })}</span>}
+            </span>
+          ) : print && (s === 'new' || s === 'confirmed' || s === 'processing' || s === 'installation') ? (
+            <span className="flex items-start gap-2">
+              <Printer className="mt-0.5 h-4 w-4 shrink-0 text-ink" />
+              <span>{s === 'installation' ? t('inPrintHint') : t('printHint')}</span>
             </span>
           ) : (
             <span className="sm:hidden">
@@ -594,17 +627,17 @@ function ItemsCard({ order, t, onFulfil }: { order: Order; t: Dict; onFulfil: ()
                 {t('startProcessing')}
               </Button>
             )}
+            {print && (s === 'confirmed' || s === 'processing') && (
+              <Button size="sm" shape="rounded" icon={<Printer className="h-4 w-4" />} onClick={toPrint}>
+                {t('sendToPrint')}
+              </Button>
+            )}
             {(ful === 'unfulfilled' || ful === 'partial') && (
-              <Button size="sm" shape="rounded" icon={<PackageCheck className="h-4 w-4" />} onClick={onFulfil}>
+              <Button variant={print && s !== 'installation' ? 'outline' : 'primary'} size="sm" shape="rounded" icon={<PackageCheck className="h-4 w-4" />} onClick={onFulfil}>
                 {t('prepare')}
               </Button>
             )}
-            {s === 'shipped' && hasInstallation && (
-              <Button variant="outline" size="sm" shape="rounded" icon={<Wrench className="h-4 w-4" />} onClick={() => advance('installation')}>
-                {t('scheduleInstall')}
-              </Button>
-            )}
-            {(s === 'shipped' || s === 'installation') && ful !== 'partial' && (
+            {(s === 'shipped' || (s === 'installation' && !!f?.shippedAt)) && ful !== 'partial' && (
               <Button size="sm" shape="rounded" icon={<CheckCircle2 className="h-4 w-4" />} onClick={() => advance('completed')}>
                 {t('markDelivered')}
               </Button>
@@ -645,7 +678,7 @@ function PaymentCard({ order, t, onRefund, refundable }: { order: Order; t: Dict
     for (const l of order.items) {
       const p = products.find((x) => x.id === l.productId);
       if (!p?.cost) return null;
-      sum += p.cost * (l.unit === 'm2' && l.packSize ? l.qty * l.packSize : l.qty);
+      sum += p.cost * l.qty;
     }
     return round2(sum);
   }, [order.items, products]);
@@ -695,7 +728,7 @@ function PaymentCard({ order, t, onRefund, refundable }: { order: Order; t: Dict
           : order.discount > 0 && <SumRow label={order.coupon?.code ? <span className="inline-flex items-center gap-1.5">{tc('discount')} <CodeChip>{order.coupon.code}</CodeChip></span> : tc('discount')} value={`−${money(order.discount, lang)}`} />}
         <SumRow
           label={t('shippingRow', { method: tc(`delivery_${order.delivery.method}`) })}
-          sub={shipDiscount ? t('freeBy', { name: discountName(shipDiscount.id, shipDiscount.title, discounts, lang) }) : order.shipping === 0 && order.installationTotal > 0 && order.delivery.method !== 'pickup' ? t('freeInstall') : undefined}
+          sub={shipDiscount ? t('freeBy', { name: discountName(shipDiscount.id, shipDiscount.title, discounts, lang) }) : undefined}
           value={
             shipDiscount && shipBefore > order.shipping ? (
               <span>
@@ -857,11 +890,11 @@ function DeliveryCard({ order, t }: { order: Order; t: Dict }) {
         <div className="border-t border-line/70 pt-3 text-[12.5px]">
           {f?.tracking ? (
             <p className="text-ink-soft">
-              {f.carrier && <span className="font-medium text-ink">{isCarrierKey(f.carrier) ? to(`carrier_${f.carrier}`) : f.carrier} · </span>}
+              {f.carrier && <span className="font-medium text-ink">{carrierKey(f.carrier) ? to(`carrier_${carrierKey(f.carrier)!}`) : f.carrier} · </span>}
               {t('trackingNo', { n: f.tracking })}
             </p>
           ) : f?.carrier ? (
-            <p className="text-ink-soft">{isCarrierKey(f.carrier) ? to(`carrier_${f.carrier}`) : f.carrier}</p>
+            <p className="text-ink-soft">{carrierKey(f.carrier) ? to(`carrier_${carrierKey(f.carrier)!}`) : f.carrier}</p>
           ) : (
             <p className="text-muted">{t('trackingLater')}</p>
           )}

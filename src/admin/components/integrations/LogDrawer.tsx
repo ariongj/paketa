@@ -55,7 +55,7 @@ export function LogDrawer({ open, x, entries, canTest, onTest, onClose }: { open
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0 text-[12.5px] text-muted">
               <StatusMark state={STATUS_MARK[x.status]}>{t(STATUS_KEY[x.status])}</StatusMark>
-              {providerName(x) && <span className="ml-2">· {providerName(x)}</span>}
+              {providerName(x, lang) && <span className="ml-2">· {providerName(x, lang)}</span>}
             </div>
             <Segmented<Filter>
               label={t('logTitle')}

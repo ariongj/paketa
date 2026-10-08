@@ -54,9 +54,9 @@ export function DevicePreview({ slug, live, dirty }: { slug: string | null; live
     // hide the storefront's floating "demo → CMS" badge inside the preview
     try {
       const doc = frame.current?.contentDocument;
-      if (doc && !doc.getElementById('selca-offer-preview')) {
+      if (doc && !doc.getElementById('paketoje-offer-preview')) {
         const st = doc.createElement('style');
-        st.id = 'selca-offer-preview';
+        st.id = 'paketoje-offer-preview';
         st.textContent = 'a.fixed[href$="/admin"]{display:none!important}';
         doc.head.appendChild(st);
       }

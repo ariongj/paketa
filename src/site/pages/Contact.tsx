@@ -1,14 +1,15 @@
 import type { ComponentType, ReactNode } from 'react';
-import { ArrowRight, ArrowUpRight, Clock, Mail, MapPin, Phone } from 'lucide-react';
-import type { HomeSection } from '@/lib/types';
+import { Link, useSearchParams } from 'react-router';
+import { ArrowRight, ArrowUpRight, Clock, Gift, Mail, MapPin, MessageSquareText, Phone, RotateCcw, Stamp, Truck } from 'lucide-react';
+import type { HomeSection, InquiryType } from '@/lib/types';
 import { Accent, Accordion, Reveal } from '@/components/ui/misc';
-import { ButtonLink } from '@/components/ui/Button';
 import { InstagramIcon, ViberIcon, WhatsAppIcon } from '@/components/brand/Social';
 import { PageHero, SectionHeading } from '@/site/components/SectionHeading';
 import { MeasureForm } from '@/site/components/MeasureForm';
 import { MapCard } from '@/site/components/content/MapCard';
-import { telHref } from '@/site/components/content/posts';
+import { REFUND_EMAIL, telHref } from '@/site/components/content/posts';
 import { usePageTitle } from '@/site/layout/SiteLayout';
+import { ACCENT_ON_DARK } from '@/site/components/company/Blocks';
 import { defineDict, useDict, useL } from '@/i18n';
 import { useDb } from '@/store/db';
 import { useSettings } from '@/store/hooks';
@@ -18,84 +19,103 @@ const T = defineDict({
   me: {
     title: 'Kontakt',
     eyebrow: 'Kontakt',
-    heroTitle: 'Razgovarajmo o *vašem domu*',
-    heroText: 'Pozovite, pišite ili svratite u naš salon. Savjet je uvijek besplatan, a na svaki upit odgovaramo istog dana.',
+    heroTitle: 'Razgovarajmo o *vašoj ambalaži*',
+    heroText: 'Pozovite, pišite na WhatsApp ili svratite u naš magacin u Suhodolu, Mitrovica. Na svaki upit odgovaramo istog radnog dana.',
     replyBadge: 'Odgovaramo istog dana',
-    measureBadge: 'Besplatno mjerenje širom Crne Gore',
+    deliveryBadge: 'Dostava širom Kosova',
     phone: 'Telefon',
     phoneHint: 'Pozovite nas direktno',
     email: 'E-mail',
-    emailHint: 'Za ponude, nacrte i fotografije',
-    address: 'Salon',
+    emailHint: 'Za ponude, logotipe i fakture',
+    address: 'Magacin',
     addressHint: 'Prikaži na mapi',
     hours: 'Radno vrijeme',
-    hoursHint: 'Mjerenja zakazujemo i van radnog vremena',
-    socialTitle: 'Pratite naše *realizacije*',
-    socialText: 'Nove ugradnje, prije i poslije, uzorci i akcije — svake sedmice.',
+    hoursHint: 'Preuzimanje narudžbi u magacinu',
+    socialTitle: 'Brže preko *WhatsApp-a*',
+    socialText: 'Pošaljite fotografiju proizvoda ili vaš logo — odgovaramo odmah tokom radnog vremena.',
     whatsapp: 'WhatsApp',
     viber: 'Viber',
-    formEyebrow: 'Pošaljite poruku',
-    formTitle: 'Pišite nam — *odgovaramo brzo*',
-    formText: 'Opišite šta vam treba: proizvod, okvirne mjere ili rok. Savjetnik će vas kontaktirati telefonom ili e-mailom.',
+    formEyebrow: 'Pišite nam',
+    formTitle: 'Poruka, uzorci ili *ponuda*',
+    formText: 'Izaberite šta vam treba — zahtjev stiže direktno našem timu za prodaju.',
+    tab_contact: 'Poruka',
+    tab_samples: 'Besplatni uzorci',
+    tab_quote: 'Veleprodajna ponuda',
+    returnsTitle: 'Povrat robe',
+    returnsText: 'Nekorišćenu robu u originalnom pakovanju možete vratiti u roku od 5 dana od prijema. Pišite nam na:',
+    returnsPolicy: 'Pravila povrata',
     faqHelpTitle: 'Niste pronašli odgovor?',
-    faqHelpText: 'Pozovite nas — savjetnik je dostupan tokom cijelog radnog vremena.',
-    bookMeasure: 'Zakaži mjerenje',
+    faqHelpText: 'Pozovite nas — tim prodaje je dostupan tokom cijelog radnog vremena.',
   },
   sq: {
-    title: 'Kontakt',
-    eyebrow: 'Kontakt',
-    heroTitle: 'Të flasim për *shtëpinë tuaj*',
-    heroText: 'Na telefononi, na shkruani ose ejani në sallonin tonë. Këshilla është gjithmonë falas dhe çdo kërkese i përgjigjemi të njëjtën ditë.',
+    title: 'Kontakti',
+    eyebrow: 'Kontakti',
+    heroTitle: 'Të flasim për *paketimin tuaj*',
+    heroText: 'Na telefononi, na shkruani në WhatsApp ose ejani në depon tonë në Suhodoll, Mitrovicë. Çdo kërkese i përgjigjemi të njëjtën ditë pune.',
     replyBadge: 'Përgjigjemi të njëjtën ditë',
-    measureBadge: 'Matje falas në gjithë Malin e Zi',
+    deliveryBadge: 'Dërgesë në gjithë Kosovën',
     phone: 'Telefoni',
     phoneHint: 'Na telefononi direkt',
-    email: 'E-mail',
-    emailHint: 'Për oferta, skica dhe fotografi',
-    address: 'Salloni',
+    email: 'Email',
+    emailHint: 'Për oferta, logo dhe fatura',
+    address: 'Depoja',
     addressHint: 'Shfaq në hartë',
-    hours: 'Orari i punës',
-    hoursHint: 'Matjet i caktojmë edhe jashtë orarit',
-    socialTitle: 'Ndiqni *realizimet* tona',
-    socialText: 'Montime të reja, para dhe pas, mostra dhe oferta — çdo javë.',
+    hours: 'Orari',
+    hoursHint: 'Marrje e porosive në depo',
+    socialTitle: 'Më shpejt në *WhatsApp*',
+    socialText: 'Na dërgoni foton e produktit ose logon tuaj — përgjigjemi menjëherë gjatë orarit të punës.',
     whatsapp: 'WhatsApp',
     viber: 'Viber',
-    formEyebrow: 'Dërgoni mesazh',
-    formTitle: 'Na shkruani — *përgjigjemi shpejt*',
-    formText: 'Përshkruani çfarë ju nevojitet: produktin, masat e përafërta ose afatin. Këshilltari do t’ju kontaktojë me telefon ose e-mail.',
+    formEyebrow: 'Na shkruani',
+    formTitle: 'Mesazh, mostra apo *ofertë*',
+    formText: 'Zgjidhni çfarë ju nevojitet — kërkesa i shkon drejtpërdrejt ekipit tonë të shitjes.',
+    tab_contact: 'Mesazh',
+    tab_samples: 'Mostra falas',
+    tab_quote: 'Ofertë shumice',
+    returnsTitle: 'Kthimi i mallit',
+    returnsText: 'Mallin e papërdorur, në paketimin origjinal, mund ta ktheni brenda 5 ditëve nga pranimi. Na shkruani në:',
+    returnsPolicy: 'Politika e kthimit',
     faqHelpTitle: 'Nuk e gjetët përgjigjen?',
-    faqHelpText: 'Na telefononi — këshilltari është në dispozicion gjatë gjithë orarit të punës.',
-    bookMeasure: 'Cakto matjen',
+    faqHelpText: 'Na telefononi — ekipi i shitjes është në dispozicion gjatë gjithë orarit.',
   },
   en: {
     title: 'Contact',
     eyebrow: 'Contact',
-    heroTitle: 'Let’s talk about *your home*',
-    heroText: 'Call, write or drop by our showroom. Advice is always free, and we reply to every enquiry the same day.',
+    heroTitle: 'Let’s talk about *your packaging*',
+    heroText: 'Call, message us on WhatsApp or drop by our warehouse in Suhodoll, Mitrovica. We reply to every enquiry the same working day.',
     replyBadge: 'Same-day replies',
-    measureBadge: 'Free measurement across Montenegro',
+    deliveryBadge: 'Delivery across Kosovo',
     phone: 'Phone',
     phoneHint: 'Call us directly',
-    email: 'E-mail',
-    emailHint: 'For quotes, drawings and photos',
-    address: 'Showroom',
+    email: 'Email',
+    emailHint: 'For quotes, logos and invoices',
+    address: 'Warehouse',
     addressHint: 'Show on map',
     hours: 'Opening hours',
-    hoursHint: 'Measurements can be booked out of hours too',
-    socialTitle: 'Follow our *latest projects*',
-    socialText: 'New installations, before & after, samples and offers — every week.',
+    hoursHint: 'Order pickup at the warehouse',
+    socialTitle: 'Faster on *WhatsApp*',
+    socialText: 'Send us a photo of the product or your logo — we reply right away during opening hours.',
     whatsapp: 'WhatsApp',
     viber: 'Viber',
-    formEyebrow: 'Send a message',
-    formTitle: 'Write to us — *we reply fast*',
-    formText: 'Tell us what you need: the product, rough measurements or your timeline. An advisor will get back to you by phone or e-mail.',
+    formEyebrow: 'Write to us',
+    formTitle: 'A message, samples or a *quote*',
+    formText: 'Pick what you need — your request goes straight to our sales team.',
+    tab_contact: 'Message',
+    tab_samples: 'Free samples',
+    tab_quote: 'Wholesale quote',
+    returnsTitle: 'Returns',
+    returnsText: 'Unused goods in their original packaging can be returned within 5 days of receipt. Write to us at:',
+    returnsPolicy: 'Returns policy',
     faqHelpTitle: 'Didn’t find your answer?',
-    faqHelpText: 'Give us a call — an advisor is available throughout opening hours.',
-    bookMeasure: 'Book a visit',
+    faqHelpText: 'Give us a call — our sales team is available throughout opening hours.',
   },
 });
 
 type FaqData = Extract<HomeSection, { type: 'faq' }>;
+
+/** ?lloji=mostra | oferte  ↔  inquiry type */
+const TYPE_BY_PARAM: Record<string, InquiryType> = { mostra: 'measurement', oferte: 'quote' };
+const PARAM_BY_TYPE: Record<InquiryType, string> = { contact: '', measurement: 'mostra', quote: 'oferte' };
 
 /** Contact tile — compact icon-left row on phones, tall card with the icon on top from `sm` up. */
 function ContactCard({ icon: Icon, label, hint, href, external, children }: { icon: ComponentType<{ className?: string }>; label: string; hint?: string; href?: string; external?: boolean; children: ReactNode }) {
@@ -107,7 +127,7 @@ function ContactCard({ icon: Icon, label, hint, href, external, children }: { ic
         </span>
         <div className={cn('flex min-w-0 flex-1 flex-col sm:mt-7 sm:pr-0', href && 'pr-6')}>
           <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">{label}</div>
-          <div className="mt-1.5 break-words text-[17px] font-semibold leading-snug text-ink sm:mt-2 sm:text-[19px]">{children}</div>
+          <div className="mt-1.5 break-words text-[17px] font-semibold leading-snug text-ink sm:mt-2 sm:text-[18px]">{children}</div>
           {hint && <div className={cn('mt-auto pt-2.5 text-[13.5px] leading-snug text-muted sm:pt-4', href && 'transition-colors group-hover:text-ink')}>{hint}</div>}
         </div>
       </div>
@@ -121,7 +141,7 @@ function ContactCard({ icon: Icon, label, hint, href, external, children }: { ic
       href={href}
       target={external ? '_blank' : undefined}
       rel={external ? 'noreferrer' : undefined}
-      className={cn(cls, 'transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_28px_50px_-32px_rgba(28,26,23,0.5)] hover:ring-ink/15')}
+      className={cn(cls, 'transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_28px_50px_-32px_rgba(15,29,22,0.5)] hover:ring-ink/15')}
     >
       {inner}
     </a>
@@ -133,7 +153,18 @@ export default function Contact() {
   const l = useL();
   const settings = useSettings();
   const faq = useDb((s) => s.home.find((h): h is FaqData => h.type === 'faq'));
+  const returnsPage = useDb((s) => s.pages.find((p) => p.published && p.slug === 'kthimet'));
+  const [params, setParams] = useSearchParams();
   usePageTitle(t('title'));
+
+  const type: InquiryType = TYPE_BY_PARAM[params.get('lloji') ?? ''] ?? 'contact';
+  const selectType = (next: InquiryType) => {
+    const p = new URLSearchParams(params);
+    if (PARAM_BY_TYPE[next]) p.set('lloji', PARAM_BY_TYPE[next]);
+    else p.delete('lloji');
+    if (next !== 'quote') p.delete('logo');
+    setParams(p, { replace: true, preventScrollReset: true });
+  };
 
   // Tolerate "@handle" or a pasted profile URL in the CMS settings.
   const igHandle = (settings.instagram ?? '')
@@ -147,26 +178,32 @@ export default function Contact() {
     .split(/\s*·\s*/)
     .filter(Boolean);
 
+  const tabs: { id: InquiryType; label: string; icon: ComponentType<{ className?: string }> }[] = [
+    { id: 'contact', label: t('tab_contact'), icon: MessageSquareText },
+    { id: 'measurement', label: t('tab_samples'), icon: Gift },
+    { id: 'quote', label: t('tab_quote'), icon: Stamp },
+  ];
+
   return (
     <>
       <PageHero eyebrow={t('eyebrow')} title={t('heroTitle')} subtitle={t('heroText')} crumbs={[{ label: t('title') }]}>
         <div className="mt-8 flex flex-wrap gap-2">
           <span className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[13px] font-semibold text-ink ring-1 ring-line">
             <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-signal opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-signal" />
             </span>
             {t('replyBadge')}
           </span>
           <span className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[13px] font-semibold text-ink ring-1 ring-line">
-            <MapPin className="h-3.5 w-3.5 text-brand-600" />
-            {t('measureBadge')}
+            <Truck className="h-3.5 w-3.5 text-brand-600" />
+            {t('deliveryBadge')}
           </span>
         </div>
       </PageHero>
 
       {/* Contact cards */}
-      <section className="pb-20 pt-12 sm:pb-24 sm:pt-16">
+      <section className="pb-16 pt-12 sm:pb-20 sm:pt-16">
         <div className="container-x">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
             <Reveal className="h-full">
@@ -197,62 +234,94 @@ export default function Contact() {
             </Reveal>
           </div>
 
-          {/* Social strip */}
+          {/* WhatsApp / social strip */}
           {(igHandle || waDigits) && (
-          <Reveal className="mt-5">
-            <div className="relative flex flex-col gap-6 overflow-hidden rounded-3xl bg-ink p-6 text-white sm:p-8 lg:flex-row lg:items-center lg:justify-between">
-              <div className="bg-grain pointer-events-none absolute inset-0" />
-              <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-gradient-to-br from-[#f58529] via-[#dd2a7b] to-[#8134af] opacity-25 blur-3xl" />
-              <div className="relative flex items-center gap-5">
-                <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-[#f58529] via-[#dd2a7b] to-[#8134af] text-white shadow-lg">
-                  <InstagramIcon className="h-7 w-7" />
-                </span>
-                <div>
-                  <h2 className="display text-[26px] leading-tight sm:text-[30px]">
-                    <Accent text={t('socialTitle')} accentClassName="text-brand-200" />
-                  </h2>
-                  <p className="mt-1 text-[14.5px] text-paper/65">{t('socialText')}</p>
+            <Reveal className="mt-5">
+              <div className="relative flex flex-col gap-6 overflow-hidden rounded-3xl bg-brand-700 p-6 text-white sm:p-8 lg:flex-row lg:items-center lg:justify-between">
+                <div className="bg-grain pointer-events-none absolute inset-0" />
+                <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-signal/40 blur-3xl" />
+                <div className="relative flex items-center gap-5">
+                  <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-[#25D366] text-white shadow-lg">
+                    <WhatsAppIcon className="h-7 w-7" />
+                  </span>
+                  <div>
+                    <h2 className="display text-[26px] leading-tight sm:text-[30px]">
+                      <Accent text={t('socialTitle')} accentClassName={ACCENT_ON_DARK} />
+                    </h2>
+                    <p className="mt-1 text-[14.5px] text-white/70">{t('socialText')}</p>
+                  </div>
+                </div>
+                <div className="relative flex flex-wrap gap-2">
+                  {waDigits && (
+                    <>
+                      <a href={`https://wa.me/${waDigits}`} target="_blank" rel="noreferrer" className="inline-flex h-11 items-center gap-2 rounded-full bg-lime px-5 text-sm font-bold text-ink transition hover:bg-[#b3f560]">
+                        <WhatsAppIcon className="h-4 w-4" />
+                        {t('whatsapp')}
+                      </a>
+                      <a href={`viber://chat?number=%2B${waDigits}`} className="inline-flex h-11 items-center gap-2 rounded-full border border-white/25 px-5 text-sm font-semibold text-white transition hover:bg-white/10">
+                        <ViberIcon className="h-4 w-4" />
+                        {t('viber')}
+                      </a>
+                    </>
+                  )}
+                  {igHandle && (
+                    <a href={instagram} target="_blank" rel="noreferrer" className="inline-flex h-11 items-center gap-2 rounded-full border border-white/25 px-5 text-sm font-semibold text-white transition hover:bg-white/10">
+                      <InstagramIcon className="h-4 w-4" />@{igHandle}
+                    </a>
+                  )}
                 </div>
               </div>
-              <div className="relative flex flex-wrap gap-2">
-                {igHandle && (
-                  <a
-                    href={instagram}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-ink transition hover:bg-sand"
-                  >
-                    <InstagramIcon className="h-4 w-4" />@{igHandle}
-                  </a>
-                )}
-                {waDigits && (
-                  <>
-                    <a href={`https://wa.me/${waDigits}`} target="_blank" rel="noreferrer" className="inline-flex h-11 items-center gap-2 rounded-full border border-white/25 px-5 text-sm font-semibold text-white transition hover:bg-white/10">
-                      <WhatsAppIcon className="h-4 w-4" />
-                      {t('whatsapp')}
-                    </a>
-                    <a href={`viber://chat?number=%2B${waDigits}`} className="inline-flex h-11 items-center gap-2 rounded-full border border-white/25 px-5 text-sm font-semibold text-white transition hover:bg-white/10">
-                      <ViberIcon className="h-4 w-4" />
-                      {t('viber')}
-                    </a>
-                  </>
-                )}
-              </div>
-            </div>
-          </Reveal>
+            </Reveal>
           )}
         </div>
       </section>
 
       {/* Form + map */}
-      <section className="bg-sand/60 py-20 sm:py-28">
-        <div className="container-x grid gap-10 lg:grid-cols-[1.05fr_1fr] lg:gap-10">
+      <section id="forma" className="scroll-mt-24 bg-sand/60 py-20 sm:py-24">
+        <div className="container-x grid gap-10 lg:grid-cols-[1.1fr_1fr] lg:gap-10">
           <Reveal>
             <SectionHeading eyebrow={t('formEyebrow')} title={t('formTitle')} subtitle={t('formText')} />
-            <MeasureForm type="contact" className="mt-10 shadow-[0_30px_60px_-45px_rgba(28,26,23,0.45)] lg:p-9" />
+            <div className="mt-8 grid grid-cols-3 gap-1 rounded-full bg-white p-1 ring-1 ring-line" role="tablist" aria-label={t('formEyebrow')}>
+              {tabs.map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={type === id}
+                  onClick={() => selectType(id)}
+                  className={cn(
+                    'inline-flex h-11 items-center justify-center gap-2 rounded-full px-2 text-[13px] font-semibold leading-tight transition-colors sm:text-[14px]',
+                    type === id ? 'bg-brand-600 text-white shadow-[0_8px_18px_-10px_var(--color-brand-700)]' : 'text-ink-soft hover:text-ink',
+                  )}
+                >
+                  <Icon className="hidden h-4 w-4 shrink-0 sm:block" />
+                  <span className="text-center">{label}</span>
+                </button>
+              ))}
+            </div>
+            <MeasureForm type={type} defaultLogo={params.get('logo') === '1'} className="mt-4 shadow-[0_30px_60px_-45px_rgba(15,29,22,0.45)] lg:p-9" />
           </Reveal>
-          <Reveal delay={120} className="h-full">
-            <MapCard className="h-full shadow-[0_30px_60px_-45px_rgba(28,26,23,0.45)]" />
+          <Reveal delay={120} className="flex h-full flex-col gap-4">
+            <MapCard className="flex-1 shadow-[0_30px_60px_-45px_rgba(15,29,22,0.45)]" />
+            <div className="flex items-start gap-4 rounded-3xl border-2 border-dashed border-brand-600/25 bg-white/70 p-5 sm:p-6">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-pink-soft text-pink-ink">
+                <RotateCcw className="h-5 w-5" />
+              </span>
+              <div className="min-w-0">
+                <h3 className="font-bold text-ink">{t('returnsTitle')}</h3>
+                <p className="mt-1 text-[14px] leading-relaxed text-muted">
+                  {t('returnsText')}{' '}
+                  <a href={`mailto:${REFUND_EMAIL}`} className="font-semibold text-brand-700 underline decoration-brand-600/30 underline-offset-4 hover:decoration-brand-600">
+                    {REFUND_EMAIL}
+                  </a>
+                </p>
+                {returnsPage && (
+                  <Link to={`/faqe/${returnsPage.slug}`} className="mt-3 inline-flex items-center gap-1.5 text-[13.5px] font-semibold text-ink hover:text-brand-700">
+                    {t('returnsPolicy')} <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
+                )}
+              </div>
+            </div>
           </Reveal>
         </div>
       </section>
@@ -270,9 +339,11 @@ export default function Contact() {
                   <a href={telHref(settings.phone)} className="inline-flex h-11 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-paper transition hover:bg-ink-soft">
                     <Phone className="h-4 w-4" /> {settings.phone}
                   </a>
-                  <ButtonLink to="/#mjerenje" variant="outline" iconRight={<ArrowRight className="h-4 w-4" />}>
-                    {t('bookMeasure')}
-                  </ButtonLink>
+                  {waDigits && (
+                    <a href={`https://wa.me/${waDigits}`} target="_blank" rel="noreferrer" className="inline-flex h-11 items-center gap-2 rounded-full border border-ink/15 bg-white px-5 text-sm font-semibold text-ink transition hover:border-ink/35">
+                      <WhatsAppIcon className="h-4 w-4 text-[#25D366]" /> {t('whatsapp')}
+                    </a>
+                  )}
                 </div>
               </div>
             </Reveal>

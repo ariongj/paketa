@@ -26,9 +26,9 @@ import { cn, slugify, thumb, uid } from '@/lib/utils';
 const T = defineDict({
   me: {
     newPost: 'Novi članak',
-    newPostText: 'Članak za blog „Savjeti“ — vodiči, savjeti i inspiracija za kupce.',
+    newPostText: 'Članak za blog — vodiči za pakovanje, savjeti za lokale i novosti iz asortimana.',
     title: 'Naslov članka',
-    titlePh: 'npr. Kako izabrati pravi laminat',
+    titlePh: 'npr. Kako izabrati pravu čašu za topla pića',
     category: 'Kategorija',
     categoryHint: 'Prikazuje se kao tema članka na sajtu.',
     quickPick: 'Postojeće:',
@@ -50,9 +50,9 @@ const T = defineDict({
   },
   sq: {
     newPost: 'Artikull i ri',
-    newPostText: 'Artikull për blogun „Këshilla“ — udhëzues, këshilla dhe frymëzim për klientët.',
+    newPostText: 'Artikull për blogun — udhëzues për paketim, këshilla për lokale dhe të reja nga asortimenti.',
     title: 'Titulli i artikullit',
-    titlePh: 'p.sh. Si të zgjidhni laminatin e duhur',
+    titlePh: 'p.sh. Si të zgjidhni gotën e duhur për pije të nxehta',
     category: 'Kategoria',
     categoryHint: 'Shfaqet si tema e artikullit në faqe.',
     quickPick: 'Ekzistuese:',
@@ -74,9 +74,9 @@ const T = defineDict({
   },
   en: {
     newPost: 'New article',
-    newPostText: 'An article for the “Advice” blog — guides, tips and inspiration for customers.',
+    newPostText: 'An article for the blog — packaging guides, tips for venues and news from the range.',
     title: 'Article title',
-    titlePh: 'e.g. How to choose the right laminate',
+    titlePh: 'e.g. How to choose the right cup for hot drinks',
     category: 'Category',
     categoryHint: 'Shown as the article topic on the site.',
     quickPick: 'Existing:',
@@ -106,7 +106,7 @@ const blankPost = (): PostX => ({
   body: emptyL10n(),
   cover: '',
   tag: emptyL10n(),
-  author: 'SELCA tim',
+  author: 'Ekipi Paketoje',
   readMinutes: 3,
   publishedAt: new Date().toISOString(),
   published: false,
@@ -151,26 +151,29 @@ function PostEditor({ id }: { id: string }) {
 
   const slugTaken = useMemo(() => !!draft.slug && posts.some((p) => p.id !== draft.id && p.slug === draft.slug), [posts, draft.slug, draft.id]);
   const errors = {
-    title: !draft.title.me.trim() ? te('titleRequired') : undefined,
+    title: !draft.title.sq.trim() ? te('titleRequired') : undefined,
     slug: !draft.slug.trim() ? te('slugRequired') : slugTaken ? te('slugTaken') : undefined,
   };
 
   /** Categories already used by other articles — one-click reuse keeps them consistent. */
   const knownCats = useMemo(() => {
     const seen = new Map<string, L10n>();
-    posts.forEach((p) => p.tag.me.trim() && !seen.has(p.tag.me.trim().toLowerCase()) && seen.set(p.tag.me.trim().toLowerCase(), p.tag));
+    posts.forEach((p) => {
+      const k = (p.tag.sq || p.tag.me).trim().toLowerCase();
+      if (k && !seen.has(k)) seen.set(k, p.tag);
+    });
     return [...seen.values()];
   }, [posts]);
-  const authors = useMemo(() => Array.from(new Set(['SELCA tim', ...staff.filter((s) => s.active).map((s) => s.name), ...posts.map((p) => p.author)].filter(Boolean))), [staff, posts]);
+  const authors = useMemo(() => Array.from(new Set(['Ekipi Paketoje', ...staff.filter((s) => s.active).map((s) => s.name), ...posts.map((p) => p.author)].filter(Boolean))), [staff, posts]);
   const tagSuggestions = useMemo(() => Array.from(new Set(posts.flatMap((p) => p.tags ?? []))), [posts]);
 
-  const suggestedMinutes = readMinutesFor(draft.body.me);
-  const setTitle = (title: L10n) => patch(slugAuto ? { title, slug: slugify(title.me) } : { title });
+  const suggestedMinutes = readMinutesFor(draft.body.sq || draft.body.en || draft.body.me);
+  const setTitle = (title: L10n) => patch(slugAuto ? { title, slug: slugify(title.sq) } : { title });
 
   const save = () => {
     if (readOnly || (!dirty && !isNew)) return;
     const clean: PostX = { ...draft, slug: slugify(draft.slug), readMinutes: Math.max(1, Math.round(draft.readMinutes || 1)) };
-    if (!clean.title.me.trim() || !clean.slug || slugTaken) {
+    if (!clean.title.sq.trim() || !clean.slug || slugTaken) {
       setShowErrors(true);
       toast.error(te('fixErrors'));
       return;
@@ -307,8 +310,8 @@ function PostEditor({ id }: { id: string }) {
             onChange={(seo) => patch({ seo })}
             fallbackTitle={l(draft.title) || t('newPost')}
             fallbackDescription={l(draft.excerpt)}
-            domain={adminEmail.split('@')[1] || 'selca.me'}
-            path={['savjeti', draft.slug]}
+            domain={adminEmail.split('@')[1] || 'paketoje.com'}
+            path={['blog', draft.slug]}
             readOnly={readOnly}
             slugField={
               <SlugField
@@ -320,10 +323,10 @@ function PostEditor({ id }: { id: string }) {
                 }}
                 onBlur={() => patch({ slug: slugify(draft.slug) })}
                 auto={slugAuto}
-                canRegenerate={!readOnly && !!draft.title.me.trim() && draft.slug !== slugify(draft.title.me)}
+                canRegenerate={!readOnly && !!draft.title.sq.trim() && draft.slug !== slugify(draft.title.sq)}
                 onRegenerate={() => {
                   setSlugAuto(true);
-                  patch({ slug: slugify(draft.title.me) });
+                  patch({ slug: slugify(draft.title.sq) });
                 }}
                 error={slugTaken || showErrors ? errors.slug : undefined}
               />
@@ -366,10 +369,10 @@ function PostEditor({ id }: { id: string }) {
                 <div className="mt-2 flex flex-wrap items-center gap-1">
                   <span className="mr-0.5 text-xs text-muted">{t('quickPick')}</span>
                   {knownCats.map((tag) => {
-                    const on = tag.me === draft.tag.me;
+                    const on = (tag.sq || tag.me) === (draft.tag.sq || draft.tag.me);
                     return (
                       <button
-                        key={tag.me}
+                        key={tag.sq || tag.me}
                         type="button"
                         onClick={() => patch({ tag: { ...tag } })}
                         className={cn('rounded-md px-2 py-0.5 text-[12px] font-semibold transition-colors', on ? 'bg-ink text-white' : 'text-ink-soft ring-1 ring-inset ring-line hover:bg-white hover:text-ink')}

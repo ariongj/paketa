@@ -9,7 +9,7 @@ import { useCan } from '@/store/hooks';
 import { dateTime, timeAgo } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { Order, OrderEvent } from '@/lib/types';
-import { actorName, isCarrierKey, isRecent } from './helpers';
+import { actorName, carrierKey, isRecent } from './helpers';
 import { od } from './dict';
 
 const T = defineDict({
@@ -96,7 +96,8 @@ export function OrderTimeline({ order }: { order: Order }) {
   // fulfillOrder() writes "<carrier key> <tracking>" — show the carrier by name
   const noteText = (e: OrderEvent) => {
     const m = e.status === 'shipped' && e.note ? /^(\S+)\s+(.+)$/.exec(e.note) : null;
-    return m && isCarrierKey(m[1]) ? `${to(`carrier_${m[1]}`)} · ${m[2]}` : e.note;
+    const key = m ? carrierKey(m[1]) : null;
+    return m && key ? `${to(`carrier_${key}`)} · ${m[2]}` : e.note;
   };
 
   const icon = (e: OrderEvent, i: number) => {

@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode, SelectHTMLAttributes } from 'react';
-import { AlertCircle, Building2, CalendarCheck2, CalendarClock, Check, CheckCircle2, Clock, MessageSquare, Minus, PencilLine, Ruler, Send, ShoppingBag, Users, XCircle, ChevronDown } from 'lucide-react';
+import { AlertCircle, Building2, CalendarCheck2, CalendarClock, Check, CheckCircle2, Clock, MessageSquare, Minus, PackageOpen, PencilLine, Send, ShoppingBag, Users, XCircle, ChevronDown } from 'lucide-react';
 import { useDict, useL, useLang } from '@/i18n';
 import { ROLE_META } from '@/lib/permissions';
 import { date } from '@/lib/format';
@@ -45,7 +45,7 @@ export function StatusLabel({ status, className }: { status: InquiryStatus; clas
 /* ------------------------------------------------------------------ */
 /* Kind (Lloji)                                                        */
 /* ------------------------------------------------------------------ */
-export const KIND_ICON: Record<ContactKind, Icon> = { contact: MessageSquare, b2b: Building2, meeting: Users, measurement: Ruler };
+export const KIND_ICON: Record<ContactKind, Icon> = { contact: MessageSquare, b2b: Building2, meeting: Users, measurement: PackageOpen };
 
 export function KindLabel({ kind, className }: { kind: ContactKind; className?: string }) {
   const t = useDict(cx, 'admin');

@@ -20,30 +20,31 @@ const PRESETS: { key: string; make: () => ProductOption }[] = [
       name: L('Boja', 'Ngjyra', 'Colour'),
       type: 'swatch',
       values: [
-        { id: uid('v'), label: L('Bijela', 'E bardhë', 'White'), swatch: '#f3f0ea' },
-        { id: uid('v'), label: L('Antracit', 'Antracit', 'Anthracite'), swatch: '#3b3e42' },
-        { id: uid('v'), label: L('Hrast', 'Lis', 'Oak'), swatch: '#b88a5a', priceDelta: 20 },
+        { id: uid('v'), label: L('Bijela', 'E bardhë', 'White'), swatch: '#f4f3ef' },
+        { id: uid('v'), label: L('Crna', 'E zezë', 'Black'), swatch: '#1f1f1d' },
+        { id: uid('v'), label: L('Kraft', 'Kraft', 'Kraft'), swatch: '#c9a26f', priceDelta: 0.5 },
       ],
     }),
   },
   {
-    key: 'width',
+    key: 'capacity',
     make: () => ({
       id: uid('opt'),
-      name: L('Širina', 'Gjerësia', 'Width'),
+      name: L('Zapremina', 'Kapaciteti', 'Capacity'),
       type: 'button',
-      values: ['70 cm', '80 cm', '90 cm'].map((w, i) => ({ id: uid('v'), label: L(w, w, w), priceDelta: i === 2 ? 15 : undefined })),
+      values: ['250 ml', '300 ml', '400 ml'].map((w, i) => ({ id: uid('v'), label: L(w, w, w), priceDelta: i === 2 ? 0.5 : undefined })),
     }),
   },
   {
-    key: 'opening',
+    key: 'lid',
     make: () => ({
       id: uid('opt'),
-      name: L('Smjer otvaranja', 'Drejtimi i hapjes', 'Opening side'),
+      name: L('Poklopac', 'Kapaku', 'Lid'),
       type: 'button',
       values: [
-        { id: uid('v'), label: L('Lijevo', 'Majtas', 'Left') },
-        { id: uid('v'), label: L('Desno', 'Djathtas', 'Right') },
+        { id: uid('v'), label: L('Bez poklopca', 'Pa kapak', 'No lid') },
+        { id: uid('v'), label: L('Ravni poklopac', 'Kapak i sheshtë', 'Flat lid'), priceDelta: 2 },
+        { id: uid('v'), label: L('Kupolasti poklopac', 'Kapak kupolë', 'Dome lid'), priceDelta: 2 },
       ],
     }),
   },
@@ -137,8 +138,8 @@ export function OptionsFields({ value, onChange, lang }: { value: ProductOption[
   const setValues = (i: number, values: ProductOptionValue[]) => update(i, { values });
   const addOption = () => onChange([...value, { id: uid('opt'), name: empty(), type: 'button', values: [{ id: uid('v'), label: empty() }] }]);
   const presets = PRESETS.filter((p) => {
-    const name = p.make().name.me.toLowerCase();
-    return !value.some((o) => o.name.me.trim().toLowerCase() === name);
+    const name = p.make().name.sq.toLowerCase();
+    return !value.some((o) => o.name.sq.trim().toLowerCase() === name);
   });
 
   return (

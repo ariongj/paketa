@@ -17,7 +17,9 @@ export interface ValidateCtx {
   now?: number;
 }
 
-const LANG_ORDER: Lang[] = ['me', 'sq', 'en'];
+/** SQ, EN, SR — `me` holds Serbian and is shown as SR. */
+const LANG_ORDER: Lang[] = ['sq', 'en', 'me'];
+const LANG_SHORT: Record<Lang, string> = { sq: 'SQ', en: 'EN', me: 'SR' };
 
 const isL10n = (v: unknown): v is L10n =>
   !!v && typeof v === 'object' && !Array.isArray(v) && typeof (v as L10n).me === 'string' && typeof (v as L10n).sq === 'string' && typeof (v as L10n).en === 'string';
@@ -154,7 +156,7 @@ export function validateSection(s: HomeSection, ctx: ValidateCtx): Issue[] {
       gaps.forEach((g) => missing.add(g));
     }
   });
-  if (fields) out.push({ level: 'warning', key: 'v_missingLang', vars: { langs: LANG_ORDER.filter((k) => missing.has(k)).map((k) => k.toUpperCase()).join(', '), n: fields } });
+  if (fields) out.push({ level: 'warning', key: 'v_missingLang', vars: { langs: LANG_ORDER.filter((k) => missing.has(k)).map((k) => LANG_SHORT[k]).join(', '), n: fields } });
 
   return out;
 }

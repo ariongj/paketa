@@ -7,41 +7,41 @@ import { Img } from '@/components/ui/misc';
 import { defineDict, useDict, useL } from '@/i18n';
 import { cn } from '@/lib/utils';
 import { C } from './Blocks';
-import { pad2, useMeasureHref } from './data';
+import { LOGO_QUOTE_HREF, pad2 } from './data';
 
 const T = defineDict({
   me: {
-    location: 'Lokacija',
+    location: 'Grad',
     year: 'Godina',
-    prev: 'Prethodni projekat',
-    next: 'Sljedeći projekat',
+    prev: 'Prethodni primjer',
+    next: 'Sljedeći primjer',
     close: 'Zatvori',
     similar: 'Želite nešto slično?',
-    similarText: 'Besplatno mjerenje na vašoj adresi i precizna ponuda u roku od 48 sati.',
+    similarText: 'Pošaljite nam logo — probni dizajn i ponudu dobijate u roku od 24 sata, izrada 7–10 radnih dana.',
     keys: 'Strelice ← → za listanje',
-    more: 'Još projekata',
+    more: 'Još primjera',
   },
   sq: {
-    location: 'Vendndodhja',
+    location: 'Qyteti',
     year: 'Viti',
-    prev: 'Projekti i mëparshëm',
-    next: 'Projekti i radhës',
+    prev: 'Shembulli i mëparshëm',
+    next: 'Shembulli i radhës',
     close: 'Mbyll',
     similar: 'Dëshironi diçka të ngjashme?',
-    similarText: 'Matje falas në adresën tuaj dhe ofertë e saktë brenda 48 orëve.',
+    similarText: 'Na dërgoni logon — dizajnin provë dhe ofertën i merrni brenda 24 orëve, prodhimi 7–10 ditë pune.',
     keys: 'Shigjetat ← → për të shfletuar',
-    more: 'Më shumë projekte',
+    more: 'Më shumë shembuj',
   },
   en: {
-    location: 'Location',
+    location: 'City',
     year: 'Year',
-    prev: 'Previous project',
-    next: 'Next project',
+    prev: 'Previous example',
+    next: 'Next example',
     close: 'Close',
     similar: 'Want something similar?',
-    similarText: 'A free measurement at your address and a precise quote within 48 hours.',
+    similarText: 'Send us your logo — you get a proof and a quote within 24 hours, production takes 7–10 working days.',
     keys: 'Use ← → to browse',
-    more: 'More projects',
+    more: 'More examples',
   },
 });
 
@@ -62,7 +62,6 @@ export function ProjectLightbox({
   const t = useDict(T);
   const tc = useDict(C);
   const l = useL();
-  const measureHref = useMeasureHref();
   const n = projects.length;
   const i = Math.min(index, Math.max(0, n - 1));
   const p = projects[i];
@@ -159,11 +158,11 @@ export function ProjectLightbox({
               <p className="mt-6 text-[16px] leading-relaxed text-ink-soft">{l(p.summary)}</p>
             </div>
 
-            <div className="mt-8 rounded-2xl bg-sand/70 p-5">
+            <div className="mt-8 rounded-2xl border-2 border-dashed border-brand-600/25 bg-lime-soft/50 p-5">
               <div className="font-bold text-ink">{t('similar')}</div>
               <p className="mt-1 text-[14px] leading-relaxed text-muted">{t('similarText')}</p>
-              <ButtonLink to={measureHref} onClick={onClose} size="sm" className="mt-4" iconRight={<ArrowRight className="h-3.5 w-3.5" />}>
-                {tc('bookFree')}
+              <ButtonLink to={LOGO_QUOTE_HREF} onClick={onClose} size="sm" className="mt-4" iconRight={<ArrowRight className="h-3.5 w-3.5" />}>
+                {tc('logoQuote')}
               </ButtonLink>
             </div>
 

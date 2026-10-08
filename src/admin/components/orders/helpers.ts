@@ -1,11 +1,13 @@
 // Shared helpers for the CMS orders area (list, detail, invoice, drafts, returns).
 import { Banknote, CreditCard, Landmark, type LucideIcon } from 'lucide-react';
 import { lt } from '@/i18n';
-import { money, num, unitLabel } from '@/lib/format';
+import { money, num } from '@/lib/format';
+import { fulfillmentOf, orderLineInstallation } from '@/lib/orders';
+import { qtyText } from '@/admin/components/products/units';
 import { fold } from '@/lib/search';
 import { customerKeyOf } from '@/lib/crm';
 import type { RejectedDiscount } from '@/lib/discounts';
-import type { Discount, Lang, Order, OrderLine, OrderStatus, PaymentMethod, Product, Staff } from '@/lib/types';
+import type { Discount, FulfillmentState, Lang, Order, OrderLine, OrderStatus, PaymentMethod, Product, Staff } from '@/lib/types';
 
 /* ------------------------------------------------------------------ */
 /* Archive (PDF p.17: "Arkivimi është organizim liste, jo rimbursim")   */
@@ -42,9 +44,14 @@ export function actorName(by: string | undefined, staff: Staff[], labels: { web:
 /* ------------------------------------------------------------------ */
 /* Carriers (stored as a key on order.fulfillment.carrier)             */
 /* ------------------------------------------------------------------ */
-export const CARRIERS = ['selca', 'courier', 'pickup', 'other'] as const;
+export const CARRIERS = ['van', 'courier', 'pickup', 'other'] as const;
 export type CarrierKey = (typeof CARRIERS)[number];
 export const isCarrierKey = (v: string | undefined): v is CarrierKey => !!v && (CARRIERS as readonly string[]).includes(v);
+/** Stored carrier → current key ('selca' in older data = our own van); null for free text. */
+export const carrierKey = (v: string | undefined): CarrierKey | null => {
+  const k = v === 'selca' ? 'van' : v;
+  return isCarrierKey(k) ? k : null;
+};
 
 /* ------------------------------------------------------------------ */
 /* Discounts                                                           */
@@ -69,13 +76,35 @@ export function rejectText(r: RejectedDiscount, t: Dict, lang: Lang, nameOf: (id
   }
 }
 
-/** The happy-path flow an order moves through (cancelled sits outside it). */
-export const ORDER_FLOW: OrderStatus[] = ['new', 'confirmed', 'processing', 'shipped', 'installation', 'completed'];
+/**
+ * The happy-path flow an order moves through (cancelled sits outside it). Paketoje: 'installation' is
+ * "Në printim" — custom logo print production — and comes BEFORE shipping.
+ */
+export const ORDER_FLOW: OrderStatus[] = ['new', 'confirmed', 'processing', 'installation', 'shipped', 'completed'];
 export const ALL_STATUSES: OrderStatus[] = [...ORDER_FLOW, 'cancelled'];
 
-export function nextStatus(s: OrderStatus): OrderStatus | null {
-  const i = ORDER_FLOW.indexOf(s);
-  return i >= 0 && i < ORDER_FLOW.length - 1 ? ORDER_FLOW[i + 1] : null;
+/** The order has at least one line with the logo-print add-on. */
+export const hasPrint = (o: Pick<Order, 'items'>) => o.items.some((l) => l.installation);
+
+/** Steps for one order: the print step only for orders with logo-print lines (or that already went through it). */
+export function flowFor(o: Pick<Order, 'items' | 'status' | 'timeline'>): OrderStatus[] {
+  const print = hasPrint(o) || o.status === 'installation' || o.timeline.some((e) => e.status === 'installation');
+  return print ? ORDER_FLOW : ORDER_FLOW.filter((s) => s !== 'installation');
+}
+
+export function nextStatus(o: Pick<Order, 'items' | 'status' | 'timeline'>): OrderStatus | null {
+  const flow = flowFor(o);
+  const i = flow.indexOf(o.status);
+  return i >= 0 && i < flow.length - 1 ? flow[i + 1] : null;
+}
+
+/**
+ * Fulfilment for the CMS screens. lib/orders counts 'installation' as shipped (the old installation step came
+ * after delivery); for Paketoje an order "in print" has not left the warehouse yet, unless a shipment was recorded.
+ */
+export function fulfilState(o: Pick<Order, 'status' | 'fulfillment'>): FulfillmentState {
+  if (o.status === 'installation' && !o.fulfillment?.shippedAt) return o.fulfillment?.partial ? 'partial' : 'unfulfilled';
+  return fulfillmentOf(o);
 }
 
 export const PAY_ICON: Record<PaymentMethod, LucideIcon> = { cod: Banknote, bank: Landmark, card: CreditCard };
@@ -85,15 +114,12 @@ export const isRecent = (iso: string) => Date.now() - new Date(iso).getTime() < 
 
 export const customerName = (o: Order) => `${o.customer.firstName} ${o.customer.lastName}`.trim();
 
-/** Units a line represents: m² for packaged products, otherwise the quantity itself. */
-export const lineUnits = (l: OrderLine) => (l.unit === 'm2' && l.packSize ? Math.round(l.qty * l.packSize * 100) / 100 : l.qty);
+/** Logo-print add-on amount of a line (EUR) — price per pack × packs. */
+export const installationAmount = orderLineInstallation;
 
-export const installationAmount = (l: OrderLine) => (l.installation && l.installationPrice ? Math.round(l.installationPrice * lineUnits(l) * 100) / 100 : 0);
-
-/** "12 pak. · 25,92 m²" for packaged products, "3 kom" otherwise. */
-export function qtyLabel(l: OrderLine, lang: Lang, packsWord: string) {
-  if (l.unit === 'm2' && l.packSize) return `${l.qty} ${packsWord} · ${num(lineUnits(l), lang)} m²`;
-  return `${num(l.qty, lang)} ${unitLabel(l.unit, lang)}`;
+/** "20 pako × 50 copë = 1.000 copë" for packs ("20 pako · 1.000 copë" with short), "3 copë" otherwise. */
+export function qtyLabel(l: OrderLine, lang: Lang, opts: { short?: boolean } = {}) {
+  return qtyText(l, l.qty, lang, opts);
 }
 
 /**
@@ -113,7 +139,7 @@ export function localizeLine(l: OrderLine, product: Product | undefined, from: L
 }
 
 export function mapsUrl(address: string, city: string) {
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([address, city, 'Montenegro'].filter(Boolean).join(', '))}`;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([address, city, 'Kosovo'].filter(Boolean).join(', '))}`;
 }
 
 /** Case/diacritic-insensitive match on number, name, email, phone (digits only) and city. */
@@ -127,7 +153,7 @@ export function matchesOrder(o: Order, query: string) {
   return digits.length >= 3 && c.phone.replace(/\D/g, '').includes(digits);
 }
 
-/** Pick a plural form: Montenegrin has one/few/many, Albanian + English one/many. */
+/** Pick a plural form: Serbian has one/few/many, Albanian + English one/many. */
 export function pluralForm(n: number, lang: Lang): 'one' | 'few' | 'many' {
   if (lang === 'me') {
     const m10 = n % 10;
@@ -142,7 +168,7 @@ export function pluralForm(n: number, lang: Lang): 'one' | 'few' | 'many' {
 /** "{n} stavka/stavke/stavki" style keys: base_one / base_few / base_many. */
 export const pluralKey = <B extends string>(base: B, n: number, lang: Lang) => `${base}_${pluralForm(n, lang)}` as `${B}_one` | `${B}_few` | `${B}_many`;
 
-/** Semicolon CSV (Excel in ME/SQ locales) — values quoted when needed. */
+/** Semicolon CSV (Excel in SQ/SR locales) — values quoted when needed. */
 export function toCsv(rows: (string | number)[][]) {
   const cell = (v: string | number) => {
     const s = String(v ?? '');
@@ -151,5 +177,5 @@ export function toCsv(rows: (string | number)[][]) {
   return rows.map((r) => r.map(cell).join(';')).join('\r\n');
 }
 
-/** 1234.5 → "1234,50" (ME/SQ) or "1234.50" (EN) — plain, spreadsheet friendly. */
+/** 1234.5 → "1234,50" (SQ/SR) or "1234.50" (EN) — plain, spreadsheet friendly. */
 export const csvNum = (v: number, lang: Lang) => (lang === 'en' ? v.toFixed(2) : v.toFixed(2).replace('.', ','));

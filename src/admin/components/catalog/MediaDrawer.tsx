@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type ComponentType } from 'react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
 import {
-  AlertTriangle, BookOpen, ChevronLeft, ChevronRight, Database, ExternalLink, FileText, FolderTree, GalleryHorizontalEnd, Hammer, Home,
+  AlertTriangle, Award, BookOpen, ChevronLeft, ChevronRight, Database, ExternalLink, FileText, FolderTree, GalleryHorizontalEnd, Home,
   Images, Layers, Megaphone, Package, PencilLine, Replace, Trash2,
 } from 'lucide-react';
 import { Drawer, Modal } from '@/components/ui/Overlay';
@@ -17,7 +17,7 @@ import { adm } from '@/admin/i18n';
 import { useDb } from '@/store/db';
 import { useCan } from '@/store/hooks';
 import { date } from '@/lib/format';
-import type { HomeSectionType, MediaItem } from '@/lib/types';
+import type { HomeSectionType, L10n, MediaItem } from '@/lib/types';
 import { cn, thumb } from '@/lib/utils';
 
 export const MEDIA_T = defineDict({
@@ -29,7 +29,7 @@ export const MEDIA_T = defineDict({
     library: 'Iz kataloga',
     alt: 'Alternativni tekst',
     altHint: 'Kratak opis slike — pomaže Google pretrazi i čitačima ekrana.',
-    altPh: 'npr. Sobna vrata u bijeloj boji',
+    altPh: 'npr. Plastična čaša F95 400 ml sa ravnim poklopcem',
     altSaved: 'Alt tekst je sačuvan',
     altMissing: 'Nedostaje alt tekst',
     dimensions: 'Dimenzije',
@@ -69,7 +69,7 @@ export const MEDIA_T = defineDict({
     kind_homeDraft: 'Početna (nacrt)',
     kind_placement: 'Slajd / baner',
     kind_offer: 'Ponuda',
-    kind_project: 'Realizacija',
+    kind_project: 'Referenca',
     kind_post: 'Blog',
     kind_page: 'Stranica',
     kind_model: 'Model sadržaja',
@@ -80,7 +80,7 @@ export const MEDIA_T = defineDict({
     sec_promo: 'Promo akcija',
     sec_process: 'Kako radimo',
     sec_services: 'Usluge',
-    sec_projects: 'Realizacije',
+    sec_projects: 'Reference',
     sec_stats: 'Brojke i citat',
     sec_instagram: 'Instagram',
     sec_faq: 'Česta pitanja',
@@ -95,7 +95,7 @@ export const MEDIA_T = defineDict({
     library: 'Nga katalogu',
     alt: 'Teksti alternativ',
     altHint: 'Përshkrim i shkurtër i imazhit — ndihmon kërkimin në Google dhe lexuesit e ekranit.',
-    altPh: 'p.sh. Derë e brendshme e bardhë',
+    altPh: 'p.sh. Gotë plastike F95 400 ml me kapak të sheshtë',
     altSaved: 'Teksti alt u ruajt',
     altMissing: 'Mungon teksti alt',
     dimensions: 'Dimensionet',
@@ -135,7 +135,7 @@ export const MEDIA_T = defineDict({
     kind_homeDraft: 'Ballina (draft)',
     kind_placement: 'Slide / banner',
     kind_offer: 'Ofertë',
-    kind_project: 'Projekt',
+    kind_project: 'Referencë',
     kind_post: 'Blog',
     kind_page: 'Faqe',
     kind_model: 'Model përmbajtjeje',
@@ -146,7 +146,7 @@ export const MEDIA_T = defineDict({
     sec_promo: 'Aksioni promo',
     sec_process: 'Si punojmë',
     sec_services: 'Shërbimet',
-    sec_projects: 'Realizimet',
+    sec_projects: 'Referencat',
     sec_stats: 'Shifrat dhe citati',
     sec_instagram: 'Instagram',
     sec_faq: 'Pyetjet e shpeshta',
@@ -161,7 +161,7 @@ export const MEDIA_T = defineDict({
     library: 'From catalogue',
     alt: 'Alt text',
     altHint: 'A short description of the image — helps Google search and screen readers.',
-    altPh: 'e.g. White interior door',
+    altPh: 'e.g. F95 400 ml plastic cup with a flat lid',
     altSaved: 'Alt text saved',
     altMissing: 'Alt text missing',
     dimensions: 'Dimensions',
@@ -201,7 +201,7 @@ export const MEDIA_T = defineDict({
     kind_homeDraft: 'Homepage (draft)',
     kind_placement: 'Slide / banner',
     kind_offer: 'Offer',
-    kind_project: 'Project',
+    kind_project: 'Reference',
     kind_post: 'Blog',
     kind_page: 'Page',
     kind_model: 'Content model',
@@ -212,7 +212,7 @@ export const MEDIA_T = defineDict({
     sec_promo: 'Promo campaign',
     sec_process: 'How we work',
     sec_services: 'Services',
-    sec_projects: 'Projects',
+    sec_projects: 'References',
     sec_stats: 'Stats & quote',
     sec_instagram: 'Instagram',
     sec_faq: 'FAQ',
@@ -221,20 +221,31 @@ export const MEDIA_T = defineDict({
   },
 });
 
-/** Data folder names are stored in Montenegrin — show them in the panel language. */
-const FOLDER_LABELS: Record<string, { sq: string; en: string }> = {
-  Hero: { sq: 'Hero', en: 'Hero' },
-  Ostalo: { sq: 'Të tjera', en: 'Other' },
-  Kategorije: { sq: 'Kategoritë', en: 'Categories' },
-  Usluge: { sq: 'Shërbimet', en: 'Services' },
-  Projekti: { sq: 'Projektet', en: 'Projects' },
-  Proizvodi: { sq: 'Produktet', en: 'Products' },
-  Otpremljeno: { sq: 'Të ngarkuara', en: 'Uploaded' },
+/** Media folder names are stored as plain strings (shared-platform seed uses Serbian names) — show them in the panel language. */
+const FOLDER_L: Record<string, L10n> = {
+  hero: { me: 'Hero', sq: 'Hero', en: 'Hero' },
+  other: { me: 'Ostalo', sq: 'Të tjera', en: 'Other' },
+  categories: { me: 'Kategorije', sq: 'Kategoritë', en: 'Categories' },
+  services: { me: 'Usluge', sq: 'Shërbimet', en: 'Services' },
+  references: { me: 'Reference', sq: 'Referencat', en: 'References' },
+  products: { me: 'Proizvodi', sq: 'Produktet', en: 'Products' },
+  uploaded: { me: 'Otpremljeno', sq: 'Të ngarkuara', en: 'Uploaded' },
+  brand: { me: 'Brend', sq: 'Brendi', en: 'Brand' },
+};
+const FOLDER_KEY: Record<string, keyof typeof FOLDER_L> = {
+  Hero: 'hero',
+  Ostalo: 'other', 'Të tjera': 'other', Other: 'other',
+  Kategorije: 'categories', 'Kategoritë': 'categories', Categories: 'categories',
+  Usluge: 'services', 'Shërbimet': 'services', Services: 'services',
+  Projekti: 'references', Reference: 'references', Referencat: 'references', References: 'references', Projects: 'references',
+  Proizvodi: 'products', Produktet: 'products', Products: 'products',
+  Otpremljeno: 'uploaded', 'Të ngarkuara': 'uploaded', Uploaded: 'uploaded',
+  Brand: 'brand', Brend: 'brand', Brendi: 'brand',
 };
 
 export function useFolderLabel() {
   const lang = useLang('admin');
-  return useCallback((folder: string) => (lang === 'me' ? folder : FOLDER_LABELS[folder]?.[lang] ?? folder), [lang]);
+  return useCallback((folder: string) => FOLDER_L[FOLDER_KEY[folder]]?.[lang] ?? folder, [lang]);
 }
 
 export const KIND_ICON: Record<UsageKind, ComponentType<{ className?: string }>> = {
@@ -245,7 +256,7 @@ export const KIND_ICON: Record<UsageKind, ComponentType<{ className?: string }>>
   homeDraft: PencilLine,
   placement: GalleryHorizontalEnd,
   offer: Megaphone,
-  project: Hammer,
+  project: Award,
   post: BookOpen,
   page: FileText,
   model: Database,

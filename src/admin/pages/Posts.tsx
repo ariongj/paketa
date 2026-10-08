@@ -22,7 +22,7 @@ import { href } from '@/lib/paths';
 
 const T = defineDict({
   me: {
-    description: 'Članci sa savjetima — stranica „Savjeti“ i sekcija na početnoj. Kategorija, autor, sažetak, oznake, SEO i datum objave.',
+    description: 'Blog za lokale i kupce — stranica /blog i sekcija na početnoj. Kategorija, autor, sažetak, oznake, SEO i datum objave.',
     newPost: 'Novi članak',
     colPost: 'Članak',
     colCategory: 'Kategorija',
@@ -35,7 +35,7 @@ const T = defineDict({
     searchPh: 'Pretraži članke…',
     allCategories: 'Sve kategorije',
     empty: 'Još nema članaka',
-    emptyText: 'Napišite prvi članak — kupci vole praktične vodiče za izbor i održavanje.',
+    emptyText: 'Napišite prvi članak — npr. kako izabrati čaše i poklopce za kafić ili posude za dostavu.',
     noMatch: 'Nijedan članak ne odgovara filterima.',
     deleteTitle: 'Obrisati članak „{name}“?',
     deleteText: 'Članak i svi njegovi prevodi biće trajno uklonjeni.',
@@ -52,7 +52,7 @@ const T = defineDict({
     articles: '{n} čl.',
   },
   sq: {
-    description: 'Artikuj me këshilla — faqja „Këshilla“ dhe seksioni në ballinë. Kategoria, autori, përmbledhja, etiketat, SEO dhe data e publikimit.',
+    description: 'Blogu për lokale dhe klientë — faqja /blog dhe seksioni në ballinë. Kategoria, autori, përmbledhja, etiketat, SEO dhe data e publikimit.',
     newPost: 'Artikull i ri',
     colPost: 'Artikulli',
     colCategory: 'Kategoria',
@@ -65,7 +65,7 @@ const T = defineDict({
     searchPh: 'Kërko artikujt…',
     allCategories: 'Të gjitha kategoritë',
     empty: 'Ende nuk ka artikuj',
-    emptyText: 'Shkruani artikullin e parë — klientët i duan udhëzuesit praktikë për zgjedhje dhe mirëmbajtje.',
+    emptyText: 'Shkruani artikullin e parë — p.sh. si të zgjidhni gotat dhe kapakët për kafiterinë ose enët për dërgesa.',
     noMatch: 'Asnjë artikull nuk përputhet me filtrat.',
     deleteTitle: 'Të fshihet artikulli „{name}“?',
     deleteText: 'Artikulli dhe të gjitha përkthimet do të hiqen përgjithmonë.',
@@ -82,7 +82,7 @@ const T = defineDict({
     articles: '{n} art.',
   },
   en: {
-    description: 'Advice articles — the “Advice” page and the homepage section. Category, author, excerpt, tags, SEO and publish date.',
+    description: 'The blog for venues and customers — the /blog page and the homepage section. Category, author, excerpt, tags, SEO and publish date.',
     newPost: 'New article',
     colPost: 'Article',
     colCategory: 'Category',
@@ -95,7 +95,7 @@ const T = defineDict({
     searchPh: 'Search articles…',
     allCategories: 'All categories',
     empty: 'No articles yet',
-    emptyText: 'Write your first article — customers love practical buying and care guides.',
+    emptyText: 'Write your first article — e.g. how to pick cups and lids for a café, or containers for delivery.',
     noMatch: 'No article matches the filters.',
     deleteTitle: 'Delete the article “{name}”?',
     deleteText: 'The article and all its translations will be removed permanently.',
@@ -115,7 +115,7 @@ const T = defineDict({
 
 type Filter = 'all' | ContentState;
 const COLS = 'md:grid-cols-[72px_minmax(0,1fr)_128px_118px_104px_40px] lg:grid-cols-[72px_minmax(0,1fr)_128px_120px_118px_104px_40px]';
-const catKey = (tag: L10n) => slugify(tag.me) || '_';
+const catKey = (tag: L10n) => slugify(tag.sq || tag.en || tag.me) || '_';
 
 export default function Posts() {
   const t = useDict(T, 'admin');
@@ -162,7 +162,7 @@ export default function Posts() {
         if (filter !== 'all' && states.get(p.id) !== filter) return false;
         if (cat !== 'all' && catKey(p.tag) !== cat) return false;
         if (!needle) return true;
-        return fold(`${p.title.me} ${p.title.sq} ${p.title.en} ${p.slug} ${p.tag.me} ${p.author} ${(p.tags ?? []).join(' ')}`).includes(needle);
+        return fold(`${p.title.sq} ${p.title.en} ${p.title.me} ${p.slug} ${p.tag.sq} ${p.tag.me} ${p.author} ${(p.tags ?? []).join(' ')}`).includes(needle);
       });
   }, [posts, q, filter, cat, states]);
 
@@ -170,8 +170,8 @@ export default function Posts() {
     const copy: PostX = {
       ...structuredClone(p),
       id: uid('post'),
-      slug: `${p.slug}-kopija`.slice(0, 80),
-      title: { me: `${p.title.me} ${T.me.copySuffix}`, sq: p.title.sq ? `${p.title.sq} ${T.sq.copySuffix}` : '', en: p.title.en ? `${p.title.en} ${T.en.copySuffix}` : '' },
+      slug: `${p.slug}-kopje`.slice(0, 80),
+      title: { sq: `${p.title.sq || p.title.en || p.title.me} ${T.sq.copySuffix}`, en: p.title.en ? `${p.title.en} ${T.en.copySuffix}` : '', me: p.title.me ? `${p.title.me} ${T.me.copySuffix}` : '' },
       published: false,
       hidden: false,
       publishedAt: new Date().toISOString(),

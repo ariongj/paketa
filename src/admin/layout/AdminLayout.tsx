@@ -19,22 +19,25 @@ import { Sidebar } from './Sidebar';
 import { activeNav, navFor } from './nav';
 import { MOD_KEY, useScrollLock } from './popover';
 
-/** "CMS" + small SELCA mark (top bar, left). */
+/** Paketoje box mark + "CMS" (top bar, left) — the bar itself stays neutral. */
 function Brand({ onClick }: { onClick?: () => void }) {
   return (
-    <Link to="/admin" onClick={onClick} className="flex items-center gap-2.5 rounded-md px-1.5 py-1 text-white">
-      <span className="text-[17px] font-extrabold tracking-tight">CMS</span>
+    <Link to="/admin" onClick={onClick} className="flex items-center gap-2.5 rounded-md px-1.5 py-1 text-white" aria-label="Paketoje CMS">
+      <LogoMark tone="light" className="h-[22px]" />
       <span className="h-4 w-px bg-white/20" aria-hidden />
-      <LogoMark tone="light" className="h-[17px] opacity-90" />
+      <span className="text-[17px] font-extrabold tracking-tight">CMS</span>
     </Link>
   );
 }
+
+/** Store name without the legal-form suffix ("Paketoje Sh.p.k." → "Paketoje"). */
+const storeName = (company: string) => company.replace(/\s*(sh\.?\s?p\.?\s?k\.?|l\.?l\.?c\.?|d\.?\s?o\.?\s?o\.?)$/i, '').trim() || 'Paketoje';
 
 /** Store label (top bar, right) — opens the public site in a new tab. */
 function StoreLabel({ className, dark = true }: { className?: string; dark?: boolean }) {
   const t = useDict(adm, 'admin');
   const company = useDb((s) => s.settings.companyName);
-  const name = company.replace(/\s*d\.?\s?o\.?\s?o\.?$/i, '') || 'SELCA COMPANY';
+  const name = storeName(company);
   return (
     <a
       href={href('/')}
@@ -89,10 +92,10 @@ export default function AdminLayout() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // Tab title: "Porositë · CMS — SELCA COMPANY"
+  // Tab title: "Porositë · CMS — Paketoje"
   const screen = useMemo(() => activeNav(pathname, navFor(role)).leaf, [pathname, role]);
   useEffect(() => {
-    document.title = `${screen ? `${t(screen.label)} · ` : ''}CMS — ${companyName}`;
+    document.title = `${screen ? `${t(screen.label)} · ` : ''}CMS — ${storeName(companyName)}`;
   }, [screen, t, companyName]);
 
   return (

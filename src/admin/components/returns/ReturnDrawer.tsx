@@ -15,11 +15,11 @@ import { od } from '@/admin/components/orders/dict';
 import { NumInput } from '@/admin/components/products/parts';
 import { adm } from '@/admin/i18n';
 import { useDict, useLang } from '@/i18n';
-import { common } from '@/i18n/common';
 import { useDb } from '@/store/db';
 import { useCan } from '@/store/hooks';
 import { fulfillmentOf, paymentOf, refundForLines } from '@/lib/orders';
-import { date, dateTime, money, num, unitLabel } from '@/lib/format';
+import { date, dateTime, money, num } from '@/lib/format';
+import { piecesNote, unitsText } from '@/admin/components/products/units';
 import { cn, round2 } from '@/lib/utils';
 import type { Order, ReturnRequest, ReturnStatus } from '@/lib/types';
 import { rd } from './dict';
@@ -83,7 +83,6 @@ type Props = { ret: ReturnRequest; order: Order | undefined; cap: Cap; step: Ste
 function Body({ ret, order, cap, step }: Props) {
   const t = useDict(rd, 'admin');
   const to = useDict(od, 'admin');
-  const tc = useDict(common, 'admin');
   const lang = useLang('admin');
   const can = useCan();
   const products = useDb((s) => s.products);
@@ -105,10 +104,8 @@ function Body({ ret, order, cap, step }: Props) {
     toast.success(t('orderPaid', { n: order.number }));
   };
 
-  const unitOf = (productId: string) => {
-    const line = order?.items.find((l) => l.productId === productId);
-    return line ? (line.unit === 'm2' && line.packSize ? tc('packs') : unitLabel(line.unit, lang)) : '';
-  };
+  /** Selling unit of a returned product: the order line snapshot, else the product. */
+  const unitSource = (productId: string) => order?.items.find((l) => l.productId === productId) ?? products.find((p) => p.id === productId);
   const tracked = ret.lines.map((l) => products.find((p) => p.id === l.productId)).filter((p) => !!p && p.stock < 999);
 
   return (
@@ -170,13 +167,16 @@ function Body({ ret, order, cap, step }: Props) {
             const ordered = order?.items.filter((x) => x.productId === l.productId).reduce((s, x) => s + x.qty, 0) ?? l.qty;
             const value = order ? refundForLines(order, [l]) : 0;
             const sku = products.find((p) => p.id === l.productId)?.sku ?? order?.items.find((x) => x.productId === l.productId)?.sku;
+            const src = unitSource(l.productId);
+            const pcs = src ? piecesNote(src, l.qty, lang) : '';
             return (
               <li key={l.productId} className="flex items-center gap-3 px-4 py-3">
                 <Thumb src={lineImage(l.productId, order, products)} className="h-11 w-11 rounded-lg" />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[13.5px] font-medium text-ink">{lineName(l.productId, order, products, lang)}</span>
                   <span className="block truncate text-[12px] text-muted">
-                    {t('ofQty', { n: num(l.qty, lang), total: num(ordered, lang) })} {unitOf(l.productId)}
+                    {t('ofQty', { n: num(l.qty, lang), total: src ? unitsText(ordered, src.unit, lang) : num(ordered, lang) })}
+                    {pcs && <span className="tabular-nums"> · {pcs}</span>}
                     {sku && <span className="font-mono"> · {sku}</span>}
                   </span>
                 </span>
@@ -253,7 +253,7 @@ function Body({ ret, order, cap, step }: Props) {
                 <p className="mt-1 text-[12px] tabular-nums text-muted">
                   {tracked.map((p) => (
                     <span key={p!.id} className="mr-3 inline-block">
-                      <span className="font-mono">{p!.sku}</span> · {t('stockNow', { n: num(p!.stock, lang) })}
+                      <span className="font-mono">{p!.sku}</span> · {t('stockNow', { n: unitsText(p!.stock, p!.unit, lang) })}
                     </span>
                   ))}
                 </p>

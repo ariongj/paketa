@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { motion } from 'motion/react';
 import { toast } from 'sonner';
-import { ChevronDown, ChevronUp, ExternalLink, FolderTree, Pencil, Plus, Star, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, ExternalLink, FolderTree, Hourglass, Pencil, Plus, Star, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Switch } from '@/components/ui/Field';
 import { Badge, EmptyState } from '@/components/ui/misc';
@@ -26,6 +26,11 @@ const T = defineDict({
     colCategory: 'Kategorija',
     colProducts: 'Proizvodi',
     colFeatured: 'Istaknuta',
+    colSoon: 'Uskoro',
+    soonBadge: 'Uskoro',
+    soonOn: '„{name}“ je označena kao „Uskoro“ — na sajtu se prikazuje obrazac za obavještenje',
+    soonOff: '„{name}“ je ponovo u prodaji',
+    soonHint: 'Asortiman najavljen, još nije u prodaji',
     activeN: '{n} aktivnih',
     activeOne: '1 aktivan',
     draftsN: '+ {n} u nacrtu',
@@ -56,6 +61,11 @@ const T = defineDict({
     colCategory: 'Kategoria',
     colProducts: 'Produktet',
     colFeatured: 'E veçuar',
+    colSoon: 'Së shpejti',
+    soonBadge: 'Së shpejti',
+    soonOn: '„{name}” u shënua „Së shpejti” — në faqe shfaqet formulari i njoftimit',
+    soonOff: '„{name}” është sërish në shitje',
+    soonHint: 'Gamë e paralajmëruar, ende jo në shitje',
     activeN: '{n} aktive',
     activeOne: '1 aktiv',
     draftsN: '+ {n} draft',
@@ -86,6 +96,11 @@ const T = defineDict({
     colCategory: 'Category',
     colProducts: 'Products',
     colFeatured: 'Featured',
+    colSoon: 'Coming soon',
+    soonBadge: 'Coming soon',
+    soonOn: '“{name}” is marked “Coming soon” — the site shows a notify form',
+    soonOff: '“{name}” is on sale again',
+    soonHint: 'Range announced, not on sale yet',
     activeN: '{n} active',
     activeOne: '1 active',
     draftsN: '+ {n} draft',
@@ -170,6 +185,11 @@ export default function Categories() {
     toast.success(t('deletedToast'));
   };
 
+  const toggleSoon = (c: Category, soon: boolean) => {
+    upsertCategory({ ...c, soon: soon || undefined });
+    toast.success(soon ? t('soonOn', { name: l(c.name) }) : t('soonOff', { name: l(c.name) }));
+  };
+
   const toggleFeatured = (c: Category, featured: boolean) => {
     upsertCategory({ ...c, featured });
     toast.success(featured ? t('featuredOn', { name: l(c.name) }) : t('featuredOff', { name: l(c.name) }));
@@ -210,6 +230,7 @@ export default function Categories() {
               <span className="min-w-0 flex-1">{t('colCategory')}</span>
               <span className="w-[104px]">{t('colProducts')}</span>
               <span className="w-[76px]">{t('colFeatured')}</span>
+              <span className="w-[92px]">{t('colSoon')}</span>
               <span className="w-[72px]" />
             </div>
             <ul>
@@ -256,6 +277,11 @@ export default function Categories() {
                           <button type="button" onClick={() => openEditor(c)} className="truncate text-[15px] font-bold text-ink transition-colors hover:text-brand-700">
                             {l(c.name)}
                           </button>
+                          {c.soon && (
+                            <span title={t('soonHint')} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-ink px-2 py-0.5 text-[11px] font-semibold text-white">
+                              <Hourglass className="h-3 w-3" /> {t('soonBadge')}
+                            </span>
+                          )}
                           <a
                             href={href(`/produktet/${c.slug}`)}
                             target="_blank"
@@ -286,6 +312,10 @@ export default function Categories() {
                       <span className="flex shrink-0 items-center gap-1.5 md:w-[76px]" title={t('colFeatured')}>
                         <Star className={cn('h-3.5 w-3.5 md:hidden', c.featured ? 'fill-brand-600 text-brand-600' : 'text-muted')} />
                         <Switch size="sm" checked={c.featured} onChange={(v) => toggleFeatured(c, v)} />
+                      </span>
+                      <span className="flex shrink-0 items-center gap-1.5 md:w-[92px]" title={t('colSoon')}>
+                        <Hourglass className={cn('h-3.5 w-3.5 md:hidden', c.soon ? 'text-ink' : 'text-muted')} />
+                        <Switch size="sm" checked={!!c.soon} onChange={(v) => toggleSoon(c, v)} />
                       </span>
                       <span className="flex w-[72px] shrink-0 justify-end gap-0.5">
                         <IconBtn icon={<Pencil className="h-4 w-4" />} label={ta('edit')} onClick={() => openEditor(c)} />
@@ -329,6 +359,7 @@ function HomePreview({ cats, flash }: { cats: Category[]; flash: string | null }
               {c.image && <img src={thumb(c.image)} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />}
               <span className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/10 to-transparent" />
               <span className="absolute left-1.5 top-1.5 rounded-full bg-white/20 px-1.5 text-[9px] font-bold tracking-[0.14em] text-white backdrop-blur-md">{String(i + 1).padStart(2, '0')}</span>
+              {c.soon && <span className="absolute right-1.5 top-1.5 rounded-full bg-white px-1.5 text-[8.5px] font-bold uppercase tracking-wide text-ink">{t('soonBadge')}</span>}
               <span className="absolute inset-x-2 bottom-1.5 block truncate font-display text-[13px] leading-tight text-white sm:text-lg xl:text-[13px]">{l(c.name)}</span>
             </div>
           </motion.div>

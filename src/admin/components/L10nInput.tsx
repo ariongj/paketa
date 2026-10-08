@@ -2,19 +2,13 @@ import { useId, useState, type ReactNode } from 'react';
 import { Copy } from 'lucide-react';
 import type { L10n, Lang } from '@/lib/types';
 import { Label, Hint } from '@/components/ui/Field';
-import { useDict, useLang } from '@/i18n';
+import { LANGS, useDict, useLang } from '@/i18n';
 import { adm } from '@/admin/i18n';
 import { cn } from '@/lib/utils';
 
-const LANGS: { code: Lang; short: string }[] = [
-  { code: 'me', short: 'ME' },
-  { code: 'sq', short: 'SQ' },
-  { code: 'en', short: 'EN' },
-];
-
 /**
- * One field, three languages. Tabs show a dot when a translation is missing.
- * Starts on the admin's panel language.
+ * One field, three languages (SQ · EN · SR). Tabs show a dot when a translation is missing.
+ * Starts on the admin's panel language; an empty EN/SR tab can copy the Albanian text.
  */
 export function L10nInput({
   label,
@@ -59,9 +53,9 @@ export function L10nInput({
           <span />
         )}
         <div className="flex items-center gap-1">
-          {lang !== 'me' && !v[lang]?.trim() && v.me?.trim() && (
-            <button type="button" onClick={() => set(v.me)} className="mr-1 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold text-muted hover:bg-canvas hover:text-ink" title={t('copyFromMe')}>
-              <Copy className="h-3 w-3" /> ME
+          {lang !== 'sq' && !v[lang]?.trim() && v.sq?.trim() && (
+            <button type="button" onClick={() => set(v.sq)} className="mr-1 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold text-muted hover:bg-canvas hover:text-ink" title={t('copyFromMe')}>
+              <Copy className="h-3 w-3" /> SQ
             </button>
           )}
           <div className="flex rounded-lg bg-canvas p-0.5">
@@ -72,7 +66,7 @@ export function L10nInput({
                   key={l.code}
                   type="button"
                   onClick={() => setLang(l.code)}
-                  title={missing ? t('missingTranslation') : undefined}
+                  title={missing ? `${l.label} — ${t('missingTranslation')}` : l.label}
                   className={cn(
                     'relative rounded-md px-2 py-0.5 text-[11px] font-bold tracking-wide transition-colors',
                     lang === l.code ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink',

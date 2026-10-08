@@ -4,12 +4,13 @@ import { CalendarClock, CircleCheck, CircleDashed, EyeOff, Lock } from 'lucide-r
 import { Card } from '@/admin/components/kit';
 import { L10nInput } from '@/admin/components/L10nInput';
 import { useDict, useLang } from '@/i18n';
-import type { L10n, Lang } from '@/lib/types';
+import type { L10n } from '@/lib/types';
+import { useSettings } from '@/store/hooks';
 import { date } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { cx } from './dict';
 import { SearchPreview, TextField } from './fields';
-import { emptySeo, fromLocalInput, toLocalInput, type SeoMeta, type Visibility } from './meta';
+import { ED_LANGS, LANG_SHORT, emptySeo, fromLocalInput, toLocalInput, type SeoMeta, type Visibility } from './meta';
 import { ChipsInput, Notice, SelectField } from './ui';
 
 /* ------------------------------------------------------------------ */
@@ -107,19 +108,17 @@ export function PublishCard({
 /* ------------------------------------------------------------------ */
 /* SEO: Google preview + SEO title / description per language + slug   */
 /* ------------------------------------------------------------------ */
-const LANGS: Lang[] = ['me', 'sq', 'en'];
-
 function CountHint({ value, limit }: { value: L10n; limit: number }) {
   const t = useDict(cx, 'admin');
   return (
     <span className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5">
       <span>{t('seoLimit', { n: limit })}</span>
       <span className="flex gap-2 tabular-nums">
-        {LANGS.map((l) => {
+        {ED_LANGS.map((l) => {
           const n = value[l]?.trim().length ?? 0;
           return (
             <span key={l} className={cn(n > limit ? 'font-semibold text-red-600' : n ? 'text-ink-soft' : 'text-muted/70')}>
-              {l.toUpperCase()} {n}
+              {LANG_SHORT[l]} {n}
             </span>
           );
         })}
@@ -149,12 +148,13 @@ export function SeoCard({
 }) {
   const t = useDict(cx, 'admin');
   const lang = useLang('admin');
+  const company = useSettings().companyName || 'Paketoje';
   const s = seo ?? emptySeo();
-  const title = s.title[lang]?.trim() || s.title.me.trim() || fallbackTitle;
-  const description = s.description[lang]?.trim() || s.description.me.trim() || fallbackDescription;
+  const title = s.title[lang]?.trim() || s.title.sq.trim() || fallbackTitle;
+  const description = s.description[lang]?.trim() || s.description.sq.trim() || fallbackDescription;
   return (
     <Card title={t('seo')} description={`${t('seoHint')} ${t('seoFallback')}`} bodyClassName="space-y-5">
-      <SearchPreview domain={domain} path={path} title={`${title} | SELCA COMPANY`} description={description} />
+      <SearchPreview domain={domain} path={path} title={`${title} | ${company}`} description={description} />
       <fieldset disabled={readOnly} className="space-y-5">
         <L10nInput label={t('seoTitle')} value={s.title} onChange={(title) => onChange({ ...s, title })} placeholder={fallbackTitle} hint={<CountHint value={s.title} limit={60} />} />
         <L10nInput label={t('seoDesc')} value={s.description} onChange={(description) => onChange({ ...s, description })} multiline rows={3} placeholder={fallbackDescription} hint={<CountHint value={s.description} limit={160} />} />

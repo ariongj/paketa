@@ -18,21 +18,21 @@ import { KINDS, assignableStaff, findExisting, isoDayFromNow, type ContactKind, 
 const T = defineDict({
   me: {
     title: 'Ručni upit',
-    subtitle: 'Upišite upit primljen telefonom ili u salonu — dobija isti tok kao upiti sa sajta.',
+    subtitle: 'Upišite upit primljen telefonom ili u depou — dobija isti tok kao upiti sa sajta.',
     kind: 'Vrsta',
     source: 'Izvor',
     src_phone: 'Telefonski poziv',
-    src_manual: 'U salonu / ručno',
+    src_manual: 'U depou / ručno',
     name: 'Ime i prezime',
     phone: 'Telefon',
     email: 'E-mail',
     city: 'Grad',
     company: 'Firma',
-    service: 'Usluga',
-    serviceAny: 'Bez usluge',
+    service: 'Asortiman',
+    serviceAny: 'Bez kategorije',
     preferred: 'Željeni datum',
     message: 'Poruka / opis zahtjeva',
-    messagePh: 'Npr. ponuda za 30 prozora za hotel, ugradnja prije sezone…',
+    messagePh: 'Npr. kafić otvara u maju — ponuda za 5 kartona čaša 400 ml sa logom i poklopce…',
     assignee: 'Odgovorni',
     followUp: 'Rok za praćenje',
     noDue: 'Bez roka',
@@ -49,21 +49,21 @@ const T = defineDict({
   },
   sq: {
     title: 'Kërkesë manuale',
-    subtitle: 'Regjistroni një kërkesë të marrë me telefon ose në sallon — ndjek të njëjtin proces si kërkesat nga faqja.',
+    subtitle: 'Regjistroni një kërkesë të marrë me telefon ose në depo — ndjek të njëjtin proces si kërkesat nga faqja.',
     kind: 'Lloji',
     source: 'Burimi',
     src_phone: 'Telefonatë',
-    src_manual: 'Në sallon / manual',
+    src_manual: 'Në depo / manual',
     name: 'Emri dhe mbiemri',
     phone: 'Telefoni',
     email: 'E-mail',
     city: 'Qyteti',
     company: 'Kompania',
-    service: 'Shërbimi',
-    serviceAny: 'Pa shërbim',
+    service: 'Kategoria',
+    serviceAny: 'Pa kategori',
     preferred: 'Data e dëshiruar',
     message: 'Mesazhi / përshkrimi i kërkesës',
-    messagePh: 'P.sh. ofertë për 30 dritare për hotel, montim para sezonit…',
+    messagePh: 'P.sh. kafiteri që hapet në maj — ofertë për 5 kartonë gota 400 ml me logo dhe kapakë…',
     assignee: 'Përgjegjësi',
     followUp: 'Afati i ndjekjes',
     noDue: 'Pa afat',
@@ -80,21 +80,21 @@ const T = defineDict({
   },
   en: {
     title: 'Manual request',
-    subtitle: 'Log a request received by phone or in the showroom — it follows the same flow as website requests.',
+    subtitle: 'Log a request received by phone or at the warehouse — it follows the same flow as website requests.',
     kind: 'Type',
     source: 'Source',
     src_phone: 'Phone call',
-    src_manual: 'Showroom / manual',
+    src_manual: 'Warehouse / manual',
     name: 'Full name',
     phone: 'Phone',
     email: 'E-mail',
     city: 'City',
     company: 'Company',
-    service: 'Service',
-    serviceAny: 'No service',
+    service: 'Product range',
+    serviceAny: 'No category',
     preferred: 'Preferred date',
     message: 'Message / request details',
-    messagePh: 'E.g. quote for 30 windows for a hotel, fitting before the season…',
+    messagePh: 'E.g. café opening in May — quote for 5 cartons of 400 ml cups with logo, plus lids…',
     assignee: 'Assignee',
     followUp: 'Follow-up due',
     noDue: 'No due date',
@@ -177,7 +177,7 @@ export function ManualInquiryModal({ open, onClose, onCreated }: { open: boolean
     const extra: Partial<InquiryX> = {
       seen: true,
       followUpAt: follow ? new Date(`${follow}T10:00`).toISOString() : undefined,
-      tags: [kind === 'b2b' ? 'b2b' : kind === 'meeting' ? 'takim' : kind === 'measurement' ? 'matje' : 'kontakt', source === 'phone' ? 'telefon' : 'sallon'],
+      tags: [kind === 'b2b' ? 'b2b' : kind === 'meeting' ? 'takim' : kind === 'measurement' ? 'mostra' : 'kontakt', source === 'phone' ? 'telefon' : 'depo'],
       ...(kind === 'meeting' ? { kind: 'meeting' as const } : {}),
     };
     db.updateInquiry(q.id, extra);
@@ -237,7 +237,7 @@ export function ManualInquiryModal({ open, onClose, onCreated }: { open: boolean
 
         <div className="grid gap-x-4 gap-y-3.5 sm:grid-cols-2">
           <CInput label={t('name')} required value={form.name} onChange={set('name')} error={errors.name} autoComplete="off" autoFocus />
-          <CInput label={t('phone')} required type="tel" value={form.phone} onChange={set('phone')} error={errors.phone} placeholder="+382 6_ ___ ___" />
+          <CInput label={t('phone')} required type="tel" value={form.phone} onChange={set('phone')} error={errors.phone} placeholder="+383 4_ ___ ___" />
           <CInput label={t('email')} type="email" value={form.email} onChange={set('email')} error={errors.email} />
           <CInput label={t('city')} value={form.city} onChange={set('city')} list="manual-cities" />
           <datalist id="manual-cities">
@@ -245,11 +245,11 @@ export function ManualInquiryModal({ open, onClose, onCreated }: { open: boolean
               <option key={c} value={c} />
             ))}
           </datalist>
-          {kind === 'b2b' && <CInput label={t('company')} required value={form.company} onChange={set('company')} error={errors.company} wrapClassName="sm:col-span-2" placeholder="d.o.o." />}
+          {kind === 'b2b' && <CInput label={t('company')} required value={form.company} onChange={set('company')} error={errors.company} wrapClassName="sm:col-span-2" placeholder="SH.P.K." />}
           <CSelect label={t('service')} value={form.service} onChange={set('service')}>
             <option value="">{t('serviceAny')}</option>
             {categories.map((c) => (
-              <option key={c.id} value={c.name.me}>
+              <option key={c.id} value={c.name.sq}>
                 {l(c.name)}
               </option>
             ))}

@@ -343,7 +343,7 @@ function Editor({ initial, isNew }: { initial: Discount; isNew: boolean }) {
                       id="disc-code"
                       value={d.code ?? ''}
                       onChange={(e) => set({ code: e.target.value.toUpperCase().replace(/\s+/g, '') })}
-                      placeholder="SELCA10"
+                      placeholder="KAFE15"
                       autoComplete="off"
                       spellCheck={false}
                       aria-invalid={!!errors.code || undefined}

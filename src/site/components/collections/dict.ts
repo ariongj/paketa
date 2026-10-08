@@ -1,14 +1,16 @@
 import { defineDict } from '@/i18n';
 import type { Lang } from '@/lib/types';
 
-/** Storefront collection page (/koleksioni/:slug) — ME / SQ / EN. */
+/** Storefront collection page (/koleksioni/:slug) — SR (me) / SQ / EN. */
 export const CT = defineDict({
   me: {
     eyebrow: 'Kolekcija',
     countOne: '{n} proizvod',
     countMany: '{n} proizvoda',
-    fromPrice: 'Već od {price}',
-    install: 'Stručna ugradnja',
+    fromPrice: 'Od {price} / pak.',
+    fromPiece: 'od {price}/kom',
+    install: 'Štampa logotipa',
+    tierPill: 'Do −{pct}% uz karton',
     upTo: 'Do −{pct}%',
     autoPct: '−{pct}% automatski u korpi',
     autoFixed: '−{amount} automatski u korpi',
@@ -22,7 +24,7 @@ export const CT = defineDict({
     sort_newest: 'Najnovije',
     emptyTitle: 'Kolekcija se uskoro puni',
     emptyText: 'Proizvodi za ovu kolekciju stižu uskoro — do tada pogledajte cijeli katalog.',
-    otherEyebrow: 'Još inspiracije',
+    otherEyebrow: 'Još kolekcija',
     otherTitle: 'Druge *kolekcije*',
     notFoundTitle: 'Ova kolekcija *nije dostupna*',
     notFoundText: 'Možda je akcija završena ili je link promijenjen. Pogledajte druge kolekcije ili cijeli katalog.',
@@ -34,8 +36,10 @@ export const CT = defineDict({
     eyebrow: 'Koleksion',
     countOne: '{n} produkt',
     countMany: '{n} produkte',
-    fromPrice: 'Që nga {price}',
-    install: 'Montim profesional',
+    fromPrice: 'Nga {price} / pako',
+    fromPiece: 'nga {price}/copë',
+    install: 'Printim me logo',
+    tierPill: 'Deri −{pct}% me karton',
     upTo: 'Deri −{pct}%',
     autoPct: '−{pct}% automatikisht në shportë',
     autoFixed: '−{amount} automatikisht në shportë',
@@ -49,7 +53,7 @@ export const CT = defineDict({
     sort_newest: 'Më të rejat',
     emptyTitle: 'Koleksioni po mbushet së shpejti',
     emptyText: 'Produktet për këtë koleksion vijnë së shpejti — deri atëherë shikoni të gjithë katalogun.',
-    otherEyebrow: 'Më shumë frymëzim',
+    otherEyebrow: 'Më shumë koleksione',
     otherTitle: 'Koleksione *të tjera*',
     notFoundTitle: 'Ky koleksion *nuk është i disponueshëm*',
     notFoundText: 'Ndoshta oferta ka përfunduar ose lidhja ka ndryshuar. Shikoni koleksionet e tjera ose të gjithë katalogun.',
@@ -61,8 +65,10 @@ export const CT = defineDict({
     eyebrow: 'Collection',
     countOne: '{n} product',
     countMany: '{n} products',
-    fromPrice: 'From {price}',
-    install: 'Professional installation',
+    fromPrice: 'From {price} / pack',
+    fromPiece: 'from {price}/pc',
+    install: 'Logo print',
+    tierPill: 'Up to −{pct}% per carton',
     upTo: 'Up to −{pct}%',
     autoPct: '−{pct}% off, applied in the cart',
     autoFixed: '−{amount} off, applied in the cart',
@@ -76,7 +82,7 @@ export const CT = defineDict({
     sort_newest: 'Newest',
     emptyTitle: 'This collection is filling up soon',
     emptyText: 'Products for this collection are on their way — meanwhile, browse the full catalogue.',
-    otherEyebrow: 'More inspiration',
+    otherEyebrow: 'More collections',
     otherTitle: 'Other *collections*',
     notFoundTitle: 'This collection is *not available*',
     notFoundText: 'The sale may have ended or the link has changed. Browse other collections or the full catalogue.',
@@ -88,13 +94,13 @@ export const CT = defineDict({
 
 export type CtT = (key: keyof typeof CT.me, vars?: Record<string, string | number>) => string;
 
-/** "1 proizvod" / "5 proizvoda" (ME: 1, 21, 31… are singular). */
+/** "1 proizvod" / "5 proizvoda" (SR: 1, 21, 31… are singular). */
 export function countLabel(t: CtT, lang: Lang, n: number) {
   const one = lang === 'me' ? n % 10 === 1 && n % 100 !== 11 : n === 1;
   return t(one ? 'countOne' : 'countMany', { n });
 }
 
-/** Accent the last word of a plain title ("Podovi na *akciji*") unless it already has *markers*. */
+/** Accent the last word of a plain title ("Gota për *kafiteri*") unless it already has *markers*. */
 export const accentTitle = (title: string) => {
   if (title.includes('*')) return title;
   const words = title.trim().split(/\s+/);

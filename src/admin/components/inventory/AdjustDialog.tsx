@@ -15,29 +15,34 @@ import type { MovementReason } from '@/lib/types';
 import { num } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { inv } from './dict';
-import { ADJUST_REASONS, stockUnit } from './helpers';
+import { ADJUST_REASONS, qtyOf, type UnitLike } from './helpers';
 import type { InvRow } from './useInventory';
-import { DeltaQty, FieldLabel, IntField, Segmented, SelectField, controlClass } from './ui';
+import { DeltaQty, FieldLabel, IntField, PiecesLine, Segmented, SelectField, UnitQty, controlClass } from './ui';
+import { piecesNote, unitWord } from '@/admin/components/products/units';
 
 type Tab = 'onHand' | 'blocked';
 type Mode = 'by' | 'set';
 
-function PreviewRow({ label, from, to, unit, strong }: { label: ReactNode; from: number; to: number; unit: string; strong?: boolean }) {
+/** "120 → 125 pako" with the resulting pieces underneath. */
+function PreviewRow({ label, from, to, of, strong }: { label: ReactNode; from: number; to: number; of: UnitLike; strong?: boolean }) {
   const lang = useLang('admin');
   const changed = from !== to;
   return (
-    <div className="flex items-center justify-between gap-3 py-1.5 text-[13.5px]">
+    <div className="flex items-start justify-between gap-3 py-1.5 text-[13.5px]">
       <span className={cn('text-muted', strong && 'font-semibold text-ink-soft')}>{label}</span>
-      <span className="flex items-center gap-2 tabular-nums">
-        <span className={cn(changed ? 'text-muted line-through decoration-ink/30' : 'font-semibold text-ink')}>{num(from, lang)}</span>
-        {changed && (
-          <>
-            <ArrowRight className="h-3.5 w-3.5 text-muted" />
-            <span className={cn('font-bold text-ink', strong && 'text-[15px]')}>
-              {num(to, lang)} <span className="text-[12px] font-medium text-muted">{unit}</span>
-            </span>
-          </>
-        )}
+      <span className="flex flex-col items-end">
+        <span className="flex items-center gap-2 tabular-nums">
+          {changed && (
+            <>
+              <span className="text-muted line-through decoration-ink/30">{num(from, lang)}</span>
+              <ArrowRight className="h-3.5 w-3.5 text-muted" />
+            </>
+          )}
+          <span className={cn(changed ? 'font-bold' : 'font-semibold', 'text-ink', changed && strong && 'text-[15px]')}>
+            {num(to, lang)} <span className="text-[12px] font-medium text-muted">{unitWord(of.unit, to, lang)}</span>
+          </span>
+        </span>
+        <PiecesLine of={of} qty={to} />
       </span>
     </div>
   );
@@ -79,7 +84,10 @@ export function AdjustDialog({ row, locationName, onClose }: { row: InvRow | und
   const allowed = can('inventory', 'edit');
   const p = row?.p;
   const lv = row?.lv;
-  const unit = p ? stockUnit(p, lang) : '';
+  const q = (n: number) => qtyOf(p, n, lang);
+  // "+250 copë" under the quantity field (pack products only)
+  const pcs = p && qty ? piecesNote(p, Math.abs(qty), lang) : '';
+  const piecesHint = pcs && mode === 'by' ? `${(qty ?? 0) > 0 ? '+' : '−'}${pcs}` : pcs;
 
   // On-hand tab
   const newOnHand = lv ? (mode === 'by' ? lv.onHand + (qty ?? 0) : (qty ?? lv.onHand)) : 0;
@@ -100,12 +108,12 @@ export function AdjustDialog({ row, locationName, onClose }: { row: InvRow | und
       if (!onHandValid) return;
       const mv = adjustStock(p.id, delta, reason, note.trim() || undefined);
       if (!mv) return;
-      toast.success(t('adj_saved'), { description: `${p.sku} · ${t('col_onHand')} ${num(lv.onHand, lang)} → ${num(lv.onHand + mv.delta, lang)} (${t(`r_${reason}`)})` });
+      toast.success(t('adj_saved'), { description: `${p.sku} · ${t('col_onHand')} ${num(lv.onHand, lang)} → ${q(lv.onHand + mv.delta)} (${t(`r_${reason}`)})` });
     } else {
       if (!blockedValid) return;
       upsertProduct({ ...p, unavailable: blockedVal });
       logAudit({ action: 'adjust', object: 'inventory', objectId: p.id, detail: `${p.sku} ${t('col_unavailable')} ${lv.unavailable} → ${blockedVal}${note.trim() ? ` — ${note.trim()}` : ''}` });
-      toast.success(t('adj_blockedSaved'), { description: `${p.sku} · ${t('col_unavailable')} ${lv.unavailable} → ${blockedVal}` });
+      toast.success(t('adj_blockedSaved'), { description: `${p.sku} · ${t('col_unavailable')} ${num(lv.unavailable, lang)} → ${q(blockedVal)}` });
     }
     close();
   };
@@ -148,9 +156,8 @@ export function AdjustDialog({ row, locationName, onClose }: { row: InvRow | und
             {tracked && (
               <div className="shrink-0 text-right">
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-muted">{t('col_available')}</div>
-                <div className="text-[18px] font-bold leading-tight tabular-nums text-ink">
-                  {num(lv.available, lang)} <span className="text-[12px] font-medium text-muted">{unit}</span>
-                </div>
+                <UnitQty n={lv.available} of={p} className="block text-[18px] font-bold leading-tight text-ink" unitClassName="text-[12px]" />
+                <PiecesLine of={p} qty={lv.available} />
               </div>
             )}
           </div>
@@ -222,6 +229,10 @@ export function AdjustDialog({ row, locationName, onClose }: { row: InvRow | und
                         aria-label={mode === 'by' ? t('adj_by') : t('adj_set')}
                         autoFocus
                       />
+                      <p className="mt-1.5 text-[12px] tabular-nums text-muted">
+                        {t('adj_inUnits', { u: unitWord(p.unit, 2, lang) })}
+                        {piecesHint && <span className="font-medium text-ink-soft"> · {piecesHint}</span>}
+                      </p>
                     </div>
                     <div>
                       <FieldLabel>{t('adj_reason')}</FieldLabel>
@@ -235,7 +246,7 @@ export function AdjustDialog({ row, locationName, onClose }: { row: InvRow | und
                       {reason === 'damaged' && delta > 0 && <p className="mt-1.5 text-[12px] text-amber-800">{t('adj_damagedHint')}</p>}
                     </div>
                   </div>
-                  {belowCommitted && <p className="rounded-lg bg-red-50 px-3 py-2 text-[12.5px] font-medium text-red-700">{t('adj_belowCommitted', { n: lv.committed })}</p>}
+                  {belowCommitted && <p className="rounded-lg bg-red-50 px-3 py-2 text-[12.5px] font-medium text-red-700">{t('adj_belowCommitted', { n: q(lv.committed) })}</p>}
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -244,7 +255,7 @@ export function AdjustDialog({ row, locationName, onClose }: { row: InvRow | und
                     <FieldLabel>{t('adj_blockedQty')}</FieldLabel>
                     <IntField value={blocked} onChange={setBlocked} min={0} max={maxBlocked} stepper invalid={blockedVal > maxBlocked} aria-label={t('adj_blockedQty')} />
                   </div>
-                  <p className={cn('text-[12px]', blockedVal > maxBlocked ? 'font-medium text-red-700' : 'text-muted')}>{t('adj_blockedMax', { n: maxBlocked })}</p>
+                  <p className={cn('text-[12px]', blockedVal > maxBlocked ? 'font-medium text-red-700' : 'text-muted')}>{t('adj_blockedMax', { n: q(maxBlocked) })}</p>
                 </div>
               )}
 
@@ -257,20 +268,20 @@ export function AdjustDialog({ row, locationName, onClose }: { row: InvRow | und
               <div className="rounded-xl border border-line/80 px-4 py-2.5">
                 <div className="flex items-center justify-between gap-2 border-b border-line/70 pb-2">
                   <span className="text-[12px] font-semibold uppercase tracking-wide text-muted">{t('adj_preview')}</span>
-                  {tab === 'onHand' && delta !== 0 && <DeltaQty delta={delta} unit={unit} className="text-[13px]" />}
+                  {tab === 'onHand' && delta !== 0 && <DeltaQty delta={delta} unit={unitWord(p.unit, delta, lang)} className="text-[13px]" />}
                 </div>
                 {tab === 'onHand' ? (
                   <>
-                    <PreviewRow label={t('col_onHand')} from={lv.onHand} to={newOnHand} unit={unit} />
-                    <PreviewRow label={t('col_committed')} from={lv.committed} to={lv.committed} unit={unit} />
-                    <PreviewRow label={t('col_unavailable')} from={lv.unavailable} to={lv.unavailable} unit={unit} />
-                    <PreviewRow label={t('col_available')} from={lv.available} to={belowCommitted ? lv.available : newAvailable} unit={unit} strong />
+                    <PreviewRow label={t('col_onHand')} from={lv.onHand} to={newOnHand} of={p} />
+                    <PreviewRow label={t('col_committed')} from={lv.committed} to={lv.committed} of={p} />
+                    <PreviewRow label={t('col_unavailable')} from={lv.unavailable} to={lv.unavailable} of={p} />
+                    <PreviewRow label={t('col_available')} from={lv.available} to={belowCommitted ? lv.available : newAvailable} of={p} strong />
                   </>
                 ) : (
                   <>
-                    <PreviewRow label={t('col_onHand')} from={lv.onHand} to={lv.onHand} unit={unit} />
-                    <PreviewRow label={t('col_unavailable')} from={lv.unavailable} to={blockedVal} unit={unit} />
-                    <PreviewRow label={t('col_available')} from={lv.available} to={Math.max(0, p.stock - Math.min(blockedVal, maxBlocked))} unit={unit} strong />
+                    <PreviewRow label={t('col_onHand')} from={lv.onHand} to={lv.onHand} of={p} />
+                    <PreviewRow label={t('col_unavailable')} from={lv.unavailable} to={blockedVal} of={p} />
+                    <PreviewRow label={t('col_available')} from={lv.available} to={Math.max(0, p.stock - Math.min(blockedVal, maxBlocked))} of={p} strong />
                   </>
                 )}
                 <p className="border-t border-line/70 pt-2 text-[11.5px] text-muted">{t('formula')}</p>

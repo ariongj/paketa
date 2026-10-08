@@ -26,12 +26,12 @@ export interface StoreTheme {
   domain: { name: string; checkedAt?: string };
 }
 
-export const DEFAULT_THEME = (phone = '+382 67 123 456'): StoreTheme => ({
+export const DEFAULT_THEME = (phone = '+383 44 000 000'): StoreTheme => ({
   logo: 'full',
   logoSize: 44,
   font: 'classic',
   density: 'comfortable',
-  shareImage: '/images/hero/living.webp',
+  shareImage: '/images/hero/kraft.webp',
   maintenance: {
     on: false,
     message: {
@@ -41,7 +41,7 @@ export const DEFAULT_THEME = (phone = '+382 67 123 456'): StoreTheme => ({
     },
   },
   slideshow: { layout: 'full', autoplay: true, interval: 7, controls: true },
-  domain: { name: 'selcacompany.com' },
+  domain: { name: 'paketoje.com' },
 });
 
 type WithTheme = Settings & { theme?: Partial<StoreTheme> };
@@ -67,10 +67,11 @@ export function themePatch(theme: StoreTheme): Partial<Settings> {
 /* ------------------------------------------------------------------ */
 /* Brand colour                                                        */
 /* ------------------------------------------------------------------ */
-export const BRAND_PRESETS: { hex: string; key: 'preset_selca' | 'preset_terracotta' | 'preset_oak' | 'preset_olive' | 'preset_petrol' | 'preset_navy' }[] = [
-  { hex: DEFAULT_BRAND, key: 'preset_selca' },
-  { hex: '#b0532c', key: 'preset_terracotta' },
-  { hex: '#8a6235', key: 'preset_oak' },
+/** Paketoje forest green first (the logo colour), then alternatives that keep white button text readable. */
+export const BRAND_PRESETS: { hex: string; key: 'preset_brand' | 'preset_berry' | 'preset_kraft' | 'preset_olive' | 'preset_petrol' | 'preset_navy' }[] = [
+  { hex: DEFAULT_BRAND, key: 'preset_brand' },
+  { hex: '#b8217f', key: 'preset_berry' },
+  { hex: '#8a6235', key: 'preset_kraft' },
   { hex: '#5a6b3f', key: 'preset_olive' },
   { hex: '#1f5a63', key: 'preset_petrol' },
   { hex: '#283d66', key: 'preset_navy' },
@@ -92,38 +93,39 @@ export function whiteContrast(hex: string) {
 /* ------------------------------------------------------------------ */
 /* Storefront preview inside the neutral CMS                           */
 /* ------------------------------------------------------------------ */
-/** The warm storefront tokens (src/index.css) — the admin remaps them to greys, a preview restores them locally. */
-const WARM_TOKENS: Record<string, string> = {
-  '--color-ink': '#1c1a17',
-  '--color-ink-soft': '#3a3631',
-  '--color-muted': '#6f675e',
-  '--color-paper': '#f7f3ee',
-  '--color-sand': '#efe7dc',
-  '--color-sand-2': '#e6dccd',
-  '--color-line': '#e3d9cc',
-  '--color-canvas': '#f3f0eb',
+/** The storefront tokens (src/index.css: green-black ink on kraft-tinted paper) — the admin remaps them to greys, a preview restores them locally. */
+const STORE_TOKENS: Record<string, string> = {
+  '--color-ink': '#0f1d16',
+  '--color-ink-soft': '#2c3a33',
+  '--color-muted': '#5f6d66',
+  '--color-paper': '#f6f4ee',
+  '--color-sand': '#eee9dd',
+  '--color-sand-2': '#e3dbc8',
+  '--color-line': '#e2ddd0',
+  '--color-canvas': '#f2f0ea',
 };
 
-/** Inline style that makes a subtree look like the public site (brand scale + warm tokens). */
+/** Inline style that makes a subtree look like the public site (brand scale + Paketoje tokens). */
 export function storefrontVars(brand: string): CSSProperties {
-  return { ...brandVars(isHex(brand) ? brand : DEFAULT_BRAND), ...(WARM_TOKENS as CSSProperties) };
+  return { ...brandVars(isHex(brand) ? brand : DEFAULT_BRAND), ...(STORE_TOKENS as CSSProperties) };
 }
 
 export const FONT_PAIRS: Record<FontPair, { heading: CSSProperties; body: CSSProperties; label: string }> = {
+  // Paketoje default: Bricolage Grotesque headlines (the .display style) + Manrope text
   classic: {
-    heading: { fontFamily: 'var(--font-display)', fontWeight: 400, letterSpacing: '-0.02em' },
+    heading: { fontFamily: 'var(--font-display)', fontWeight: 700, letterSpacing: '-0.035em', fontVariationSettings: '"wdth" 92' },
     body: { fontFamily: 'var(--font-sans)' },
-    label: 'Fraunces + Manrope',
+    label: 'Bricolage Grotesque + Manrope',
   },
   modern: {
-    heading: { fontFamily: 'var(--font-sans)', fontWeight: 750, letterSpacing: '-0.035em' },
+    heading: { fontFamily: 'var(--font-sans)', fontWeight: 800, letterSpacing: '-0.035em' },
     body: { fontFamily: 'var(--font-sans)' },
     label: 'Manrope',
   },
   elegant: {
-    heading: { fontFamily: 'var(--font-display)', fontWeight: 330, letterSpacing: '-0.025em' },
-    body: { fontFamily: 'var(--font-display)', letterSpacing: '0.005em' },
-    label: 'Fraunces',
+    heading: { fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-0.02em', fontVariationSettings: '"wdth" 100' },
+    body: { fontFamily: 'var(--font-display)', fontWeight: 400 },
+    label: 'Bricolage Grotesque',
   },
 };
 
@@ -134,5 +136,5 @@ export const DENSITY: Record<Density, { pad: number; gap: number; radius: number
   airy: { pad: 28, gap: 16, radius: 18, scale: 1.14 },
 };
 
-/** "Sve za vaš dom" → "Sve za vaš *dom*" (last word in the italic brand serif). */
+/** "Paketimi për lokalin tuaj" → "… *tuaj*" (last word gets the green + lime brand accent). */
 export const accentLast = (text: string) => (text.includes('*') ? text : text.replace(/(\S+)\s*$/, '*$1*'));

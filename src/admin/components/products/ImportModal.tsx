@@ -7,7 +7,7 @@ import { useDict, useLang } from '@/i18n';
 import { adm } from '@/admin/i18n';
 import { useDb } from '@/store/db';
 import { useCategories } from '@/store/hooks';
-import { money } from '@/lib/format';
+import { money, piecesLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { pd, type PdKey } from './dict';
 import { parseCsv, type ParsedCsv } from './csv';
@@ -178,7 +178,7 @@ export function ImportModal({ open, onClose, onImported }: { open: boolean; onCl
                 <Button variant="outline" shape="rounded" size="xs" icon={<Download className="h-3.5 w-3.5" />} onClick={() => downloadTemplate(t, lang)}>
                   {t('imp_template')}
                 </Button>
-                <Button variant="outline" shape="rounded" size="xs" icon={<Sparkles className="h-3.5 w-3.5" />} onClick={() => load(SAMPLE_CSV, 'selca-primjer.csv')}>
+                <Button variant="outline" shape="rounded" size="xs" icon={<Sparkles className="h-3.5 w-3.5" />} onClick={() => load(SAMPLE_CSV, 'paketoje-shembull.csv')}>
                   {t('imp_sample')}
                 </Button>
               </span>
@@ -188,7 +188,7 @@ export function ImportModal({ open, onClose, onImported }: { open: boolean; onCl
               onChange={(e) => load(e.target.value, null)}
               rows={7}
               spellCheck={false}
-              placeholder={'Naziv;SKU;Kategorija;Cijena;Zalihe\nSobna vrata Arco;SC-VR-110;Vrata;319,00;8'}
+              placeholder={'Emri;SKU;Kategoria;Çmimi;Njësia;Copë në pako;Pako në karton;Çmime shumice;Stoku\nGota Plastike F95 400ml CC;PAK-104;Gota;2,50;pack;50;20;10:5|20:10;480'}
               className="w-full resize-y rounded-lg border border-line bg-white px-3 py-2.5 font-mono text-[12px] leading-relaxed text-ink outline-none transition placeholder:text-muted/50 focus:border-ink/40 focus:ring-4 focus:ring-ink/5"
             />
           </div>
@@ -305,14 +305,15 @@ export function ImportModal({ open, onClose, onImported }: { open: boolean; onCl
           <DuplicateReport rows={rows} opts={opts} />
 
           <div className="overflow-x-auto rounded-xl border border-line">
-            <table className="w-full min-w-[620px] text-left text-[13px]">
+            <table className="w-full min-w-[700px] text-left text-[13px]">
               <thead>
                 <tr className="bg-canvas/70 text-[12px] font-semibold text-muted">
                   <th className="w-14 px-3 py-2.5">{t('imp_colLine')}</th>
                   <th className="w-[124px] px-3 py-2.5">{t('imp_colResult')}</th>
-                  <th className="px-3 py-2.5">{t('fld_name_me')}</th>
+                  <th className="px-3 py-2.5">{t('fld_name_sq')}</th>
                   <th className="px-3 py-2.5">SKU</th>
                   <th className="px-3 py-2.5 text-right">{t('fld_price')}</th>
+                  <th className="px-3 py-2.5">{t('fld_packSize')}</th>
                   <th className="px-3 py-2.5">{t('imp_colNote')}</th>
                 </tr>
               </thead>
@@ -328,6 +329,11 @@ export function ImportModal({ open, onClose, onImported }: { open: boolean; onCl
                     </td>
                     <td className="px-3 py-2 font-mono text-[12px] text-ink-soft">{r.sku || '—'}</td>
                     <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{r.price != null ? money(r.price, lang) : '—'}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-[12.5px] tabular-nums text-ink-soft">
+                      {r.values.packSize ? `${r.values.packSize} ${piecesLabel(lang)}` : '—'}
+                      {r.values.cartonPacks && <span className="text-muted"> · ×{r.values.cartonPacks}</span>}
+                      {r.values.tiers && <div className="text-[11.5px] text-muted">{r.values.tiers}</div>}
+                    </td>
                     <td className="px-3 py-2 text-[12.5px]">
                       <IssueList issues={r.errors} tone="error" />
                       <IssueList issues={r.warnings} tone="warn" />
@@ -427,7 +433,7 @@ function DuplicateReport({ rows, opts }: { rows: ImportRow[]; opts: ImportOption
           {inCatalog.map((r) => (
             <li key={`c${r.line}`} className="flex items-start gap-1.5">
               <RefreshCw className="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-soft" />
-              {t('imp_dupInCatalog', { sku: r.sku, name: r.existing?.name.me ?? '', action: opts.onExisting === 'update' ? t('imp_actUpdate') : t('imp_actSkip') })}
+              {t('imp_dupInCatalog', { sku: r.sku, name: r.existing?.name.sq ?? '', action: opts.onExisting === 'update' ? t('imp_actUpdate') : t('imp_actSkip') })}
             </li>
           ))}
         </ul>

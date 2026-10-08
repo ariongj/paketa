@@ -8,16 +8,17 @@ import type { Lang, Order, OrderLine, Product, ReturnRequest, ReturnStatus } fro
 export const RETURN_FLOW: ReturnStatus[] = ['requested', 'approved', 'received', 'refunded'];
 export const RETURN_STATUSES: ReturnStatus[] = [...RETURN_FLOW, 'rejected'];
 
-export const REASONS = ['damaged', 'shade', 'size', 'surplus', 'mind', 'other'] as const;
+/** Packaging return reasons: damaged in transit, wrong item/colour, wrong size (e.g. lid does not fit), surplus unopened packs. */
+export const REASONS = ['damaged', 'wrong', 'size', 'surplus', 'mind', 'other'] as const;
 export type ReasonKey = (typeof REASONS)[number];
 
 /** Best-effort reason category from free text (seeded/imported reasons are written by people in any language). */
 export function reasonKey(text: string): ReasonKey {
   const f = fold(text);
-  if (/ostecen|demtu|damag|broken|thyer|slomljen|ogreb/.test(f)) return 'damaged';
-  if (/nijans|nuanc|shade|model|boj[aeu]|ngjyr|colou?r/.test(f)) return 'shade';
-  if (/mjer|\bmase\b|size|dimenz|velicin/.test(f)) return 'size';
-  if (/visak|tepert|surplus|left ?over|preostal/.test(f)) return 'surplus';
+  if (/ostecen|demtu|damag|broken|thyer|crush|shtypur|zgnjec|slomljen|ogreb|plasarit|cracked|lagur|\bwet\b|mokr|rrjedh|leak/.test(f)) return 'damaged';
+  if (/madhesi|\bmase\b|size|dimenz|velicin|pershtat|\bfit\b|odgovara|nalegn/.test(f)) return 'size';
+  if (/gabuar|wrong|pogresan|pogresn|tjeter produkt|ngjyr|boj[aeu]|colou?r|model/.test(f)) return 'wrong';
+  if (/visak|tepert|surplus|left ?over|preostal|pahapur|unopened|neotvoren/.test(f)) return 'surplus';
   if (/odusta|mendje|changed (their|his|her) mind|predomisl/.test(f)) return 'mind';
   return 'other';
 }

@@ -2,7 +2,8 @@ import { defineDict } from '@/i18n';
 
 /**
  * Labels shared by the contacts inbox, the inquiry drawer and the B2B quotes (PDF pp.43–44).
- * Albanian follows the proposal wording: E re · E caktuar · Në trajtim · E mbyllur; Kontakt · B2B · Takim · Matje.
+ * Albanian follows the proposal wording: E re · E caktuar · Në trajtim · E mbyllur.
+ * Paketoje kinds: Mesazh (contact) · Ofertë B2B (wholesale / logo-print quote) · Takim · Mostra falas (type 'measurement').
  */
 export const cx = defineDict({
   me: {
@@ -17,16 +18,16 @@ export const cx = defineDict({
     tab_open: 'U obradi',
     tab_closed: 'Zatvorene',
     // kinds
-    kind_contact: 'Kontakt',
-    kind_b2b: 'B2B',
+    kind_contact: 'Poruka',
+    kind_b2b: 'B2B ponuda',
     kind_meeting: 'Sastanak',
-    kind_measurement: 'Mjerenje',
+    kind_measurement: 'Besplatni uzorci',
     // sources
     src_web_form: 'Forma na sajtu',
-    src_measurement: 'Forma za mjerenje',
+    src_measurement: 'Forma za uzorke',
     src_quote: 'Forma za ponudu',
     src_phone: 'Telefon',
-    src_manual: 'Ručno',
+    src_manual: 'Depo / ručno',
     // assignee
     unassigned: 'Nije dodijeljeno',
     me: 'Moji upiti',
@@ -58,15 +59,15 @@ export const cx = defineDict({
     tab_new: 'Të reja',
     tab_open: 'Në trajtim',
     tab_closed: 'Të mbyllura',
-    kind_contact: 'Kontakt',
-    kind_b2b: 'B2B',
+    kind_contact: 'Mesazh',
+    kind_b2b: 'Ofertë B2B',
     kind_meeting: 'Takim',
-    kind_measurement: 'Matje',
+    kind_measurement: 'Mostra falas',
     src_web_form: 'Formulari i faqes',
-    src_measurement: 'Formulari i matjes',
+    src_measurement: 'Formulari i mostrave',
     src_quote: 'Formulari i ofertës',
     src_phone: 'Telefon',
-    src_manual: 'Manual',
+    src_manual: 'Depo / manual',
     unassigned: 'Pa caktim',
     me: 'Të miat',
     due_today: 'Sot {time}',
@@ -94,15 +95,15 @@ export const cx = defineDict({
     tab_new: 'New',
     tab_open: 'In progress',
     tab_closed: 'Closed',
-    kind_contact: 'Contact',
-    kind_b2b: 'B2B',
+    kind_contact: 'Message',
+    kind_b2b: 'B2B quote',
     kind_meeting: 'Meeting',
-    kind_measurement: 'Measurement',
+    kind_measurement: 'Free samples',
     src_web_form: 'Website form',
-    src_measurement: 'Measurement form',
+    src_measurement: 'Samples form',
     src_quote: 'Quote form',
     src_phone: 'Phone',
-    src_manual: 'Manual',
+    src_manual: 'Warehouse / manual',
     unassigned: 'Unassigned',
     me: 'Mine',
     due_today: 'Today {time}',

@@ -516,7 +516,7 @@ export function campaignRows(offers: Offer[], discounts: Discount[], orders: Ord
 /* ------------------------------------------------------------------ */
 /* Operational reports — the current state, not tied to the range      */
 /* ------------------------------------------------------------------ */
-export const LOW_STOCK = 5;
+export const LOW_STOCK = 10;
 export const EXPIRY_DAYS = 14;
 
 export interface Expiring {

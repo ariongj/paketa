@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
-import { FolderOpen, MapPin, Maximize2 } from 'lucide-react';
+import { BadgeCheck, FolderOpen, MapPin, Maximize2, Palette, PenTool, Stamp, Upload } from 'lucide-react';
 import type { Project } from '@/lib/types';
 import { EmptyState, Img, Reveal } from '@/components/ui/misc';
+import { ButtonLink } from '@/components/ui/Button';
 import { PageHero } from '@/site/components/SectionHeading';
 import { usePageTitle } from '@/site/layout/SiteLayout';
-import { CtaBand } from '@/site/components/company/Blocks';
+import { C, CtaBand } from '@/site/components/company/Blocks';
 import { ProjectLightbox } from '@/site/components/company/ProjectLightbox';
-import { useHomeData } from '@/site/components/company/data';
+import { LOGO_QUOTE_HREF } from '@/site/components/company/data';
 import { defineDict, useDict, useL, useLang } from '@/i18n';
 import { site } from '@/i18n/site';
 import { useDb } from '@/store/db';
@@ -14,46 +15,49 @@ import { cn } from '@/lib/utils';
 
 const T = defineDict({
   me: {
-    eyebrow: 'Realizacije',
-    title: 'Domovi koje smo *uredili*',
-    subtitle: 'Izbor projekata iz cijele Crne Gore — od jednog kupatila do kompletne stolarije za vilu.',
-    statProjects: 'Realizacija',
-    statCities: 'Gradova',
-    statYears: 'Godine rada',
+    eyebrow: 'Reference',
+    title: 'Ambalaža sa *vašim logom*',
+    subtitle: 'Primjeri personalizovane ambalaže za kafiće, restorane, poslastičarnice i brzu hranu — čaše, kutije, kese i naljepnice sa brendom lokala.',
+    flow1: 'Logo',
+    flow2: 'Probni dizajn',
+    flow3: 'Odobrenje',
+    flow4: 'Izrada 7–10 dana',
     all: 'Sve',
-    filter: 'Filtriraj po vrsti radova',
+    filter: 'Filtriraj po vrsti ambalaže',
     showing: 'Prikazano {n} od {total}',
-    view: 'Pogledaj projekat',
-    emptyTitle: 'Uskoro novi projekti',
-    emptyText: 'Galerija realizacija se upravo dopunjava. Svratite ponovo za nekoliko dana.',
+    view: 'Pogledaj primjer',
+    emptyTitle: 'Uskoro novi primjeri',
+    emptyText: 'Galerija se upravo dopunjava. U međuvremenu nam pošaljite logo — pripremamo probni dizajn.',
   },
   sq: {
-    eyebrow: 'Realizimet',
-    title: 'Shtëpi që i kemi *rregulluar*',
-    subtitle: 'Një përzgjedhje projektesh nga i gjithë Mali i Zi — nga një banjo e vetme deri te dograma e plotë e një vile.',
-    statProjects: 'Realizime',
-    statCities: 'Qytete',
-    statYears: 'Vite pune',
+    eyebrow: 'Referencat',
+    title: 'Paketim me *logon tuaj*',
+    subtitle: 'Shembuj paketimesh të personalizuara për kafiteri, restorante, pastiçeri dhe fast food — gota, kuti, qese dhe etiketa me markën e lokalit.',
+    flow1: 'Logoja',
+    flow2: 'Dizajni provë',
+    flow3: 'Aprovimi',
+    flow4: 'Prodhimi 7–10 ditë',
     all: 'Të gjitha',
-    filter: 'Filtro sipas llojit të punimeve',
+    filter: 'Filtro sipas llojit të paketimit',
     showing: 'Shfaqen {n} nga {total}',
-    view: 'Shiko projektin',
-    emptyTitle: 'Së shpejti projekte të reja',
-    emptyText: 'Galeria e realizimeve po plotësohet. Na vizitoni sërish pas disa ditësh.',
+    view: 'Shiko shembullin',
+    emptyTitle: 'Së shpejti shembuj të rinj',
+    emptyText: 'Galeria po plotësohet. Ndërkohë na dërgoni logon — ju përgatisim dizajnin provë.',
   },
   en: {
-    eyebrow: 'Our work',
-    title: 'Homes we have *transformed*',
-    subtitle: 'A selection of projects from across Montenegro — from a single bathroom to full glazing for a villa.',
-    statProjects: 'Projects',
-    statCities: 'Towns',
-    statYears: 'Years',
+    eyebrow: 'References',
+    title: 'Packaging with *your logo*',
+    subtitle: 'Examples of custom-branded packaging for cafés, restaurants, pastry shops and fast food — cups, boxes, bags and labels carrying the venue’s brand.',
+    flow1: 'Your logo',
+    flow2: 'Proof',
+    flow3: 'Approval',
+    flow4: 'Production 7–10 days',
     all: 'All',
-    filter: 'Filter by type of work',
+    filter: 'Filter by packaging type',
     showing: 'Showing {n} of {total}',
-    view: 'View project',
-    emptyTitle: 'New projects coming soon',
-    emptyText: 'The project gallery is being updated. Please check back in a few days.',
+    view: 'View example',
+    emptyTitle: 'New examples coming soon',
+    emptyText: 'The gallery is being updated. Meanwhile, send us your logo — we’ll prepare a proof.',
   },
 });
 
@@ -114,12 +118,12 @@ function ProjectTile({ project: p, size, onOpen }: { project: Project; size: Siz
         className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.4s] ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-[1.06]"
       />
       <div className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/15 to-transparent" />
-      <div className="absolute inset-0 bg-ink/0 transition-colors duration-500 group-hover:bg-ink/30" />
+      <div className="absolute inset-0 bg-brand-900/0 transition-colors duration-500 group-hover:bg-brand-900/30" />
 
       <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-5 sm:p-6">
         <div className="flex flex-wrap gap-1.5">
           {p.tags.map((tg, k) => (
-            <span key={k} className="rounded-full bg-white/15 px-2.5 py-1 text-[11px] font-semibold text-white ring-1 ring-white/10 backdrop-blur-md">
+            <span key={k} className={cn('rounded-full px-2.5 py-1 text-[11px] font-bold backdrop-blur-md', k === 0 ? 'bg-lime text-ink' : 'bg-white/85 text-ink')}>
               {l(tg)}
             </span>
           ))}
@@ -130,10 +134,12 @@ function ProjectTile({ project: p, size, onOpen }: { project: Project; size: Siz
       </div>
 
       <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7">
-        <div className="flex items-center gap-1.5 text-[11.5px] font-bold uppercase tracking-[0.16em] text-white/70">
-          <MapPin className="h-3.5 w-3.5" />
-          {p.location} · {p.year}
-        </div>
+        {p.location && (
+          <div className="flex items-center gap-1.5 text-[11.5px] font-bold uppercase tracking-[0.16em] text-white/75">
+            <MapPin className="h-3.5 w-3.5" />
+            {p.location}
+          </div>
+        )}
         <h3 className={cn('display mt-2 max-w-xl leading-[1.08] text-white', big ? 'text-[28px] sm:text-[38px] lg:text-[44px]' : 'text-[24px] sm:text-[28px]')}>{l(p.title)}</h3>
         <div className="grid grid-rows-[0fr] opacity-0 transition-[grid-template-rows,opacity] duration-500 ease-[cubic-bezier(.16,1,.3,1)] group-hover:grid-rows-[1fr] group-hover:opacity-100">
           <div className="overflow-hidden">
@@ -148,10 +154,10 @@ function ProjectTile({ project: p, size, onOpen }: { project: Project; size: Siz
 export default function Projects() {
   const ts = useDict(site);
   const t = useDict(T);
+  const tc = useDict(C);
   const l = useL();
   const lang = useLang();
   const all = useDb((s) => s.projects);
-  const head = useHomeData('projects');
   usePageTitle(ts('nav_projects'));
 
   // Selected tag is remembered together with the language it was picked in,
@@ -161,9 +167,11 @@ export default function Projects() {
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
 
+  const list = useMemo(() => [...all].sort((a, b) => Number(b.featured) - Number(a.featured)), [all]);
+
   const tags = useMemo(() => {
     const m = new Map<string, number>();
-    all.forEach((p) => {
+    list.forEach((p) => {
       const seen = new Set<string>();
       p.tags.forEach((tg) => {
         const label = l(tg).trim();
@@ -173,82 +181,89 @@ export default function Projects() {
       });
     });
     return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([label, count]) => ({ label, count }));
-  }, [all, l]);
+  }, [list, l]);
 
-  const list = useMemo(() => (active ? all.filter((p) => p.tags.some((tg) => l(tg).trim() === active)) : all), [all, active, l]);
-  const sizes = useMemo(() => bento(list.length), [list.length]);
-
-  const facts = useMemo(() => {
-    const cities = new Set(all.map((p) => p.location.trim()).filter(Boolean)).size;
-    const years = all.map((p) => p.year).filter(Boolean);
-    const min = Math.min(...years);
-    const max = Math.max(...years);
-    return [
-      { value: String(all.length), label: t('statProjects') },
-      { value: String(cities), label: t('statCities') },
-      { value: years.length ? (min === max ? String(min) : `${min}–${String(max).slice(2)}`) : '—', label: t('statYears') },
-    ];
-  }, [all, t]);
+  const shown = useMemo(() => (active ? list.filter((p) => p.tags.some((tg) => l(tg).trim() === active)) : list), [list, active, l]);
+  const sizes = useMemo(() => bento(shown.length), [shown.length]);
 
   const chip = (on: boolean) =>
     cn(
       'inline-flex h-10 shrink-0 items-center gap-2 rounded-full px-4 text-[13.5px] font-semibold transition-colors',
-      on ? 'bg-ink text-paper' : 'bg-white text-ink-soft ring-1 ring-line hover:text-ink hover:ring-ink/30',
+      on ? 'bg-brand-600 text-white' : 'bg-white text-ink-soft ring-1 ring-line hover:text-ink hover:ring-brand-600/40',
     );
+
+  const flow = [
+    { icon: Upload, label: t('flow1') },
+    { icon: PenTool, label: t('flow2') },
+    { icon: BadgeCheck, label: t('flow3') },
+    { icon: Stamp, label: t('flow4') },
+  ];
 
   return (
     <>
-      <PageHero
-        crumbs={[{ label: ts('nav_projects') }]}
-        eyebrow={head ? l(head.eyebrow) : t('eyebrow')}
-        title={head ? l(head.title) : t('title')}
-        subtitle={t('subtitle')}
-      >
-        {all.length > 0 && (
-          <ul className="mt-10 flex flex-wrap gap-x-12 gap-y-6">
-            {facts.map((f) => (
-              <li key={f.label} className="border-l-2 border-brand-600 pl-4">
-                <div className="display text-[40px] leading-none text-ink">{f.value}</div>
-                <div className="mt-1.5 text-[11px] font-bold uppercase tracking-[0.18em] text-muted">{f.label}</div>
+      <PageHero crumbs={[{ label: ts('nav_projects') }]} eyebrow={t('eyebrow')} title={t('title')} subtitle={t('subtitle')}>
+        <div className="mt-9 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <ol className="flex flex-wrap items-center gap-2">
+            {flow.map(({ icon: Icon, label }, i) => (
+              <li key={label} className="flex items-center gap-2">
+                <span className={cn('inline-flex h-10 items-center gap-2 rounded-full px-4 text-[13.5px] font-semibold ring-1', i === flow.length - 1 ? 'bg-lime text-ink ring-lime' : 'bg-white text-ink ring-line')}>
+                  <Icon className={cn('h-4 w-4', i === flow.length - 1 ? 'text-ink' : 'text-brand-600')} />
+                  {label}
+                </span>
+                {i < flow.length - 1 && <span aria-hidden className="w-5 border-t-2 border-dashed border-ink/20" />}
               </li>
             ))}
-          </ul>
-        )}
+          </ol>
+          <ButtonLink to={LOGO_QUOTE_HREF} size="lg" icon={<Palette className="h-4 w-4" />} className="self-start lg:self-auto">
+            {tc('logoQuote')}
+          </ButtonLink>
+        </div>
       </PageHero>
 
-      {all.length === 0 ? (
+      {list.length === 0 ? (
         <div className="container-x py-16">
-          <EmptyState icon={<FolderOpen className="h-6 w-6" />} title={t('emptyTitle')} text={t('emptyText')} />
+          <EmptyState
+            icon={<FolderOpen className="h-6 w-6" />}
+            title={t('emptyTitle')}
+            text={t('emptyText')}
+            action={
+              <ButtonLink to={LOGO_QUOTE_HREF} variant="dark">
+                {tc('logoQuote')}
+              </ButtonLink>
+            }
+          />
         </div>
       ) : (
         <>
           {/* Filter bar */}
-          <div className="sticky top-[76px] z-30 border-b border-line bg-paper/90 backdrop-blur-xl">
-            <div className="container-x flex items-center gap-4 py-3">
-              <div role="group" aria-label={t('filter')} className="no-scrollbar -mx-4 flex flex-1 gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
-                <button type="button" aria-pressed={!active} onClick={() => setSel(null)} className={chip(!active)}>
-                  {t('all')}
-                  <span className={cn('text-[12px] tabular-nums', !active ? 'text-paper/55' : 'text-muted')}>{all.length}</span>
-                </button>
-                {tags.map((tg) => {
-                  const on = active === tg.label;
-                  return (
-                    <button key={tg.label} type="button" aria-pressed={on} onClick={() => setSel(on ? null : { lang, label: tg.label })} className={chip(on)}>
-                      {tg.label}
-                      <span className={cn('text-[12px] tabular-nums', on ? 'text-paper/55' : 'text-muted')}>{tg.count}</span>
-                    </button>
-                  );
-                })}
+          {tags.length > 1 && (
+            <div className="sticky top-[64px] z-30 border-b border-line bg-paper/90 backdrop-blur-xl lg:top-[76px]">
+              <div className="container-x flex items-center gap-4 py-3">
+                <div role="group" aria-label={t('filter')} className="no-scrollbar -mx-4 flex flex-1 gap-2 overflow-x-auto px-4 sm:mx-0 sm:flex-wrap sm:px-0">
+                  <button type="button" aria-pressed={!active} onClick={() => setSel(null)} className={chip(!active)}>
+                    {t('all')}
+                    <span className={cn('text-[12px] tabular-nums', !active ? 'text-white/65' : 'text-muted')}>{list.length}</span>
+                  </button>
+                  {tags.map((tg) => {
+                    const on = active === tg.label;
+                    return (
+                      <button key={tg.label} type="button" aria-pressed={on} onClick={() => setSel(on ? null : { lang, label: tg.label })} className={chip(on)}>
+                        {tg.label}
+                        <span className={cn('text-[12px] tabular-nums', on ? 'text-white/65' : 'text-muted')}>{tg.count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="hidden shrink-0 text-[13px] text-muted md:block">{t('showing', { n: shown.length, total: list.length })}</div>
               </div>
-              <div className="hidden shrink-0 text-[13px] text-muted md:block">{t('showing', { n: list.length, total: all.length })}</div>
             </div>
-          </div>
+          )}
 
           {/* Bento grid */}
           <section className="pb-4 pt-10 sm:pt-14">
             <div className="container-x">
               <div key={active ?? '*'} className="grid grid-cols-1 gap-4 sm:grid-flow-row-dense sm:grid-cols-2 lg:auto-rows-[300px] lg:grid-flow-row lg:grid-cols-12 lg:gap-6">
-                {list.map((p, i) => (
+                {shown.map((p, i) => (
                   <Reveal key={p.id} delay={(i % 3) * 90} className={SPAN[sizes[i]]}>
                     <ProjectTile
                       project={p}
@@ -266,9 +281,9 @@ export default function Projects() {
         </>
       )}
 
-      <CtaBand image="/images/hero/living.webp" />
+      <CtaBand image="/images/projects/kuti.webp" />
 
-      <ProjectLightbox projects={list} index={index} open={open} onClose={() => setOpen(false)} onIndex={setIndex} />
+      <ProjectLightbox projects={shown} index={index} open={open} onClose={() => setOpen(false)} onIndex={setIndex} />
     </>
   );
 }

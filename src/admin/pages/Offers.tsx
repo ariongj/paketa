@@ -196,7 +196,7 @@ export default function Offers() {
               </thead>
               <tbody>
                 {visible.map(({ o, state, discount, linked, stats, owner }) => {
-                  const c = contentLines(linked, o.placements.includes('home-block'), !!(o.landing.title.me || o.landing.title.sq), t);
+                  const c = contentLines(linked, o.placements.includes('home-block'), !!(o.landing.title.sq || o.landing.title.en || o.landing.title.me), t);
                   const p = periodLines(o, state, t, lang);
                   const issues = stats ? stats.fail + stats.warn : 0;
                   return (
@@ -246,7 +246,7 @@ export default function Offers() {
             {/* Phone: stacked cards */}
             <ul className="divide-y divide-line/70 md:hidden">
               {visible.map(({ o, state, discount, linked, stats }) => {
-                const c = contentLines(linked, o.placements.includes('home-block'), !!(o.landing.title.me || o.landing.title.sq), t);
+                const c = contentLines(linked, o.placements.includes('home-block'), !!(o.landing.title.sq || o.landing.title.en || o.landing.title.me), t);
                 const p = periodLines(o, state, t, lang);
                 const issues = stats ? stats.fail + stats.warn : 0;
                 return (

@@ -156,7 +156,7 @@ export default function Discounts() {
   };
   const exportCsv = () => {
     const out = list.map((r) => r.d);
-    download(`selca-zbritjet-${new Date().toISOString().slice(0, 10)}.csv`, discountsCsv(out), 'text/csv;charset=utf-8');
+    download(`paketoje-zbritjet-${new Date().toISOString().slice(0, 10)}.csv`, discountsCsv(out), 'text/csv;charset=utf-8');
     toast.success(t('exported', { n: out.length }));
   };
 

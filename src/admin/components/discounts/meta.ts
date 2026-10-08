@@ -11,7 +11,10 @@ export const isKind = (v: string | null | undefined): v is DiscountKind => !!v &
 export const STATES: DiscountState[] = ['active', 'scheduled', 'draft', 'paused', 'expired'];
 
 /** Same locales the shared date() helper uses. */
-export const DATE_LOCALE: Record<Lang, string> = { me: 'sr-Latn-ME', sq: 'sq-AL', en: 'en-GB' };
+export const DATE_LOCALE: Record<Lang, string> = { me: 'sr-Latn-RS', sq: 'sq-AL', en: 'en-GB' };
+
+/** Store time zone when settings.timezone is empty (Kosovo). */
+export const DEFAULT_TZ = 'Europe/Belgrade';
 
 /** A fresh rule with the defaults the PDF form suggests per type. Starts now, status draft. */
 export function newDiscount(kind: DiscountKind, now = new Date()): Discount {
@@ -47,14 +50,14 @@ export function newDiscount(kind: DiscountKind, now = new Date()): Discount {
       combines: { products: false, order: true, shipping: true },
     };
   if (kind === 'shipping')
-    return { ...base, value: 100, minimum: { type: 'amount', value: 300 }, shipping: { zoneIds: [] }, combines: { products: true, order: true, shipping: false } };
+    return { ...base, value: 100, minimum: { type: 'amount', value: 50 }, shipping: { zoneIds: [] }, combines: { products: true, order: true, shipping: false } };
   return base;
 }
 
-const WORDS = ['SELCA', 'DOM', 'JESEN', 'PODOVI', 'VRATA', 'DOBRODOSLI', 'STAN', 'KUPATILO', 'MONTAZA', 'ZIMA'];
+const WORDS = ['PAKETOJE', 'KAFE', 'GOTA', 'VERA', 'MIRESEERDHE', 'SHUMICE', 'LOGO', 'KAPAK', 'EKO', 'TAKEAWAY'];
 const ALNUM = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
-/** A memorable, unique code — WORD + value (SELCA15) when free, otherwise WORD-XXXX. */
+/** A memorable, unique code — WORD + value (KAFE15) when free, otherwise PK-XXXXX. */
 export function generateCode(d: Pick<Discount, 'id' | 'valueType' | 'value' | 'kind'>, all: Discount[], current?: string) {
   const v = d.kind === 'shipping' || d.kind === 'bxgy' ? '' : String(Math.round(d.value || 0) || '');
   const words = [...WORDS].sort(() => Math.random() - 0.5);
@@ -65,10 +68,10 @@ export function generateCode(d: Pick<Discount, 'id' | 'valueType' | 'value' | 'k
   for (let i = 0; i < 50; i++) {
     let s = '';
     for (let k = 0; k < 5; k++) s += ALNUM[Math.floor(Math.random() * ALNUM.length)];
-    const c = `SELCA-${s}`;
+    const c = `PK-${s}`;
     if (!isDuplicateCode(c, all, d.id)) return c;
   }
-  return `SELCA-${Date.now().toString(36).toUpperCase()}`;
+  return `PK-${Date.now().toString(36).toUpperCase()}`;
 }
 
 export const CODE_RE = /^[A-Z0-9_-]{3,32}$/;
@@ -121,7 +124,7 @@ export function zonedToIso(local: string, tz: string): string | undefined {
   return new Date(t).toISOString();
 }
 
-/** "Europe/Podgorica (UTC+2)" */
+/** "Europe/Belgrade (UTC+2)" */
 export function tzLabel(tz: string, at = new Date()) {
   const mins = Math.round(tzOffset(tz, at) / 60000);
   const sign = mins >= 0 ? '+' : '−';

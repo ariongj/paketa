@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router';
-import { ArrowRight, Compass, Percent, RotateCcw, SearchX } from 'lucide-react';
+import { ArrowRight, Compass, Percent, RotateCcw, SearchX, Stamp } from 'lucide-react';
 import { ProductCard } from '@/site/components/ProductCard';
 import { usePageTitle } from '@/site/layout/SiteLayout';
 import { Button, ButtonLink } from '@/components/ui/Button';
@@ -14,11 +14,9 @@ import { cn } from '@/lib/utils';
 import { T, countLabel } from '@/site/components/shop/dict';
 import {
   EMPTY_FILTERS,
-  FAMILY_SWATCH,
   activeCount,
   computeFacets,
   passes,
-  productColors,
   sortFromParam,
   sortProducts,
   sortToParam,
@@ -30,9 +28,12 @@ import { AllHeader, CategoryBanner, CategoryChips, shopHref } from '@/site/compo
 import { FilterPanel } from '@/site/components/shop/FilterPanel';
 import { DensityToggle, FilterButton, FilterPills, SortSelect, type Pill } from '@/site/components/shop/Toolbar';
 import { HelpBand } from '@/site/components/shop/HelpBand';
+import { SoonPanel } from '@/site/components/shop/SoonPanel';
+import { ProductRail } from '@/site/components/product/ProductRail';
+import { diverseBestsellers } from '@/site/components/utility/shared';
 
 const PAGE = 24;
-const DENSITY_KEY = 'selca-shop-cols';
+const DENSITY_KEY = 'paketoje-shop-cols';
 
 function readDensity(): 3 | 4 {
   try {
@@ -44,7 +45,7 @@ function readDensity(): 3 | 4 {
 
 export default function Shop() {
   const { category } = useParams();
-  // Remount per category so local filters (price, colours…) start fresh.
+  // Remount per category so local filters (price, stock…) start fresh.
   return <ShopView key={category ?? '*'} slug={category} />;
 }
 
@@ -93,10 +94,13 @@ function ShopView({ slug }: { slug?: string }) {
 
   /* ---------------------------- Derived ----------------------------- */
   const scope = useMemo(() => (category ? products.filter((p) => p.categoryId === category.id) : products), [products, category]);
-  const ctx: MatchCtx = useMemo(() => ({ sale, colors: new Map(scope.map((p) => [p.id, productColors(p)])) }), [scope, sale]);
+  const ctx: MatchCtx = useMemo(() => ({ sale }), [sale]);
   const results = useMemo(() => sortProducts(scope.filter((p) => passes(p, filters, ctx)), sort, l, lang), [scope, filters, ctx, sort, l, lang]);
   const facets = useMemo(() => computeFacets(scope, filters, ctx, categories), [scope, filters, ctx, categories]);
   const nActive = activeCount(filters, sale);
+  // 'Së shpejti' ranges: suggest live categories and bestsellers meanwhile
+  const soonOthers = useMemo(() => (category?.soon ? categories.filter((c) => !c.soon && c.featured).slice(0, 3) : []), [category, categories]);
+  const meanwhile = useMemo(() => (category?.soon ? diverseBestsellers(products.filter((p) => !p.quoteOnly && p.stock > 0), 8) : []), [category, products]);
 
   // "Show more" pagination — resets whenever the result set changes
   const sig = `${JSON.stringify(filters)}|${sale}|${sort}`;
@@ -127,22 +131,10 @@ function ShopView({ slug }: { slug?: string }) {
   }
   if (filters.price) {
     const [a, b] = filters.price;
-    pills.push({ key: 'price', label: `${money(a, lang, { decimals: false })} – ${money(b, lang, { decimals: false })}`, onRemove: () => setFilters({ ...filters, price: null }) });
+    pills.push({ key: 'price', label: `${money(a, lang)} – ${money(b, lang)}`, onRemove: () => setFilters({ ...filters, price: null }) });
   }
-  if (filters.install) pills.push({ key: 'install', label: t('withInstall'), onRemove: () => setFilters({ ...filters, install: false }) });
-  for (const a of filters.avail) pills.push({ key: `a-${a}`, label: t(a === 'stock' ? 'inStock' : 'toOrder'), onRemove: () => setFilters({ ...filters, avail: filters.avail.filter((x) => x !== a) }) });
-  for (const c of filters.colors)
-    pills.push({
-      key: `col-${c}`,
-      label: (
-        <>
-          <span className="h-3.5 w-3.5 rounded-full shadow-[inset_0_0_0_1px_rgb(28_26_23/0.15)]" style={{ background: FAMILY_SWATCH[c] }} />
-          {t(`c_${c}`)}
-        </>
-      ),
-      onRemove: () => setFilters({ ...filters, colors: filters.colors.filter((x) => x !== c) }),
-    });
-  for (const u of filters.units) pills.push({ key: `u-${u}`, label: t(`unit_${u}`), onRemove: () => setFilters({ ...filters, units: filters.units.filter((x) => x !== u) }) });
+  if (filters.logo) pills.push({ key: 'logo', label: <><Stamp className="h-3.5 w-3.5" /> {t('withLogo')}</>, onRemove: () => setFilters({ ...filters, logo: false }) });
+  if (filters.stock) pills.push({ key: 'stock', label: t('inStock'), onRemove: () => setFilters({ ...filters, stock: false }) });
 
   /* --------------------------- Not found ---------------------------- */
   if (slug && !category) {
@@ -159,6 +151,18 @@ function ShopView({ slug }: { slug?: string }) {
           }
         />
       </div>
+    );
+  }
+
+  if (category?.soon) {
+    return (
+      <>
+        <CategoryBanner category={category} products={scope} sale={false} />
+        <CategoryChips categories={categories} products={products} active={category.id} sale={sale} params={params} onToggleSale={() => setSale(!sale)} />
+        <SoonPanel category={category} others={soonOthers} />
+        <ProductRail className="mt-20 sm:mt-28" eyebrow={t('soonMeanwhile')} title={t('soonMeanwhileTitle')} products={meanwhile} />
+        <HelpBand />
+      </>
     );
   }
 

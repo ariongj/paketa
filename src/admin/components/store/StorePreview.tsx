@@ -1,5 +1,5 @@
 // Mini storefront that shows the theme settings BEFORE they are saved (logo, brand colour, fonts, spacing).
-// It sits inside the neutral CMS, so the warm SELCA tokens + brand scale are restored locally (storefrontVars).
+// It sits inside the neutral CMS, so the Paketoje storefront tokens + brand scale are restored locally (storefrontVars).
 import { useMemo } from 'react';
 import { ArrowRight, Search, ShoppingBag } from 'lucide-react';
 import type { Lang } from '@/lib/types';
@@ -10,7 +10,7 @@ import { Logo, LogoMark } from '@/components/brand/Logo';
 import { useDb } from '@/store/db';
 import { usePlacements } from '@/store/hooks';
 import { basePrice, isOnSale } from '@/lib/pricing';
-import { money } from '@/lib/format';
+import { money, moneyPiece, perUnit, piecesLabel } from '@/lib/format';
 import { thumb } from '@/lib/utils';
 import { DENSITY, FONT_PAIRS, accentLast, storefrontVars, type StoreTheme } from './theme';
 import { objectPos, type PlacementX } from './placements';
@@ -39,8 +39,8 @@ export function StorePreview({ brand, theme, lang, words }: { brand: string; the
       <div className="truncate bg-ink px-3 py-1.5 text-center text-[10px] font-medium text-paper">{bar ? lt(bar.title, lang) : lt(settings.announcements[0], lang)}</div>
       {/* header */}
       <div className="flex items-center justify-between border-b border-line bg-paper" style={{ padding: `${d.pad * 0.5}px ${d.pad * 0.8}px` }}>
-        <span className="flex [&>svg]:h-full! [&>svg]:w-auto" style={{ height: logoH }}>
-          {theme.logo === 'full' ? <Logo /> : <LogoMark />}
+        <span className="flex" style={{ height: logoH }}>
+          {theme.logo === 'full' ? <Logo className="h-full" /> : <LogoMark className="h-full" />}
         </span>
         <div className="flex items-center gap-2.5 text-[10.5px] font-semibold text-ink-soft">
           <span>{nav.nav_products}</span>
@@ -55,11 +55,11 @@ export function StorePreview({ brand, theme, lang, words }: { brand: string; the
         <div className="absolute inset-0 -z-10 bg-gradient-to-r from-ink/80 via-ink/45 to-ink/10" />
         <div style={{ padding: `${d.pad * 1.3}px ${d.pad}px ${d.pad}px` }}>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-2 py-0.5 text-[8.5px] font-bold uppercase tracking-[0.18em] text-white">
-            <span className="h-1 w-1 rounded-full bg-brand-400" />
+            <span className="h-1 w-1 rounded-full bg-lime" />
             {words.eyebrow}
           </span>
           <div className="mt-2 text-[27px] leading-[1.02] text-white" style={f.heading}>
-            <Accent text={accentLast(lt(settings.tagline, lang))} accentClassName="text-brand-200" />
+            <Accent text={accentLast(lt(settings.tagline, lang))} accentClassName="text-lime [background-image:none]!" />
           </div>
           <p className="mt-2 max-w-[250px] text-[11px] leading-snug text-white/85">{words.text}</p>
           <div className="mt-3 flex flex-wrap gap-1.5">
@@ -78,14 +78,20 @@ export function StorePreview({ brand, theme, lang, words }: { brand: string; the
             <div key={p.id} className="overflow-hidden border border-line bg-white" style={{ borderRadius: d.radius }}>
               <div className="relative aspect-[4/3] bg-sand">
                 <img src={thumb(p.images[0])} alt="" className="h-full w-full object-cover" />
-                {sale && <span className="absolute left-1.5 top-1.5 rounded-full bg-brand-600 px-1.5 py-0.5 text-[8px] font-bold text-white">{words.badge}</span>}
+                {sale && <span className="absolute left-1.5 top-1.5 -rotate-3 rounded-full bg-pink px-1.5 py-0.5 text-[8px] font-bold text-white">{words.badge}</span>}
               </div>
               <div style={{ padding: d.gap * 0.75 }}>
                 <div className="line-clamp-1 text-[10.5px] font-semibold text-ink">{plain(lt(p.name, lang))}</div>
                 <div className="mt-0.5 flex items-baseline gap-1">
-                  <span className="text-[11px] font-bold text-brand-700">{money(basePrice(p), lang, { decimals: false })}</span>
-                  {sale && <span className="text-[9px] text-muted line-through">{money(p.price, lang, { decimals: false })}</span>}
+                  <span className="text-[11px] font-bold text-brand-700">{money(basePrice(p), lang)}</span>
+                  <span className="text-[8.5px] text-muted">{perUnit(p.unit, lang)}</span>
+                  {sale && <span className="text-[9px] text-muted line-through">{money(p.price, lang)}</span>}
                 </div>
+                {p.unit === 'pack' && p.packSize ? (
+                  <span className="mt-1 inline-flex rounded-full bg-lime-soft px-1.5 py-px text-[8px] font-bold text-lime-ink">
+                    {moneyPiece(basePrice(p) / p.packSize, lang)}/{piecesLabel(lang)}
+                  </span>
+                ) : null}
               </div>
             </div>
           );

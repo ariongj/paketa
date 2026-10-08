@@ -55,7 +55,7 @@ export function Preview({
   const t = useDict(B, 'admin');
   const siteLang = useUi((s) => s.lang);
   const setSiteLang = useUi((s) => s.setLang);
-  const domain = useDb((s) => s.settings.adminEmail.split('@')[1] || 'selca.me');
+  const domain = useDb((s) => s.settings.adminEmail.split('@')[1] || 'paketoje.com');
   const stageRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLIFrameElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
@@ -125,9 +125,9 @@ export function Preview({
     // Hide the storefront's floating "demo → CMS" badge inside the preview only.
     try {
       const doc = frameRef.current?.contentDocument;
-      if (doc && !doc.getElementById('selca-builder-preview')) {
+      if (doc && !doc.getElementById('pk-builder-preview')) {
         const st = doc.createElement('style');
-        st.id = 'selca-builder-preview';
+        st.id = 'pk-builder-preview';
         st.textContent = 'a.fixed[href$="/admin"]{display:none!important}';
         doc.head.appendChild(st);
       }

@@ -23,7 +23,7 @@ import { num } from '@/lib/format';
 const T = defineDict({
   me: {
     title: 'Kalendar termina',
-    desc: 'Raspored tima, kapacitet usluga i status rezervacija na jednom mjestu.',
+    desc: 'Posjete sa uzorcima u objektu klijenta, konsultacije za dizajn štampe i B2B sastanci u depou u Mitrovici — na jednom mjestu.',
     add: 'Dodaj rezervaciju',
     services: 'Usluge i radno vrijeme',
     week: 'Sedmica {range}',
@@ -46,7 +46,7 @@ const T = defineDict({
     filterHint: 'kliknite za filter',
     filterOn: 'filter je uključen',
     pendingTitle: 'Čeka potvrdu',
-    pendingDesc: 'Zahtjevi sa sajta i termini koje treba potvrditi telefonom.',
+    pendingDesc: 'Zahtjevi za uzorke sa sajta i sastanci koje treba potvrditi telefonom.',
     confirm: 'Potvrdi',
     confirmed: 'Termin je potvrđen — {name}',
     open: 'Otvori',
@@ -62,7 +62,7 @@ const T = defineDict({
   },
   sq: {
     title: 'Kalendari i termineve',
-    desc: 'Orari, stafi dhe gjendja e rezervimeve në të njëjtën hapësirë.',
+    desc: 'Vizitat me mostra te lokali i klientit, konsultat për dizajnin e printimit dhe takimet B2B në depon në Mitrovicë — në një vend.',
     add: 'Shto rezervim',
     services: 'Shërbimet & orari',
     week: 'Java {range}',
@@ -85,7 +85,7 @@ const T = defineDict({
     filterHint: 'kliko për të filtruar',
     filterOn: 'filtri është aktiv',
     pendingTitle: 'Në pritje të konfirmimit',
-    pendingDesc: 'Kërkesa nga faqja dhe termine që duhen konfirmuar me telefon.',
+    pendingDesc: 'Kërkesat për mostra nga faqja dhe takimet që duhen konfirmuar me telefon.',
     confirm: 'Konfirmo',
     confirmed: 'Termini u konfirmua — {name}',
     open: 'Hap',
@@ -101,7 +101,7 @@ const T = defineDict({
   },
   en: {
     title: 'Appointment calendar',
-    desc: 'Team schedule, service capacity and booking status in one place.',
+    desc: 'Sample visits at the client’s venue, logo-print design consultations and B2B meetings at the Mitrovicë depot — in one place.',
     add: 'Add booking',
     services: 'Services & hours',
     week: 'Week {range}',
@@ -124,7 +124,7 @@ const T = defineDict({
     filterHint: 'click to filter',
     filterOn: 'filter on',
     pendingTitle: 'Awaiting confirmation',
-    pendingDesc: 'Website requests and bookings to confirm by phone.',
+    pendingDesc: 'Sample requests from the website and meetings to confirm by phone.',
     confirm: 'Confirm',
     confirmed: 'Booking confirmed — {name}',
     open: 'Open',

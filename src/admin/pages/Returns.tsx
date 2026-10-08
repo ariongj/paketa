@@ -18,7 +18,8 @@ import { useDict, useLang } from '@/i18n';
 import { useDb } from '@/store/db';
 import { useCan } from '@/store/hooks';
 import { fold } from '@/lib/search';
-import { date, money } from '@/lib/format';
+import { date, money, num } from '@/lib/format';
+import { unitsText } from '@/admin/components/products/units';
 import { cn, round2 } from '@/lib/utils';
 import type { Lang, Order, Product, ReturnRequest, ReturnStatus } from '@/lib/types';
 
@@ -26,7 +27,7 @@ type Tab = 'all' | ReturnStatus;
 const TABS: Tab[] = ['all', ...RETURN_STATUSES];
 const DAY = 86400000;
 
-const timeOf = (iso: string, lang: Lang) => new Date(iso).toLocaleTimeString(lang === 'en' ? 'en-GB' : lang === 'sq' ? 'sq-AL' : 'sr-Latn-ME', { hour: '2-digit', minute: '2-digit' });
+const timeOf = (iso: string, lang: Lang) => new Date(iso).toLocaleTimeString(lang === 'en' ? 'en-GB' : lang === 'sq' ? 'sq-AL' : 'sr-Latn-RS', { hour: '2-digit', minute: '2-digit' });
 
 export default function Returns() {
   const t = useDict(rd, 'admin');
@@ -231,17 +232,18 @@ export default function Returns() {
   );
 }
 
-/** "1 × Vrata Linea  +1 more" with the reason category under it. */
+/** "2 pako × Gota letre F95 400 ml  +1 more" with the reason category under it. */
 function Lines({ ret, order, products, lang, compact }: { ret: ReturnRequest; order: Order | undefined; products: Product[]; lang: Lang; compact?: boolean }) {
   const t = useDict(rd, 'admin');
   const first = ret.lines[0];
   if (!first) return null;
+  const unit = (order?.items.find((l) => l.productId === first.productId) ?? products.find((p) => p.id === first.productId))?.unit;
   return (
     <span className="flex min-w-0 items-center gap-2.5">
       {!compact && <Thumb src={lineImage(first.productId, order, products)} className="h-9 w-9 rounded-md" />}
       <span className="min-w-0">
         <span className="block truncate text-[13.5px]">
-          <span className="tabular-nums text-muted">{first.qty} ×</span> {lineName(first.productId, order, products, lang)}
+          <span className="tabular-nums text-muted">{unit ? unitsText(first.qty, unit, lang) : num(first.qty, lang)} ×</span> {lineName(first.productId, order, products, lang)}
           {ret.lines.length > 1 && <span className="ml-1.5 text-[12px] text-muted">{t('more', { n: ret.lines.length - 1 })}</span>}
         </span>
         <span className="block truncate text-[12px] text-muted">{t(`r_${reasonKey(ret.reason)}`)}</span>

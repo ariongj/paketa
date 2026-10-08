@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { ap } from './i18n';
 import { addDays, atMinutes, dayKey, dayName, dayMonth, fromMin, longDate, timeRange, weekdayIndex } from './dates';
 import { checkSlot, slotsForDay, windowFor } from './rules';
+import { serviceIdFor } from '@/admin/components/contacts/model';
 import { CHEVRON, ServiceDot, StaffAvatar, useBookingRules, useLocationLabel, useReasonText } from './shared';
 
 const T = defineDict({
@@ -40,10 +41,10 @@ const T = defineDict({
     phone: 'Telefon',
     email: 'E-mail',
     city: 'Grad',
-    address: 'Adresa za dolazak',
+    address: 'Adresa objekta',
     required: 'Obavezno polje',
     initial: 'Status',
-    notePh: 'Napomena za tim (npr. sprat, šta ponijeti)…',
+    notePh: 'Napomena za tim (npr. ponijeti uzorke čaša i poklopaca, ulaz sa dvorišta)…',
     pickSlot: 'Izaberite termin',
     submit: 'Dodaj rezervaciju',
     added: 'Rezervacija je dodata — {name}, {when}',
@@ -75,10 +76,10 @@ const T = defineDict({
     phone: 'Telefoni',
     email: 'E-mail',
     city: 'Qyteti',
-    address: 'Adresa e vizitës',
+    address: 'Adresa e lokalit',
     required: 'Fushë e detyrueshme',
     initial: 'Statusi',
-    notePh: 'Shënim për ekipin (p.sh. kati, çfarë të merret)…',
+    notePh: 'Shënim për ekipin (p.sh. merrni mostra gotash e kapakësh, hyrja nga oborri)…',
     pickSlot: 'Zgjidhni intervalin',
     submit: 'Shto rezervim',
     added: 'Rezervimi u shtua — {name}, {when}',
@@ -110,10 +111,10 @@ const T = defineDict({
     phone: 'Phone',
     email: 'E-mail',
     city: 'City',
-    address: 'Visit address',
+    address: 'Venue address',
     required: 'Required',
     initial: 'Status',
-    notePh: 'Note for the team (e.g. floor, what to bring)…',
+    notePh: 'Note for the team (e.g. bring cup and lid samples, entrance from the yard)…',
     pickSlot: 'Pick a slot',
     submit: 'Add booking',
     added: 'Booking added — {name}, {when}',
@@ -187,7 +188,7 @@ function AddBookingForm({ prefill, onClose, onCreated }: { prefill: AddBookingPr
   const [serviceId, setServiceId] = useState(() => {
     if (prefill.serviceId) return prefill.serviceId;
     const staffSvc = prefill.staffId ? services.find((s) => s.staffIds.includes(prefill.staffId!)) : undefined;
-    if (fromInquiry) return (fromInquiry.type === 'measurement' ? services.find((s) => s.id === 'sv-mjerenje') : services.find((s) => s.id === 'sv-konsultacija'))?.id ?? services[0]?.id ?? '';
+    if (fromInquiry) return services.find((s) => s.id === serviceIdFor(fromInquiry))?.id ?? services[0]?.id ?? '';
     return staffSvc?.id ?? services[0]?.id ?? '';
   });
   const service = services.find((s) => s.id === serviceId);
@@ -355,7 +356,7 @@ function AddBookingForm({ prefill, onClose, onCreated }: { prefill: AddBookingPr
               </select>
             </label>
             {location === 'onsite' && (
-              <Input label={t('address')} value={address} onChange={(e) => setAddress(e.target.value)} error={errors.address} wrapClassName="sm:col-span-2" className="h-10! text-[13.5px]!" placeholder="Njegoševa 12, Podgorica" />
+              <Input label={t('address')} value={address} onChange={(e) => setAddress(e.target.value)} error={errors.address} wrapClassName="sm:col-span-2" className="h-10! text-[13.5px]!" placeholder="Rr. Mbretëresha Teutë 12, Mitrovicë" />
             )}
           </div>
         </Step>
@@ -482,7 +483,7 @@ function AddBookingForm({ prefill, onClose, onCreated }: { prefill: AddBookingPr
           )}
           <div className="grid gap-3 sm:grid-cols-2">
             <Input label={t('name')} required value={contact.name} onChange={(e) => setContact((c) => ({ ...c, name: e.target.value }))} error={errors.name} className="h-10! text-[13.5px]!" />
-            <Input label={t('phone')} required type="tel" value={contact.phone} onChange={(e) => setContact((c) => ({ ...c, phone: e.target.value }))} error={errors.phone} placeholder="+382 6_ ___ ___" className="h-10! text-[13.5px]!" />
+            <Input label={t('phone')} required type="tel" value={contact.phone} onChange={(e) => setContact((c) => ({ ...c, phone: e.target.value }))} error={errors.phone} placeholder="+383 4_ ___ ___" className="h-10! text-[13.5px]!" />
             <Input label={t('email')} type="email" value={contact.email} onChange={(e) => setContact((c) => ({ ...c, email: e.target.value }))} className="h-10! text-[13.5px]!" />
             <Input label={t('city')} value={contact.city} onChange={(e) => setContact((c) => ({ ...c, city: e.target.value }))} className="h-10! text-[13.5px]!" />
           </div>

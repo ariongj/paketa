@@ -8,8 +8,9 @@ import { Thumb } from '@/admin/components/kit';
 import { useDb } from '@/store/db';
 import { applyDiscounts, discountClass, lineMatches, normalizeCode, type DiscountResult } from '@/lib/discounts';
 import { membershipIndex } from '@/lib/collections';
-import { defaultOptions, qtyUnits, unitPrice } from '@/lib/pricing';
-import { money, num, unitLabel } from '@/lib/format';
+import { defaultOptions, qtyUnits, tierPct, unitPrice } from '@/lib/pricing';
+import { money } from '@/lib/format';
+import { isPack, piecesOf, piecesText, unitsText, unitWord } from '@/admin/components/products/units';
 import { fold } from '@/lib/search';
 import type { Discount, DiscountTarget, Product } from '@/lib/types';
 import { cn, round2 } from '@/lib/utils';
@@ -25,6 +26,12 @@ interface Item {
 
 const keyOf = () => Math.random().toString(36).slice(2, 9);
 
+/** Starting quantity of a sample line: 10 packs (500 cups) for pack products, otherwise 1. */
+const sampleQty = (p: Product) => (isPack(p) ? 10 : 1);
+
+/** Line price as the cart computes it — the volume tier for that quantity included. */
+const linePrice = (p: Product, qty: number) => unitPrice(p, defaultOptions(p), qty);
+
 /* ------------------------------------------------------------------ */
 /* Sample cart that satisfies the rule (autofill)                      */
 /* ------------------------------------------------------------------ */
@@ -36,10 +43,10 @@ function eligible(target: Pick<DiscountTarget, 'scope' | 'ids'>, products: Produ
 }
 
 function autofillItems(d: Discount, products: Product[], memberOf: (p: Product) => string[]): Item[] {
-  const lineTotal = (p: Product, q: number) => unitPrice(p, defaultOptions(p)) * qtyUnits(p, q);
+  const lineTotal = (p: Product, q: number) => linePrice(p, q) * qtyUnits(p, q);
   const reach = (p: Product, base: number, target: number) => {
     let q = 1;
-    while (base + lineTotal(p, q) < target && q < 40) q++;
+    while (base + lineTotal(p, q) < target && q < 200) q++;
     return q;
   };
   if (d.kind === 'bxgy' && d.bxgy) {
@@ -55,8 +62,8 @@ function autofillItems(d: Discount, products: Product[], memberOf: (p: Product) 
   const first = pool[0];
   if (!first) return [];
   const second = pool.find((p) => p.id !== first.id && p.categoryId !== first.categoryId) ?? pool[1];
-  const items: Item[] = [{ key: keyOf(), productId: first.id, qty: first.unit === 'm2' ? 6 : 1 }];
-  if (second) items.push({ key: keyOf(), productId: second.id, qty: 1 });
+  const items: Item[] = [{ key: keyOf(), productId: first.id, qty: sampleQty(first) }];
+  if (second) items.push({ key: keyOf(), productId: second.id, qty: sampleQty(second) });
   const m = d.minimum;
   const sum = () => items.reduce((s, it) => s + lineTotal(products.find((p) => p.id === it.productId)!, it.qty), 0);
   if (m.type === 'amount' && m.value > 0 && sum() < m.value) {
@@ -128,10 +135,10 @@ export function Tester({ open, onClose, draft }: { open: boolean; onClose: () =>
         .map((it) => {
           const p = byId.get(it.productId);
           if (!p) return null;
-          const up = unitPrice(p, defaultOptions(p));
+          const up = linePrice(p, it.qty);
           const units = qtyUnits(p, it.qty);
           const total = round2(up * units);
-          return { it, p, up, units, total };
+          return { it, p, up, units, total, tier: tierPct(p, it.qty) };
         })
         .filter((v): v is NonNullable<typeof v> => !!v),
     [items, byId],
@@ -165,7 +172,7 @@ export function Tester({ open, onClose, draft }: { open: boolean; onClose: () =>
     setItems((s) => {
       const ex = s.find((it) => it.productId === p.id);
       if (ex) return s.map((it) => (it === ex ? { ...it, qty: it.qty + 1 } : it));
-      return [...s, { key: keyOf(), productId: p.id, qty: 1 }];
+      return [...s, { key: keyOf(), productId: p.id, qty: sampleQty(p) }];
     });
   const addCode = () => {
     const c = normalizeCode(codeInput);
@@ -189,9 +196,9 @@ export function Tester({ open, onClose, draft }: { open: boolean; onClose: () =>
         {/* ------------------------------ cart builder ------------------------------ */}
         <div className="space-y-5 border-b border-line p-4 sm:p-6 lg:border-b-0 lg:border-r">
           <section>
-            <div className="mb-2.5 flex items-center justify-between gap-2">
-              <h3 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-muted">{t('sampleCart')}</h3>
-              <div className="flex items-center gap-1">
+            <div className="mb-2.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
+              <h3 className="whitespace-nowrap text-[13px] font-semibold uppercase tracking-[0.08em] text-muted">{t('sampleCart')}</h3>
+              <div className="-mr-2 flex items-center gap-1 whitespace-nowrap">
                 <button type="button" onClick={() => setItems(autofillItems(draft, products, memberOf))} className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-[12.5px] font-semibold text-ink-soft transition-colors hover:bg-canvas hover:text-ink">
                   <Sparkles className="h-3.5 w-3.5" />
                   {t('autofill')}
@@ -208,20 +215,32 @@ export function Tester({ open, onClose, draft }: { open: boolean; onClose: () =>
                 <p className="px-4 py-6 text-center text-[13px] text-muted">{t('emptyCart')}</p>
               ) : (
                 <ul className="divide-y divide-line/70">
-                  {lines.map(({ it, p, up, units, total }) => (
-                    <li key={it.key} className="flex items-center gap-2.5 px-3 py-2.5">
-                      <Thumb src={p.images[0]} className="h-9 w-9 rounded-md" />
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-[13px] font-medium text-ink">{l(p.name)}</div>
-                        <div className="truncate text-[12px] tabular-nums text-muted">
-                          {p.unit === 'm2' ? `${money(up, lang)} / m² · ${t('packsEq', { v: num(units, lang) })}` : `${money(up, lang)} / ${unitLabel(p.unit, lang)}`}
+                  {lines.map(({ it, p, up, total, tier }) => (
+                    <li key={it.key} className="px-3 py-2.5">
+                      <div className="flex items-start gap-2.5">
+                        <Thumb src={p.images[0]} className="h-9 w-9 rounded-md" />
+                        <div className="min-w-0 flex-1">
+                          <div className="line-clamp-2 text-[13px] font-medium leading-snug text-ink">{l(p.name)}</div>
+                          <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[12px] tabular-nums text-muted">
+                            <span>
+                              {money(up, lang)} / {unitWord(p.unit, 1, lang)}
+                            </span>
+                            {isPack(p) && <span>· {piecesText(piecesOf(p, it.qty), lang)}</span>}
+                            {tier > 0 && (
+                              <span className="rounded bg-canvas px-1 text-[11px] font-semibold text-ink ring-1 ring-inset ring-line" title={t('tierTip')}>
+                                −{tier}%
+                              </span>
+                            )}
+                          </div>
                         </div>
+                        <button type="button" onClick={() => removeItem(it.key)} className="-mr-1 grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted hover:bg-canvas hover:text-ink" aria-label="×">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                       </div>
-                      <Stepper value={it.qty} onChange={(v) => setQty(it.key, v)} />
-                      <div className="w-[76px] shrink-0 text-right text-[13px] font-semibold tabular-nums text-ink">{eur(total)}</div>
-                      <button type="button" onClick={() => removeItem(it.key)} className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted hover:bg-canvas hover:text-ink" aria-label="×">
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      <div className="mt-2 flex items-center justify-between gap-3 pl-[46px]">
+                        <Stepper value={it.qty} onChange={(v) => setQty(it.key, v)} />
+                        <div className="text-right text-[13px] font-semibold tabular-nums text-ink">{eur(total)}</div>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -321,7 +340,7 @@ export function Tester({ open, onClose, draft }: { open: boolean; onClose: () =>
                     {lines.map((ln) => (
                       <li key={ln.it.key} className="flex items-baseline justify-between gap-3 text-[13px]">
                         <span className="min-w-0 truncate text-ink-soft">
-                          {l(ln.p.name)} <span className="text-muted">· {t('eachUnit', { q: ln.p.unit === 'm2' ? `${num(ln.units, lang)} m²` : ln.it.qty, p: eur(ln.up) })}</span>
+                          {l(ln.p.name)} <span className="text-muted">· {t('eachUnit', { q: unitsText(ln.it.qty, ln.p.unit, lang), p: eur(ln.up) })}{ln.tier > 0 && ` (−${ln.tier}%)`}</span>
                         </span>
                         <span className="shrink-0 tabular-nums text-ink">{eur(ln.total)}</span>
                       </li>
@@ -538,7 +557,7 @@ function ProductSearch({ products, onPick }: { products: Product[]; onPick: (p: 
   const [q, setQ] = useState('');
   const [focus, setFocus] = useState(false);
   const results = useMemo(() => {
-    const live = products.filter((p) => p.status === 'active');
+    const live = products.filter((p) => p.status === 'active' && !p.quoteOnly);
     const terms = fold(q.trim()).split(/\s+/).filter(Boolean);
     const list = terms.length ? live.filter((p) => terms.every((term) => fold(`${p.name.me} ${p.name.sq} ${p.name.en} ${p.sku}`).includes(term))) : [...live].sort((a, b) => b.sold - a.sold);
     return list.slice(0, 6);
@@ -569,7 +588,9 @@ function ProductSearch({ products, onPick }: { products: Product[]; onPick: (p: 
               >
                 <Thumb src={p.images[0]} className="h-7 w-7 rounded" />
                 <span className="min-w-0 flex-1 truncate text-[13px] text-ink">{l(p.name)}</span>
-                <span className="shrink-0 text-[12px] tabular-nums text-muted">{money(unitPrice(p), lang)}</span>
+                <span className="shrink-0 text-[12px] tabular-nums text-muted">
+                  {money(unitPrice(p), lang)} / {unitWord(p.unit, 1, lang)}
+                </span>
                 <Plus className="h-3.5 w-3.5 shrink-0 text-muted" />
               </button>
             </li>

@@ -4,7 +4,7 @@ import { adm } from '@/admin/i18n';
 import { Button } from '@/components/ui/Button';
 import { Switch } from '@/components/ui/Field';
 import { Modal } from '@/components/ui/Overlay';
-import { LANGS, defineDict, interpolate, useDict, useLang } from '@/i18n';
+import { LANGS, defineDict, interpolate, lt, useDict, useLang } from '@/i18n';
 import { dateTime, money, timeAgo } from '@/lib/format';
 import type { Lang, NotificationEvent, NotificationTemplate } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -44,13 +44,13 @@ const N = defineDict({
     tr_order_shipped: 'Kada se narudžba pošalje',
     tr_return_requested: 'Kada kupac zatraži povrat',
     tr_return_refunded: 'Kada je novac vraćen',
-    tr_contact_received: 'Nakon forme za kontakt ili mjerenje',
+    tr_contact_received: 'Nakon forme za kontakt, ponudu ili besplatne uzorke',
     tr_booking_confirmed: 'Kada se termin potvrdi',
     tr_booking_reminder: '24 h prije termina',
     tr_staff_new_order: 'Svaka nova narudžba',
     tr_staff_new_inquiry: 'Svaki novi upit',
     b_order_placed: 'Hvala na narudžbi {number}. Ukupno: {total}. Javićemo vam se radi dogovora o dostavi.',
-    b_order_confirmed: 'Vaša narudžba {number} je potvrđena i ide u pripremu.',
+    b_order_confirmed: 'Vaša narudžba {number} je potvrđena i pakuje se u našem depou u Mitrovici.',
     b_payment_received: 'Evidentirali smo uplatu od {total} za narudžbu {number}. Hvala!',
     b_order_shipped: 'Narudžba {number} je na putu. Broj za praćenje: {tracking}.',
     b_return_requested: 'Kupac {name} je podnio zahtjev za povrat za narudžbu {number}.',
@@ -110,13 +110,13 @@ const N = defineDict({
     tr_order_shipped: 'Kur porosia dërgohet',
     tr_return_requested: 'Kur klienti kërkon kthim',
     tr_return_refunded: 'Kur kryhet rimbursimi',
-    tr_contact_received: 'Pas formularit të kontaktit ose të matjes',
+    tr_contact_received: 'Pas formularit të kontaktit, ofertës ose mostrave falas',
     tr_booking_confirmed: 'Kur termini konfirmohet',
     tr_booking_reminder: '24 orë para terminit',
     tr_staff_new_order: 'Çdo porosi e re',
     tr_staff_new_inquiry: 'Çdo kërkesë e re',
     b_order_placed: 'Faleminderit për porosinë {number}. Totali: {total}. Do t’ju kontaktojmë për të dakorduar dorëzimin.',
-    b_order_confirmed: 'Porosia juaj {number} u konfirmua dhe po përgatitet.',
+    b_order_confirmed: 'Porosia juaj {number} u konfirmua dhe po paketohet në depon tonë në Mitrovicë.',
     b_payment_received: 'Regjistruam pagesën prej {total} për porosinë {number}. Faleminderit!',
     b_order_shipped: 'Porosia {number} është në rrugë. Numri i gjurmimit: {tracking}.',
     b_return_requested: 'Klienti {name} kërkoi kthim për porosinë {number}.',
@@ -176,13 +176,13 @@ const N = defineDict({
     tr_order_shipped: 'When the order ships',
     tr_return_requested: 'When a customer requests a return',
     tr_return_refunded: 'When the refund is issued',
-    tr_contact_received: 'After a contact or measurement form',
+    tr_contact_received: 'After a contact, quote or free-samples form',
     tr_booking_confirmed: 'When the appointment is confirmed',
     tr_booking_reminder: '24 h before the appointment',
     tr_staff_new_order: 'Every new order',
     tr_staff_new_inquiry: 'Every new enquiry',
     b_order_placed: 'Thank you for order {number}. Total: {total}. We’ll contact you to arrange delivery.',
-    b_order_confirmed: 'Your order {number} is confirmed and being prepared.',
+    b_order_confirmed: 'Your order {number} is confirmed and being packed at our Mitrovica warehouse.',
     b_payment_received: 'We’ve recorded your payment of {total} for order {number}. Thank you!',
     b_order_shipped: 'Order {number} is on its way. Tracking number: {tracking}.',
     b_return_requested: 'Customer {name} requested a return for order {number}.',
@@ -251,6 +251,8 @@ function Subject({ text }: { text: string }) {
   );
 }
 
+const SAMPLE_SERVICE: Record<Lang, string> = { sq: 'Mostra falas', en: 'Free samples', me: 'Besplatni uzorci' };
+
 function useSamples(lang: Lang) {
   const orders = useDb((s) => s.orders);
   const inquiries = useDb((s) => s.inquiries);
@@ -263,22 +265,22 @@ function useSamples(lang: Lang) {
     const b = [...bookings].filter((x) => new Date(x.start).getTime() >= now).sort((x, y) => x.start.localeCompare(y.start))[0] ?? bookings[0];
     const svc = services.find((s) => s.id === b?.serviceId);
     const start = b ? new Date(b.start) : new Date();
-    const locale = lang === 'sq' ? 'sq-AL' : lang === 'en' ? 'en-GB' : 'sr-Latn-ME';
+    const locale = lang === 'sq' ? 'sq-AL' : lang === 'en' ? 'en-GB' : 'sr-Latn';
     return {
       order: {
-        number: o?.number ?? 'SC-1042',
-        total: money(o?.total ?? 249, lang),
-        name: o ? `${o.customer.firstName} ${o.customer.lastName}` : 'Ana Petrović',
-        email: o?.customer.email ?? 'kupac@example.com',
-        tracking: 'MNE-48213',
+        number: o?.number ?? 'PK-1042',
+        total: money(o?.total ?? 24.5, lang),
+        name: o ? `${o.customer.firstName} ${o.customer.lastName}` : 'Arben Krasniqi',
+        email: o?.customer.email ?? 'klienti@example.com',
+        tracking: 'RKS-48213',
       },
-      inquiry: { name: q?.name ?? 'Vesna Bulatović', email: q?.email ?? 'kupac@example.com' },
+      inquiry: { name: q?.name ?? 'Blerina Gashi', email: q?.email ?? 'klienti@example.com' },
       booking: {
-        name: b?.customerName ?? 'Marko Đurović',
-        email: b?.email ?? 'kupac@example.com',
+        name: b?.customerName ?? 'Arta Berisha',
+        email: b?.email ?? 'klienti@example.com',
         date: start.toLocaleDateString(locale, { day: 'numeric', month: 'long' }),
         time: start.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
-        service: svc ? svc.name[lang] || svc.name.me : 'Mjerenje',
+        service: svc ? lt(svc.name, lang) : SAMPLE_SERVICE[lang],
       },
     };
   }, [orders, inquiries, bookings, services, lang]);
@@ -326,7 +328,7 @@ function TemplateModal({ open, tpl, onClose, onApply, sender, staffEmail, compan
             {readOnly ? ta('close') : ta('cancel')}
           </Button>
           {!readOnly && (
-            <Button size="sm" shape="rounded" disabled={!subject.me.trim()} onClick={() => onApply({ ...tpl, subject })}>
+            <Button size="sm" shape="rounded" disabled={!subject.sq.trim()} onClick={() => onApply({ ...tpl, subject })}>
               {tAdmin('apply')}
             </Button>
           )}
@@ -345,7 +347,7 @@ function TemplateModal({ open, tpl, onClose, onApply, sender, staffEmail, compan
             value={subject[lang]}
             onChange={(v) => setSubject({ ...subject, [lang]: v })}
             readOnly={readOnly}
-            error={!subject.me.trim() ? tAdmin('emptySubject') : unknown.length ? tAdmin('unknownVar', { vars: unknown.map((u) => `{${u}}`).join(', ') }) : undefined}
+            error={!subject.sq.trim() ? tAdmin('emptySubject') : unknown.length ? tAdmin('unknownVar', { vars: unknown.map((u) => `{${u}}`).join(', ') }) : undefined}
           />
           <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
             <span className="mr-1 text-[12px] text-muted">{tAdmin('variables')}:</span>
@@ -372,7 +374,7 @@ function TemplateModal({ open, tpl, onClose, onApply, sender, staffEmail, compan
             </div>
             <div className="flex gap-2">
               <span className="w-14 shrink-0 text-muted">Subject</span>
-              <span className="min-w-0 font-semibold text-ink">{interpolate(subject[lang] || subject.me, vars)}</span>
+              <span className="min-w-0 font-semibold text-ink">{interpolate(lt(subject, lang), vars)}</span>
             </div>
           </div>
           <div className="bg-white px-5 py-5 text-[13.5px] leading-relaxed text-ink-soft">
@@ -413,7 +415,7 @@ export function NotificationsSection({ s, set, errors, readOnly }: SecProps) {
   const [open, setOpen] = useState(false);
 
   const list = s.notifications;
-  const sender = `info@${s.ext.domain || 'selca.me'}`;
+  const sender = `info@${s.ext.domain || 'paketoje.com'}`;
   const on = (ev: NotificationEvent) => list.find((n) => n.event === ev)?.enabled ?? false;
   const patch = (id: string, p: Partial<NotificationTemplate>) => set('notifications', list.map((n) => (n.id === id ? { ...n, ...p } : n)));
 
@@ -454,7 +456,7 @@ export function NotificationsSection({ s, set, errors, readOnly }: SecProps) {
                 </div>
               </div>
               <div className={cn('min-w-0 flex-1 pl-12 text-[13px] md:pl-0', n.enabled ? 'text-ink-soft' : 'text-muted')}>
-                <Subject text={n.subject[lang] || n.subject.me} />
+                <Subject text={lt(n.subject, lang)} />
               </div>
               <div className="flex shrink-0 items-center gap-3 pl-12 md:pl-0">
                 <StateText tone={n.enabled ? 'ok' : 'off'} className="w-[72px]">
@@ -551,7 +553,7 @@ export function NotificationsSection({ s, set, errors, readOnly }: SecProps) {
         )}
       </Panel>
 
-      {list.some((n) => !n.subject.me.trim()) && (
+      {list.some((n) => !n.subject.sq.trim()) && (
         <Note tone="amber" icon={TriangleAlert}>
           {t('emptySubject')}
         </Note>

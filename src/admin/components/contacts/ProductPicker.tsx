@@ -5,7 +5,7 @@ import { SearchInput, Thumb } from '@/admin/components/kit';
 import { defineDict, useDict, useL, useLang } from '@/i18n';
 import { useDb } from '@/store/db';
 import { basePrice } from '@/lib/pricing';
-import { money, perUnit } from '@/lib/format';
+import { money, moneyPiece, num, perUnit, piecesLabel, unitLabel } from '@/lib/format';
 import { searchProducts } from '@/lib/search';
 import type { Product } from '@/lib/types';
 
@@ -52,12 +52,19 @@ export function ProductPicker({ open, onClose, onPick }: { open: boolean; onClos
                   <span className="block truncate text-[13.5px] font-semibold text-ink">{l(p.name)}</span>
                   <span className="block truncate text-[12px] text-muted">
                     <span className="font-mono">{p.sku}</span>
+                    {p.unit === 'pack' && p.packSize ? ` · ${num(p.packSize, lang, 0)} ${piecesLabel(lang)}/${unitLabel('pack', lang)}` : ''}
                     {p.status === 'draft' && ` · ${t('draft')}`}
                   </span>
                 </span>
                 <span className="shrink-0 text-right text-[12.5px] tabular-nums text-ink-soft">
                   {money(basePrice(p), lang)} <span className="text-muted">{perUnit(p.unit, lang)}</span>
-                  {p.quoteOnly && <span className="block text-[11px] text-muted">{t('onRequest')}</span>}
+                  {p.quoteOnly ? (
+                    <span className="block text-[11px] text-muted">{t('onRequest')}</span>
+                  ) : p.unit === 'pack' && p.packSize ? (
+                    <span className="block text-[11px] text-muted">
+                      {moneyPiece(basePrice(p) / p.packSize, lang)}/{piecesLabel(lang)}
+                    </span>
+                  ) : null}
                 </span>
                 <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md border border-line text-muted transition-colors group-hover:border-ink/30 group-hover:text-ink">
                   <Plus className="h-3.5 w-3.5" />

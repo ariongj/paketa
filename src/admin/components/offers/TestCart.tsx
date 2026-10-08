@@ -6,13 +6,15 @@ import { QtyStepper } from '@/components/ui/misc';
 import { useL, useLang } from '@/i18n';
 import { basePrice, defaultOptions, priceCart } from '@/lib/pricing';
 import { money } from '@/lib/format';
+import { isPack, piecesOf, piecesText, unitWord } from '@/admin/components/products/units';
 import type { CartItem, Discount, Product } from '@/lib/types';
 import type { OfferData } from './hooks';
 import type { OfferX, RuleMode } from './model';
 import { Note, useOT } from './ui';
 
 const sellable = (p: Product) => p.status === 'active' && !p.quoteOnly && basePrice(p) > 0;
-const defaultQty = (p: Product) => (p.unit === 'm2' && p.packSize ? Math.max(1, Math.ceil(20 / p.packSize)) : 1);
+/** A realistic café order: 10 packs (e.g. 500 cups) for pack products, otherwise 1. */
+const defaultQty = (p: Product) => (isPack(p) ? 10 : 1);
 
 function suggest(discount: Discount | undefined, participating: Product[], products: Product[]): CartItem[] {
   const item = (p: Product, qty: number): CartItem => ({ key: `tc-${p.id}`, productId: p.id, qty, options: defaultOptions(p), installation: false });
@@ -68,12 +70,19 @@ export function TestCart({ draft, discount, mode, participating, data }: { draft
                 <Thumb src={line.product.images[0]} className="h-9 w-9" />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[13.5px] font-medium text-ink">{l(line.product.name)}</div>
-                  <div className="text-[12px] text-muted tabular-nums">
-                    {money(line.unitPrice, lang)} × {line.units}
-                    {line.product.unit === 'm2' ? ' m²' : ''}
+                  <div className="flex min-w-0 items-center gap-1.5 text-[12px] text-muted tabular-nums">
+                    <span className="truncate">
+                      {money(line.unitPrice, lang)} / {unitWord(line.product.unit, 1, lang)}
+                      {isPack(line.product) && <> · {piecesText(piecesOf(line.product, line.item.qty), lang)}</>}
+                    </span>
+                    {line.tierPct > 0 && (
+                      <span className="shrink-0 rounded bg-canvas px-1 text-[11px] font-semibold text-ink ring-1 ring-inset ring-line" title={t('tc_tier')}>
+                        −{line.tierPct}%
+                      </span>
+                    )}
                   </div>
                 </div>
-                <QtyStepper value={line.item.qty} onChange={(v) => setQty(line.item.key, v)} size="sm" min={1} max={99} />
+                <QtyStepper value={line.item.qty} onChange={(v) => setQty(line.item.key, v)} size="sm" min={1} max={999} />
                 <div className="w-24 shrink-0 text-right tabular-nums">
                   {line.discount > 0 && <div className="text-[11.5px] text-muted line-through">{money(line.lineTotal, lang)}</div>}
                   <div className="text-[13.5px] font-semibold text-ink">{money(line.lineTotal - line.discount, lang)}</div>

@@ -44,7 +44,7 @@ const PR = defineDict({
     exported: 'Izvoz podataka kupca je preuzet',
     auditDetail: 'Izvoz podataka kupca: {who}',
     example: 'Primjer',
-    deletion: 'Brisanje: marketinške saglasnosti i upiti brišu se odmah na zahtjev; narudžbe i fakture se anonimizuju i čuvaju 10 godina zbog zakonskih (fiskalnih) obaveza.',
+    deletion: 'Brisanje: marketinške saglasnosti i upiti brišu se odmah na zahtjev; narudžbe i fakture se anonimizuju i čuvaju u zakonskom roku za poreske (ATK) obaveze. Osnova: Zakon o zaštiti ličnih podataka Kosova.',
   },
   sq: {
     policies: 'Politikat',
@@ -73,7 +73,7 @@ const PR = defineDict({
     exported: 'Eksporti i të dhënave të klientit u shkarkua',
     auditDetail: 'Eksport i të dhënave të klientit: {who}',
     example: 'Shembull',
-    deletion: 'Fshirja: pëlqimet e marketingut dhe kërkesat fshihen menjëherë me kërkesë; porositë dhe faturat anonimizohen dhe ruhen 10 vjet për detyrime ligjore (fiskale).',
+    deletion: 'Fshirja: pëlqimet e marketingut dhe kërkesat fshihen menjëherë me kërkesë; porositë dhe faturat anonimizohen dhe ruhen në afatin ligjor për detyrimet tatimore (ATK). Baza: Ligji për mbrojtjen e të dhënave personale i Kosovës.',
   },
   en: {
     policies: 'Policies',
@@ -102,7 +102,7 @@ const PR = defineDict({
     exported: 'Customer data export downloaded',
     auditDetail: 'Customer data export: {who}',
     example: 'Example',
-    deletion: 'Deletion: marketing consents and enquiries are deleted right away on request; orders and invoices are anonymised and kept for 10 years for legal (fiscal) obligations.',
+    deletion: 'Deletion: marketing consents and enquiries are deleted right away on request; orders and invoices are anonymised and kept for the statutory period for tax (ATK) obligations. Basis: Kosovo’s Law on Personal Data Protection.',
   },
 });
 type PrKey = keyof typeof PR.me;

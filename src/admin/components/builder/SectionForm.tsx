@@ -71,7 +71,7 @@ function HeroForm({ data, set }: { data: DataOf<'hero'>; set: SetData<'hero'> })
     const first = data.slides[0];
     return {
       id: uid('s'),
-      image: first?.image ?? '/images/hero/living.webp',
+      image: first?.image ?? '/images/hero/kraft.webp',
       eyebrow: emptyL10n(),
       title: { me: B.me.newSlideTitle, sq: B.sq.newSlideTitle, en: B.en.newSlideTitle },
       subtitle: emptyL10n(),
@@ -231,7 +231,7 @@ function PromoForm({ data, set }: { data: DataOf<'promo'>; set: SetData<'promo'>
             value={data.code}
             onChange={(v) => set({ ...data, code: v.toUpperCase().replace(/\s+/g, '') })}
             leading={<Ticket className="h-4 w-4" />}
-            placeholder="SELCA10"
+            placeholder="KAFE15"
             className="font-mono uppercase tracking-wider"
             hint={t('codeHint')}
             spellCheck={false}
@@ -335,7 +335,7 @@ function StatsForm({ data, set }: { data: DataOf<'stats'>; set: SetData<'stats'>
           title={(s, i) => l(s.label) || t('figure', { n: i + 1 })}
           render={(s, up) => (
             <>
-              <TextField label={t('value')} value={s.value} onChange={(value) => up({ value })} hint={t('valueHint')} placeholder="48h" />
+              <TextField label={t('value')} value={s.value} onChange={(value) => up({ value })} hint={t('valueHint')} placeholder="24h" />
               <L10nInput label={t('label')} value={s.label} onChange={(label) => up({ label })} />
             </>
           )}

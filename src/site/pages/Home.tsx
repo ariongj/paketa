@@ -52,11 +52,12 @@ export default function Home() {
   usePageTitle(undefined);
   const enabled = useMemo(() => home.filter((s) => s.enabled), [home]);
 
-  // CMS live preview: the homepage builder posts { type: 'selca:scrollTo', id } into this iframe
+  // CMS live preview: the homepage builder posts { type: '<platform>:scrollTo', id } into this iframe
   useEffect(() => {
     const onMessage = (e: MessageEvent) => {
-      if (e.origin !== window.location.origin || e.data?.type !== 'selca:scrollTo') return;
-      const el = document.querySelector<HTMLElement>(`[data-section="${e.data.id}"]`);
+      const type = e.data?.type;
+      if (e.origin !== window.location.origin || typeof type !== 'string' || !type.endsWith(':scrollTo')) return;
+      const el = document.querySelector<HTMLElement>(`[data-section="${CSS.escape(String(e.data.id))}"]`);
       if (!el) return;
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       el.classList.add('preview-highlight');

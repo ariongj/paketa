@@ -7,7 +7,8 @@ import { Button, ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/misc';
 import { Card, FilterPills, PageHeader, SearchInput, Table, Td, Th, Tr } from '@/admin/components/kit';
 import { inv } from '@/admin/components/inventory/dict';
-import { PO_STATUSES, isOpenPo, isOverdue, poLeft } from '@/admin/components/inventory/helpers';
+import { PO_STATUSES, isOpenPo, isOverdue, lineLeft, sumPiecesText, sumQty, sumUnitsText } from '@/admin/components/inventory/helpers';
+import { unitWord } from '@/admin/components/products/units';
 import { Gate, PoStatusTag, ReceiveBar, Stat, Tag } from '@/admin/components/inventory/ui';
 import { PurchaseOrderEditor } from '@/admin/components/inventory/PurchaseOrderEditor';
 import { TransfersCard } from '@/admin/components/inventory/TransfersCard';
@@ -37,6 +38,8 @@ function PurchaseOrderList() {
   const navigate = useNavigate();
   const purchaseOrders = useDb((s) => s.purchaseOrders);
   const locations = useDb((s) => s.settings.locations);
+  const products = useDb((s) => s.products);
+  const productById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
   const [params, setParams] = useSearchParams();
   const q = params.get('q') ?? '';
   const status = ((['all', ...PO_STATUSES] as string[]).includes(params.get('status') ?? '') ? params.get('status') : 'all') as StatusF;
@@ -79,13 +82,15 @@ function PurchaseOrderList() {
     const open = purchaseOrders.filter(isOpenPo);
     return {
       open: open.length,
-      units: open.reduce((s, p) => s + poLeft(p), 0),
+      units: sumQty(open.flatMap((p) => p.lines.filter((x) => lineLeft(x) > 0).map((x) => ({ of: productById.get(x.productId), qty: lineLeft(x) })))),
       value: open.reduce((s, p) => s + p.lines.reduce((v, x) => v + Math.max(0, x.ordered - x.received - x.rejected) * x.cost, 0), 0),
       overdue: purchaseOrders.filter((p) => isOverdue(p)).length,
     };
-  }, [purchaseOrders]);
+  }, [purchaseOrders, productById]);
 
   const open = (p: PurchaseOrder) => navigate(`/admin/nabavke?id=${p.id}`);
+  /** Common unit of a document's lines (packs), null when mixed. */
+  const unitOfPo = (p: PurchaseOrder) => sumQty(p.lines.map((x) => ({ of: productById.get(x.productId), qty: 0 }))).unit;
   const expected = (p: PurchaseOrder) => (p.expectedAt ? date(p.expectedAt, lang, { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
 
   return (
@@ -105,7 +110,17 @@ function PurchaseOrderList() {
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat icon={ClipboardList} label={t('po_kpiOpen')} value={kpi.open} hint={t('po_kpiOpenHint')} />
-        <Stat icon={Truck} label={t('po_kpiUnits')} value={num(kpi.units, lang)} hint={t('po_kpiUnitsHint')} />
+        <Stat
+          icon={Truck}
+          label={t('po_kpiUnits')}
+          value={
+            <>
+              {num(kpi.units.qty, lang)}
+              {kpi.units.unit && <span className="ml-1.5 text-[13px] font-semibold text-muted">{unitWord(kpi.units.unit, kpi.units.qty, lang)}</span>}
+            </>
+          }
+          hint={[sumPiecesText(kpi.units, lang), t('po_kpiUnitsHint')].filter(Boolean).join(' · ')}
+        />
         {canCost ? (
           <Stat icon={Wallet} label={t('po_kpiValue')} value={moneyCompact(kpi.value, lang)} hint={t('po_kpiValueHint')} />
         ) : (
@@ -176,6 +191,7 @@ function PurchaseOrderList() {
                 {list.map((p) => {
                   const tot = purchaseOrderTotals(p);
                   const late = isOverdue(p);
+                  const unit = unitOfPo(p);
                   return (
                     <Tr key={p.id} onClick={() => open(p)}>
                       <Td>
@@ -200,11 +216,12 @@ function PurchaseOrderList() {
                         </div>
                       </Td>
                       <Td>
-                        <div className="w-[140px]">
-                          <div className="text-[13px] tabular-nums">
+                        <div className="w-[150px]">
+                          <div className="whitespace-nowrap text-[13px] tabular-nums">
                             <span className="font-semibold text-ink">{num(tot.received, lang)}</span>
                             <span className="text-muted"> / {num(tot.ordered, lang)}</span>
-                            {tot.rejected > 0 && <span className="ml-1.5 text-[12px] font-semibold text-red-700">−{num(tot.rejected, lang)}</span>}
+                            {unit && <span className="ml-1 text-[11.5px] text-muted">{unitWord(unit, tot.ordered, lang)}</span>}
+                            {tot.rejected > 0 && <span className="ml-1.5 text-[12px] font-semibold text-red-700" title={t('ed_rejected')}>−{num(tot.rejected, lang)}</span>}
                           </div>
                           <ReceiveBar className="mt-1" ordered={tot.ordered} received={tot.received} rejected={tot.rejected} />
                         </div>
@@ -221,6 +238,7 @@ function PurchaseOrderList() {
               {list.map((p) => {
                 const tot = purchaseOrderTotals(p);
                 const late = isOverdue(p);
+                const unitsText = (n: number) => sumUnitsText({ qty: n, unit: unitOfPo(p), pieces: 0 }, lang);
                 return (
                   <li key={p.id} onClick={() => open(p)} className="cursor-pointer space-y-2.5 px-4 py-4 transition-colors active:bg-canvas">
                     <div className="flex items-start justify-between gap-3">
@@ -243,8 +261,8 @@ function PurchaseOrderList() {
                     <ReceiveBar ordered={tot.ordered} received={tot.received} rejected={tot.rejected} />
                     <div className="flex items-center justify-between gap-2 text-[12.5px] text-muted">
                       <span className="tabular-nums">
-                        {t('ed_progress', { r: num(tot.received, lang), o: num(tot.ordered, lang) })}
-                        {tot.rejected > 0 && <span className="ml-1 font-semibold text-red-700">· {t('ed_rejectedN', { n: tot.rejected })}</span>}
+                        {t('ed_progress', { r: num(tot.received, lang), o: unitsText(tot.ordered) })}
+                        {tot.rejected > 0 && <span className="ml-1 font-semibold text-red-700">· {t('ed_rejectedN', { n: unitsText(tot.rejected) })}</span>}
                       </span>
                       {canCost ? <span className="font-semibold tabular-nums text-ink">{money(tot.cost, lang)}</span> : p.status !== 'closed' && <span>{expected(p)}</span>}
                     </div>

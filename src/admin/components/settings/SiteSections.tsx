@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Badge, Accent } from '@/components/ui/misc';
 import { Logo, LogoMark } from '@/components/brand/Logo';
 import { LANGS, emptyL10n, useDict, useL, useLang } from '@/i18n';
-import { brandScale, isHex } from '@/lib/color';
+import { DEFAULT_BRAND, brandScale, isHex } from '@/lib/color';
 import { money } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { T, type Key } from './i18n';
@@ -21,7 +21,7 @@ export function LanguagesSection({ s, set }: SectionProps) {
     <SectionCard id="languages" icon={Languages} title={t('s_languages')} description={t('s_languages_d')}>
       <div className="divide-y divide-line/70">
         {LANGS.map((l) => {
-          const primary = l.code === 'me';
+          const primary = l.code === 'sq';
           return (
             <ToggleRow
               key={l.code}
@@ -31,7 +31,7 @@ export function LanguagesSection({ s, set }: SectionProps) {
               description={t(`lang_${l.code}_d` as Key)}
               checked={primary || s.languages[l.code]}
               disabled={primary}
-              onChange={(v) => set('languages', { ...s.languages, me: true, [l.code]: v })}
+              onChange={(v) => set('languages', { ...s.languages, sq: true, [l.code]: v })}
             />
           );
         })}
@@ -143,25 +143,28 @@ export function AnnouncementsSection({ s, set }: SectionProps) {
 /* ------------------------------------------------------------------ */
 /* Izgled                                                              */
 /* ------------------------------------------------------------------ */
-export const DEFAULT_BRAND = '#9a2e2e';
-
+/** Paketoje greens (selectable brand colour) — lime and pink stay fixed accents. */
 const PRESETS: { hex: string; key: Key }[] = [
-  { hex: DEFAULT_BRAND, key: 'preset_selca' },
-  { hex: '#b0532c', key: 'preset_terracotta' },
-  { hex: '#8a6235', key: 'preset_oak' },
-  { hex: '#5a6b3f', key: 'preset_olive' },
-  { hex: '#1f5a63', key: 'preset_petrol' },
-  { hex: '#283d66', key: 'preset_navy' },
+  { hex: DEFAULT_BRAND, key: 'preset_brand' },
+  { hex: '#00bf63', key: 'preset_signal' },
+  { hex: '#0b4d2c', key: 'preset_forest' },
+  { hex: '#4f7a5c', key: 'preset_mint' },
+  { hex: '#0f6e6a', key: 'preset_teal' },
+  { hex: '#0f1d16', key: 'preset_ink' },
+];
+const ACCENTS: { hex: string; key: Key }[] = [
+  { hex: '#c1ff72', key: 'accent_lime' },
+  { hex: '#ff66c4', key: 'accent_pink' },
 ];
 
 const normHex = (v: string) => {
   const h = v.trim().replace(/^#?/, '#').toLowerCase();
   return h.length === 4 ? `#${h[1]}${h[1]}${h[2]}${h[2]}${h[3]}${h[3]}` : h;
 };
-/** Accepts "9a2e2e" as well as "#9a2e2e". */
+/** Accepts "00723a" as well as "#00723a". */
 const withHash = (v: string) => v.trim().replace(/^#?/, '#');
 
-/** "Sve za vaš dom" → "Sve za vaš *dom*" (last word in the italic brand serif). */
+/** "it's packaging" → "it's *packaging*" (last word gets the brand accent). */
 const accentLast = (text: string) => (text.includes('*') ? text : text.replace(/(\S+)\s*$/, '*$1*'));
 
 export function AppearanceSection({ s, set, savedBrand }: SectionProps & { savedBrand: string }) {
@@ -202,7 +205,7 @@ export function AppearanceSection({ s, set, savedBrand }: SectionProps & { saved
             />
             {normHex(s.brandColor) !== DEFAULT_BRAND && (
               <Button variant="ghost" size="sm" shape="rounded" icon={<RotateCcw className="h-3.5 w-3.5" />} onClick={() => pick(DEFAULT_BRAND)}>
-                {t('preset_selca')}
+                {t('preset_brand')}
               </Button>
             )}
           </div>
@@ -231,6 +234,17 @@ export function AppearanceSection({ s, set, savedBrand }: SectionProps & { saved
               );
             })}
           </div>
+
+          <div className="mt-6 mb-2.5 text-[11px] font-bold uppercase tracking-[0.16em] text-muted">{t('accents')}</div>
+          <div className="flex flex-wrap items-center gap-2">
+            {ACCENTS.map((a) => (
+              <span key={a.hex} className="inline-flex items-center gap-2 rounded-full border border-line bg-white py-1 pl-1 pr-3 text-[12px] font-semibold text-ink-soft">
+                <span className="h-6 w-6 rounded-full shadow-[inset_0_0_0_1px_rgb(0_0_0/0.1)]" style={{ background: a.hex }} />
+                {t(a.key)} <span className="font-mono text-[11px] font-normal uppercase text-muted">{a.hex}</span>
+              </span>
+            ))}
+          </div>
+          <p className="mt-1.5 text-xs text-muted">{t('accents_h')}</p>
 
           <div className="mt-6 mb-2.5 text-[11px] font-bold uppercase tracking-[0.16em] text-muted">{t('palette')}</div>
           <div className="flex h-8 overflow-hidden rounded-lg shadow-[inset_0_0_0_1px_rgb(0_0_0/0.06)]">
@@ -266,12 +280,12 @@ export function AppearanceSection({ s, set, savedBrand }: SectionProps & { saved
           <div className="p-5">
             <p className="eyebrow">{t('sampleEyebrow')}</p>
             <p className="display mt-2 text-[28px] leading-[1.08] text-ink">
-              <Accent text={accentLast(l(s.tagline) || 'SELCA')} />
+              <Accent text={accentLast(l(s.tagline) || "it's packaging")} />
             </p>
             <div className="mt-4 flex items-center gap-2">
               <Badge tone="brand">{t('sampleBadge')}</Badge>
-              <span className="text-[15px] font-bold text-brand-700">{money(249, lang)}</span>
-              <span className="text-xs text-muted line-through">{money(299, lang)}</span>
+              <span className="text-[15px] font-bold text-brand-700">{money(2.5, lang)}</span>
+              <span className="text-xs text-muted line-through">{money(3, lang)}</span>
             </div>
             <div className="mt-5 flex flex-wrap gap-2">
               <Button size="sm" tabIndex={-1}>
@@ -305,7 +319,7 @@ const clip = (s: string, max: number) => (s.length > max ? `${s.slice(0, max - 1
 
 function siteHost() {
   const h = typeof window !== 'undefined' ? window.location.hostname : '';
-  return !h || h === 'localhost' || /^[\d.]+$/.test(h) ? 'selca.me' : h;
+  return !h || h === 'localhost' || /^[\d.]+$/.test(h) ? 'paketoje.com' : h;
 }
 
 export function SeoSection({ s, set }: SectionProps) {
@@ -328,7 +342,7 @@ export function SeoSection({ s, set }: SectionProps) {
               <LogoMark className="h-3.5!" />
             </span>
             <span className="min-w-0 leading-tight">
-              <span className="block truncate text-[14px] text-[#202124]">{s.companyName || 'SELCA'}</span>
+              <span className="block truncate text-[14px] text-[#202124]">{s.companyName || 'Paketoje'}</span>
               <span className="block truncate text-[12px] text-[#4d5156]">https://{siteHost()}</span>
             </span>
           </div>
@@ -358,7 +372,7 @@ export function AdminSection({ s, set, errors }: SectionProps) {
           error={errors.adminEmail}
         />
         <p className="flex items-start gap-2.5 rounded-xl bg-sand/60 p-3.5 text-[12.5px] leading-relaxed text-ink-soft sm:mt-7">
-          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-ink" />
           {t('adminNote')}
         </p>
       </div>

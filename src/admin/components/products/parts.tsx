@@ -4,11 +4,11 @@ import { AnimatePresence, motion } from 'motion/react';
 import { AlertTriangle, Archive, Check, ChevronDown, CircleDashed, Ellipsis, Infinity as InfinityIcon, Minus, XCircle } from 'lucide-react';
 import { Label, Hint, FieldError, Switch } from '@/components/ui/Field';
 import { Badge } from '@/components/ui/misc';
-import { useDict, useLang } from '@/i18n';
+import { LANGS, useDict, useLang } from '@/i18n';
 import { common } from '@/i18n/common';
 import type { L10n, Lang, Product, ProductStatus } from '@/lib/types';
 import { discountPct } from '@/lib/pricing';
-import { num, unitLabel } from '@/lib/format';
+import { piecesNote, unitsText } from './units';
 import { cn } from '@/lib/utils';
 import { pd } from './dict';
 import { LOW_STOCK, isTracked, variantCount, type ProductX } from './model';
@@ -41,8 +41,11 @@ export function StatusLabel({ status, className }: { status: ProductStatus; clas
   );
 }
 
-/** "36 në 2 variante" (PDF p.12) — or "14 copë", "Me porosi", with a symbol for low / out of stock. */
-export function InventoryCell({ product, className }: { product: ProductX; className?: string }) {
+/**
+ * "340 pako" (+ "17.000 copë" underneath with `pieces`) · "36 në 2 variante" (PDF p.12) · "Me porosi" —
+ * stock is counted in selling units (packs), with a symbol for low / out of stock.
+ */
+export function InventoryCell({ product, className, pieces }: { product: ProductX; className?: string; pieces?: boolean }) {
   const t = useDict(pd, 'admin');
   const lang = useLang('admin');
   const v = variantCount(product);
@@ -55,15 +58,18 @@ export function InventoryCell({ product, className }: { product: ProductX; class
       </span>
     );
   const s = product.stock;
-  const unit = product.unit === 'm2' ? t('packsUnit') : unitLabel(product.unit, lang);
-  const text = v > 0 ? t(v === 1 ? 'inv_in_one' : 'inv_in_many', { n: num(s, lang), v }) : `${num(s, lang)} ${unit}`;
+  const text = v > 0 ? t(v === 1 ? 'inv_in_one' : 'inv_in_many', { n: unitsText(s, product.unit, lang), v }) : unitsText(s, product.unit, lang);
   const out = s <= 0;
   const low = !out && s <= LOW_STOCK;
+  const note = pieces && !out ? piecesNote(product, s, lang) : '';
   return (
-    <span className={cn('inline-flex items-center gap-1.5 whitespace-nowrap tabular-nums', out ? 'text-red-700' : low ? 'text-amber-800' : 'text-ink', className)} title={out ? t('outOfStock') : low ? t('lowStock') : undefined}>
-      {out ? <XCircle className="h-3.5 w-3.5" aria-hidden /> : low ? <AlertTriangle className="h-3.5 w-3.5" aria-hidden /> : null}
-      {text}
-      {(out || low) && <span className="sr-only">({out ? t('outOfStock') : t('lowStock')})</span>}
+    <span className={cn('inline-flex flex-col', className)}>
+      <span className={cn('inline-flex items-center gap-1.5 whitespace-nowrap tabular-nums', out ? 'text-red-700' : low ? 'text-amber-800' : 'text-ink')} title={out ? t('outOfStock') : low ? t('lowStock') : undefined}>
+        {out ? <XCircle className="h-3.5 w-3.5" aria-hidden /> : low ? <AlertTriangle className="h-3.5 w-3.5" aria-hidden /> : null}
+        {text}
+        {(out || low) && <span className="sr-only">({out ? t('outOfStock') : t('lowStock')})</span>}
+      </span>
+      {note && <span className="mt-0.5 whitespace-nowrap text-[11.5px] tabular-nums text-muted">{note}</span>}
     </span>
   );
 }
@@ -244,18 +250,18 @@ export function Segmented<T extends string>({ value, onChange, options, size = '
   );
 }
 
-/** ME / SQ / EN switch for a whole card; amber dot = translations missing in that language. */
+/** SQ / EN / SR switch for a whole card (order and labels from LANGS); amber dot = translations missing in that language. */
 export function LangTabs({ value, onChange, missing, title }: { value: Lang; onChange: (l: Lang) => void; missing?: Partial<Record<Lang, number>>; title?: string }) {
   return (
     <div className="flex rounded-lg bg-canvas p-0.5" title={title}>
-      {(['me', 'sq', 'en'] as Lang[]).map((l) => (
+      {LANGS.map(({ code: l, short }) => (
         <button
           key={l}
           type="button"
           onClick={() => onChange(l)}
           className={cn('relative rounded-md px-2 py-0.5 text-[11px] font-bold tracking-wide transition-colors', value === l ? 'bg-white text-ink shadow-sm' : 'text-muted hover:text-ink')}
         >
-          {l.toUpperCase()}
+          {short}
           {!!missing?.[l] && <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-amber-500" />}
         </button>
       ))}
@@ -263,15 +269,16 @@ export function LangTabs({ value, onChange, missing, title }: { value: Lang; onC
   );
 }
 
-/** Single-line localized input driven by an external language (see LangTabs). Shows the ME text as a hint when a translation is missing. */
+/** Single-line localized input driven by an external language (see LangTabs). Shows the Albanian (source) text as a hint when a translation is missing. */
 export function MiniL10n({ value, lang, onChange, placeholder, className, invalid }: { value: L10n; lang: Lang; onChange: (v: L10n) => void; placeholder?: string; className?: string; invalid?: boolean }) {
   const v = value ?? { me: '', sq: '', en: '' };
-  const missing = lang !== 'me' && !v[lang]?.trim() && !!v.me?.trim();
+  const missing = lang !== 'sq' && !v[lang]?.trim() && !!v.sq?.trim();
+  const short = LANGS.find((x) => x.code === lang)?.short ?? lang.toUpperCase();
   return (
     <div className={cn('relative min-w-0', className)}>
       <input
         value={v[lang] ?? ''}
-        placeholder={missing ? v.me : placeholder}
+        placeholder={missing ? v.sq : placeholder}
         aria-invalid={invalid || undefined}
         onChange={(e) => onChange({ ...v, [lang]: e.target.value })}
         className={cn(
@@ -279,7 +286,7 @@ export function MiniL10n({ value, lang, onChange, placeholder, className, invali
           missing ? 'border-amber-300 placeholder:italic' : invalid ? 'border-red-400' : 'border-line hover:border-ink/20',
         )}
       />
-      <span className={cn('pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded px-1 py-px text-[9.5px] font-bold tracking-wide', missing ? 'bg-amber-100 text-amber-800' : 'bg-canvas text-muted')}>{lang.toUpperCase()}</span>
+      <span className={cn('pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded px-1 py-px text-[9.5px] font-bold tracking-wide', missing ? 'bg-amber-100 text-amber-800' : 'bg-canvas text-muted')}>{short}</span>
     </div>
   );
 }
@@ -289,7 +296,7 @@ export function missingCounts(values: L10n[]): Record<Lang, number> {
   const out: Record<Lang, number> = { me: 0, sq: 0, en: 0 };
   for (const v of values) {
     if (!v || !(v.me?.trim() || v.sq?.trim() || v.en?.trim())) continue;
-    for (const l of ['me', 'sq', 'en'] as Lang[]) if (!v[l]?.trim()) out[l] += 1;
+    for (const { code: l } of LANGS) if (!v[l]?.trim()) out[l] += 1;
   }
   return out;
 }
@@ -360,12 +367,11 @@ export function StockPill({ product, className }: { product: Product; className?
         <span className="h-1.5 w-1.5 rounded-full bg-current" /> {t('outOfStock')}
       </span>
     );
-  const low = s <= 5;
-  const unit = product.unit === 'm2' ? t('packsUnit') : unitLabel(product.unit, lang);
+  const low = s <= LOW_STOCK;
   return (
     <span className={cn(base, low ? 'bg-amber-50 text-amber-800 ring-amber-600/20' : 'bg-emerald-50 text-emerald-700 ring-emerald-600/15', className)}>
       <span className={cn('h-1.5 w-1.5 rounded-full', low ? 'bg-amber-500' : 'bg-emerald-500')} />
-      {num(s, lang)} {unit}
+      {unitsText(s, product.unit, lang)}
     </span>
   );
 }

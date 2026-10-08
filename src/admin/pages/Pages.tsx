@@ -22,7 +22,7 @@ import { href } from '@/lib/paths';
 
 const T = defineDict({
   me: {
-    description: 'Informativne stranice — dostava, uslovi, reklamacije, privatnost. Svaka ima status, datum objave, šablon i SEO, na tri jezika.',
+    description: 'Informativne stranice — dostava, uslovi kupovine, povrat robe (5 dana), privatnost. Svaka ima status, datum objave, šablon i SEO, na tri jezika.',
     newPage: 'Nova stranica',
     colPage: 'Stranica',
     colStatus: 'Status',
@@ -33,7 +33,7 @@ const T = defineDict({
     drafts: 'Nacrti',
     scheduled: 'Zakazane',
     empty: 'Nema stranica',
-    emptyText: 'Kreirajte prvu informativnu stranicu — npr. „Dostava i ugradnja“.',
+    emptyText: 'Kreirajte prvu informativnu stranicu — npr. „Dostava i preuzimanje u depou“.',
     noMatch: 'Nijedna stranica ne odgovara pretrazi.',
     searchPh: 'Pretraži stranice…',
     deleteTitle: 'Obrisati stranicu „{name}“?',
@@ -49,13 +49,13 @@ const T = defineDict({
     tp_home: 'Početna',
     tp_about: 'O nama',
     tp_contact: 'Kontakt',
-    tp_services: 'Usluge',
-    tp_projects: 'Realizacije',
+    tp_services: 'Za biznis (usluge)',
+    tp_projects: 'Reference',
     tp_blog: 'Savjeti (blog)',
     tp_faq: 'Česta pitanja',
     w_editor: 'Editor',
     w_settings: 'Konfiguracija',
-    w_projects: 'Realizacije',
+    w_projects: 'Reference',
     w_blog: 'Blog',
     w_models: 'Modeli',
     w_services: 'Usluge (termini)',
@@ -65,7 +65,7 @@ const T = defineDict({
     noFooterPerm: 'Promjena menija se odmah objavljuje — potrebna je dozvola za objavu.',
   },
   sq: {
-    description: 'Faqet informative — dërgesa, kushtet, reklamacionet, privatësia. Secila ka status, datë publikimi, shabllon dhe SEO, në tre gjuhë.',
+    description: 'Faqet informative — dërgesa, kushtet e blerjes, kthimi i mallit (5 ditë), privatësia. Secila ka status, datë publikimi, shabllon dhe SEO, në tre gjuhë.',
     newPage: 'Faqe e re',
     colPage: 'Faqja',
     colStatus: 'Statusi',
@@ -76,7 +76,7 @@ const T = defineDict({
     drafts: 'Draftet',
     scheduled: 'Të planifikuara',
     empty: 'Nuk ka faqe',
-    emptyText: 'Krijoni faqen e parë informative — p.sh. „Dërgesa dhe montimi“.',
+    emptyText: 'Krijoni faqen e parë informative — p.sh. „Dërgesa dhe marrja në depo“.',
     noMatch: 'Asnjë faqe nuk përputhet me kërkimin.',
     searchPh: 'Kërko faqet…',
     deleteTitle: 'Të fshihet faqja „{name}“?',
@@ -92,13 +92,13 @@ const T = defineDict({
     tp_home: 'Ballina',
     tp_about: 'Rreth nesh',
     tp_contact: 'Kontakt',
-    tp_services: 'Shërbimet',
-    tp_projects: 'Projektet',
+    tp_services: 'Për biznese (shërbimet)',
+    tp_projects: 'Referencat',
     tp_blog: 'Këshilla (blog)',
     tp_faq: 'Pyetje të shpeshta',
     w_editor: 'Editori',
     w_settings: 'Konfigurimet',
-    w_projects: 'Projektet',
+    w_projects: 'Referencat',
     w_blog: 'Blogu',
     w_models: 'Modelet',
     w_services: 'Shërbimet (terminet)',
@@ -108,7 +108,7 @@ const T = defineDict({
     noFooterPerm: 'Ndryshimi i menusë publikohet menjëherë — kërkohet leje publikimi.',
   },
   en: {
-    description: 'Information pages — delivery, terms, returns, privacy. Each has a status, publish date, template and SEO, in three languages.',
+    description: 'Information pages — delivery, terms of purchase, returns (5 days), privacy. Each has a status, publish date, template and SEO, in three languages.',
     newPage: 'New page',
     colPage: 'Page',
     colStatus: 'Status',
@@ -119,7 +119,7 @@ const T = defineDict({
     drafts: 'Drafts',
     scheduled: 'Scheduled',
     empty: 'No pages yet',
-    emptyText: 'Create your first information page — e.g. “Delivery & installation”.',
+    emptyText: 'Create your first information page — e.g. “Delivery & warehouse pickup”.',
     noMatch: 'No page matches your search.',
     searchPh: 'Search pages…',
     deleteTitle: 'Delete the page “{name}”?',
@@ -135,13 +135,13 @@ const T = defineDict({
     tp_home: 'Home',
     tp_about: 'About us',
     tp_contact: 'Contact',
-    tp_services: 'Services',
-    tp_projects: 'Projects',
+    tp_services: 'For business (services)',
+    tp_projects: 'References',
     tp_blog: 'Advice (blog)',
     tp_faq: 'FAQ',
     w_editor: 'Editor',
     w_settings: 'Settings',
-    w_projects: 'Projects',
+    w_projects: 'References',
     w_blog: 'Blog',
     w_models: 'Models',
     w_services: 'Services (appointments)',
@@ -188,7 +188,7 @@ export default function Pages() {
     return pages.filter((p) => {
       if (filter !== 'all' && states.get(p.id) !== filter) return false;
       if (!needle) return true;
-      return fold(`${p.title.me} ${p.title.sq} ${p.title.en} ${p.slug} ${(p.tags ?? []).join(' ')}`).includes(needle);
+      return fold(`${p.title.sq} ${p.title.en} ${p.title.me} ${p.slug} ${(p.tags ?? []).join(' ')}`).includes(needle);
     });
   }, [pages, q, filter, states]);
 
@@ -206,8 +206,8 @@ export default function Pages() {
     const copy: PageX = {
       ...structuredClone(p),
       id: uid('pg'),
-      slug: `${p.slug}-kopija`.slice(0, 80),
-      title: { me: `${p.title.me} ${T.me.copySuffix}`, sq: p.title.sq ? `${p.title.sq} ${T.sq.copySuffix}` : '', en: p.title.en ? `${p.title.en} ${T.en.copySuffix}` : '' },
+      slug: `${p.slug}-kopje`.slice(0, 80),
+      title: { sq: `${p.title.sq || p.title.en || p.title.me} ${T.sq.copySuffix}`, en: p.title.en ? `${p.title.en} ${T.en.copySuffix}` : '', me: p.title.me ? `${p.title.me} ${T.me.copySuffix}` : '' },
       published: false,
       hidden: false,
       showInFooter: false,

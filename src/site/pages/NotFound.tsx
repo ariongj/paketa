@@ -5,48 +5,51 @@ import { Accent, Img } from '@/components/ui/misc';
 import { ButtonLink } from '@/components/ui/Button';
 import { usePageTitle } from '@/site/layout/SiteLayout';
 import { CategoryTiles } from '@/site/components/utility/CategoryTiles';
+import { Eyebrow } from '@/site/components/SectionHeading';
 import { defineDict, useDict } from '@/i18n';
-import { useCategories } from '@/store/hooks';
 
 const T = defineDict({
   me: {
     pageTitle: 'Stranica nije pronađena',
     eyebrow: 'Greška 404',
-    title: 'Ova vrata vode *nigdje*.',
-    text: 'Stranica koju tražite ne postoji ili je premještena. Ostatak doma je otvoren — krenite odavde.',
+    title: 'Ova kutija je *prazna*.',
+    text: 'Stranica koju tražite ne postoji ili je premještena. Ali naš magacin je pun — krenite odavde.',
     requested: 'Tražena adresa',
     home: 'Na početnu',
     products: 'Pogledajte proizvode',
-    searchPh: 'Pretražite vrata, podove, pločice…',
+    searchPh: 'Traži čaše, poklopce, posude…',
     searchBtn: 'Traži',
     maybeEyebrow: 'Možda tražite',
     maybeTitle: 'Krenite od *kategorije*',
+    empty: 'prazno',
   },
   sq: {
     pageTitle: 'Faqja nuk u gjet',
     eyebrow: 'Gabim 404',
-    title: 'Kjo derë nuk të çon *askund*.',
-    text: 'Faqja që kërkoni nuk ekziston ose është zhvendosur. Pjesa tjetër e shtëpisë është e hapur — nisni nga këtu.',
+    title: 'Kjo pako është *bosh*.',
+    text: 'Faqja që kërkoni nuk ekziston ose është zhvendosur. Por depoja jonë është plot — nisni nga këtu.',
     requested: 'Adresa e kërkuar',
     home: 'Në ballinë',
     products: 'Shikoni produktet',
-    searchPh: 'Kërkoni dyer, dysheme, pllaka…',
+    searchPh: 'Kërko gota, kapakë, enë…',
     searchBtn: 'Kërko',
     maybeEyebrow: 'Ndoshta kërkoni',
     maybeTitle: 'Nisni nga një *kategori*',
+    empty: 'bosh',
   },
   en: {
     pageTitle: 'Page not found',
     eyebrow: 'Error 404',
-    title: 'This door leads *nowhere*.',
-    text: 'The page you’re looking for doesn’t exist or has moved. The rest of the house is open — start here.',
+    title: 'This box is *empty*.',
+    text: 'The page you’re looking for doesn’t exist or has moved. Our warehouse is full, though — start here.',
     requested: 'Requested address',
     home: 'Back to home',
     products: 'Browse products',
-    searchPh: 'Search doors, floors, tiles…',
+    searchPh: 'Search cups, lids, containers…',
     searchBtn: 'Search',
     maybeEyebrow: 'You might be looking for',
     maybeTitle: 'Start with a *category*',
+    empty: 'empty',
   },
 });
 
@@ -54,33 +57,35 @@ export default function NotFound() {
   const t = useDict(T);
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const cats = useCategories();
   const [q, setQ] = useState('');
   usePageTitle(t('pageTitle'));
 
-  // The "0" is a doorway: an arched photo of the doors category
-  const door = cats.find((c) => c.slug === 'vrata') ?? cats[0];
-
   return (
     <>
-      <section className="relative isolate overflow-hidden border-b border-line">
+      <section className="relative isolate overflow-hidden border-b border-dashed border-ink/15">
         <div aria-hidden className="bg-grain absolute inset-0 -z-10" />
-        <div aria-hidden className="absolute inset-x-0 top-0 -z-10 h-full bg-[radial-gradient(70%_55%_at_50%_0%,var(--color-sand)_0%,transparent_75%)]" />
+        <div aria-hidden className="absolute inset-x-0 top-0 -z-10 h-full bg-[radial-gradient(70%_60%_at_50%_0%,var(--color-sand)_0%,transparent_75%)]" />
 
         <div className="container-x flex flex-col items-center pb-16 pt-12 text-center sm:pb-20 sm:pt-16">
-          <div className="eyebrow animate-fade-up">{t('eyebrow')}</div>
+          <Eyebrow className="animate-fade-up">{t('eyebrow')}</Eyebrow>
 
-          <div aria-hidden className="display mt-5 flex animate-fade-up select-none items-baseline justify-center text-[148px] leading-[0.78] tracking-[-0.04em] text-ink [animation-delay:60ms] sm:text-[230px] lg:text-[280px]">
+          {/* "404" — the zero is an open kraft box */}
+          <div aria-hidden className="display mt-6 flex animate-fade-up select-none items-center justify-center text-[140px] leading-[0.8] tracking-[-0.05em] text-ink [animation-delay:60ms] sm:text-[220px] lg:text-[260px]">
             <span>4</span>
-            <span className="relative mx-[0.04em] inline-block -translate-y-[0.035em] h-[0.72em] w-[0.5em] overflow-hidden rounded-t-full rounded-b-[0.06em] bg-sand shadow-[0_30px_60px_-30px_rgba(28,26,23,0.55)] ring-[0.035em] ring-ink">
-              {door && <Img src={door.image} small eager alt="" className="absolute inset-0 h-full w-full object-cover" />}
-              <span className="absolute inset-0 bg-gradient-to-t from-ink/35 to-transparent" />
-              <span className="absolute right-[18%] top-[55%] h-[0.035em] w-[0.08em] rounded-full bg-brand-600" />
+            <span className="relative mx-[0.06em] inline-block h-[0.74em] w-[0.62em]">
+              <span className="absolute inset-0 rotate-[-6deg] rounded-[0.12em] bg-kraft/60" />
+              <span className="absolute inset-0 overflow-hidden rounded-[0.12em] bg-sand ring-[0.03em] ring-ink shadow-[0_30px_60px_-30px_rgba(15,29,22,0.6)]">
+                <Img src="/images/misc/box.webp" small eager alt="" className="h-full w-full object-cover" />
+                <span className="absolute inset-[0.05em] rounded-[0.08em] border-[0.012em] border-dashed border-ink/40" />
+              </span>
+              <span className="absolute -right-[0.16em] -top-[0.1em] grid h-[0.36em] w-[0.36em] rotate-[14deg] place-items-center rounded-full bg-lime font-sans text-[0.07em] font-extrabold uppercase tracking-[0.1em] text-ink shadow-[0_10px_24px_-10px_rgba(15,29,22,0.6)]">
+                {t('empty')}
+              </span>
             </span>
             <span>4</span>
           </div>
 
-          <h1 className="display mt-8 max-w-2xl animate-fade-up text-[34px] leading-[1.06] text-ink [animation-delay:120ms] sm:mt-10 sm:text-[52px]">
+          <h1 className="display mt-8 max-w-2xl animate-fade-up text-[34px] leading-[1.04] text-ink [animation-delay:120ms] sm:mt-10 sm:text-[54px]">
             <Accent text={t('title')} />
           </h1>
           <p className="mt-4 max-w-xl animate-fade-up text-[16.5px] leading-relaxed text-muted [animation-delay:160ms]">{t('text')}</p>
@@ -106,7 +111,7 @@ export default function NotFound() {
               const v = q.trim();
               navigate(v ? `/kerko?q=${encodeURIComponent(v)}` : '/kerko');
             }}
-            className="mt-6 flex w-full max-w-md animate-fade-up items-center gap-2 rounded-full border border-line bg-white p-1.5 pl-5 shadow-[0_14px_40px_-28px_rgba(28,26,23,0.5)] transition-colors [animation-delay:260ms] focus-within:border-ink/30"
+            className="mt-6 flex w-full max-w-md animate-fade-up items-center gap-2 rounded-full border border-line bg-white p-1.5 pl-5 shadow-[0_14px_40px_-28px_rgba(15,29,22,0.5)] transition-colors [animation-delay:260ms] focus-within:border-brand-600"
           >
             <Search className="h-4 w-4 shrink-0 text-muted" />
             <input
@@ -125,9 +130,9 @@ export default function NotFound() {
       </section>
 
       <section className="container-x pt-14 sm:pt-20">
-        <div className="mb-8 text-center">
-          <div className="eyebrow mb-3">{t('maybeEyebrow')}</div>
-          <h2 className="display text-[30px] leading-[1.05] text-ink sm:text-[40px]">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <Eyebrow className="mb-4">{t('maybeEyebrow')}</Eyebrow>
+          <h2 className="display text-[30px] leading-[1.05] text-ink sm:text-[42px]">
             <Accent text={t('maybeTitle')} />
           </h2>
         </div>

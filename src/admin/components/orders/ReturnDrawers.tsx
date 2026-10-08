@@ -11,12 +11,13 @@ import { Thumb, confirmDialog } from '@/admin/components/kit';
 import { defineDict, useDict, useLang } from '@/i18n';
 import { useDb } from '@/store/db';
 import { useCan } from '@/store/hooks';
-import { fulfillmentOf, paymentOf, refundForLines } from '@/lib/orders';
+import { paymentOf, refundForLines } from '@/lib/orders';
+import { unitWord } from '@/admin/components/products/units';
 import { fold } from '@/lib/search';
 import { date, dateTime, money } from '@/lib/format';
 import { cn, round2 } from '@/lib/utils';
 import type { Order, OrderLine, ReturnRequest, ReturnStatus } from '@/lib/types';
-import { actorName, customerName, localizeLine } from './helpers';
+import { actorName, customerName, fulfilState, localizeLine } from './helpers';
 import { PayBadge, ReturnBadge } from './status';
 import { Eyebrow, SelectInput, Stepper, TextInput, Tip } from './ui';
 import { od } from './dict';
@@ -319,7 +320,7 @@ export function ReturnDrawer({ ret, onClose }: { ret: ReturnRequest | null; onCl
                   <p className="truncate text-[13px] text-ink-soft">
                     {customerName(order)} · {order.customer.phone}
                   </p>
-                  <p className="text-[12px] text-muted">{date(order.createdAt, lang)} · {to(`ful_${fulfillmentOf(order)}`)}</p>
+                  <p className="text-[12px] text-muted">{date(order.createdAt, lang)} · {to(`ful_${fulfilState(order)}`)}</p>
                 </div>
                 <PayBadge state={pay} />
               </div>
@@ -451,7 +452,7 @@ export function CreateReturnDrawer({ open, onClose, initialOrderId, onCreated }:
     return [...orders]
       .filter((o) => o.status !== 'cancelled' && o.items.some((l) => l.productId))
       .filter((o) => !f || fold(`${o.number} ${customerName(o)} ${o.customer.phone} ${o.customer.email}`).includes(f))
-      .sort((a, b) => Number(fulfillmentOf(b) !== 'unfulfilled') - Number(fulfillmentOf(a) !== 'unfulfilled') || b.createdAt.localeCompare(a.createdAt))
+      .sort((a, b) => Number(fulfilState(b) !== 'unfulfilled') - Number(fulfilState(a) !== 'unfulfilled') || b.createdAt.localeCompare(a.createdAt))
       .slice(0, 8);
   }, [orders, q]);
 
@@ -532,7 +533,7 @@ export function CreateReturnDrawer({ open, onClose, initialOrderId, onCreated }:
                         </span>
                         <span className="shrink-0 text-right">
                           <span className="block text-[13px] tabular-nums text-ink">{money(o.total, lang)}</span>
-                          <span className="block text-[11.5px] text-muted">{to(`ful_${fulfillmentOf(o)}`)}</span>
+                          <span className="block text-[11.5px] text-muted">{to(`ful_${fulfilState(o)}`)}</span>
                         </span>
                       </button>
                     </li>
@@ -560,7 +561,7 @@ export function CreateReturnDrawer({ open, onClose, initialOrderId, onCreated }:
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-[13.5px] font-medium text-ink">{name}</span>
                         <span className="block text-[12px] text-muted">
-                          {money(round2(refundForLines(order, [{ productId: l.productId, qty: 1 }])), lang)} / {l.unit === 'm2' ? to('items_one', { n: 1 }).replace(/^1\s*/, '') : '1'}
+                          {money(round2(refundForLines(order, [{ productId: l.productId, qty: 1 }])), lang)} / {unitWord(l.unit, 1, lang)}
                           {prev > 0 && <> · {t('alreadyReturned', { n: prev })}</>}
                         </span>
                       </span>

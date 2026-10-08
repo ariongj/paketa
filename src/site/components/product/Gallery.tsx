@@ -46,7 +46,7 @@ export function Gallery({ images, alt, className }: { images: string[]; alt: str
   return (
     <div className={cn('flex flex-col gap-3 lg:flex-row-reverse lg:gap-4', className)}>
       <div className="group/gal relative min-w-0 flex-1">
-        <div ref={track} onScroll={onScroll} className="no-scrollbar flex aspect-[4/5] snap-x snap-mandatory overflow-x-auto overflow-y-hidden rounded-3xl bg-sand">
+        <div ref={track} onScroll={onScroll} className="no-scrollbar flex aspect-square snap-x snap-mandatory overflow-x-auto overflow-y-hidden rounded-3xl bg-sand">
           {list.map((src, i) => (
             <button
               key={src + i}
@@ -110,7 +110,7 @@ export function Gallery({ images, alt, className }: { images: string[]; alt: str
               aria-label={`${i + 1} / ${list.length}`}
               aria-current={i === index}
               className={cn(
-                'relative aspect-[4/5] w-16 shrink-0 overflow-hidden rounded-xl bg-sand transition-all lg:w-full',
+                'relative aspect-square w-16 shrink-0 overflow-hidden rounded-xl bg-sand transition-all lg:w-full',
                 i === index ? 'ring-2 ring-ink ring-offset-2 ring-offset-paper' : 'opacity-70 hover:opacity-100',
               )}
             >
@@ -202,7 +202,7 @@ function Lightbox({ open, onClose, images, index, onIndex, alt }: { open: boolea
                   onIndex(i);
                 }}
                 aria-label={`${i + 1} / ${n}`}
-                className={cn('h-14 w-12 overflow-hidden rounded-lg transition-all', i === index ? 'ring-2 ring-white ring-offset-2 ring-offset-ink' : 'opacity-50 hover:opacity-90')}
+                className={cn('h-12 w-12 overflow-hidden rounded-lg transition-all', i === index ? 'ring-2 ring-white ring-offset-2 ring-offset-ink' : 'opacity-50 hover:opacity-90')}
               >
                 <Img src={src} small alt="" className="h-full w-full object-cover" />
               </button>

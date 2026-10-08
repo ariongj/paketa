@@ -141,7 +141,7 @@ function Form({ initial, exists, onClose }: { initial: Service; exists: boolean;
     if (!d.staffIds.length) err.staff = t('staffRequired');
     setErrors(err);
     if (Object.keys(err).length) return;
-    const name = { me: d.name.me.trim() || d.name.sq.trim(), sq: d.name.sq.trim() || d.name.me.trim(), en: d.name.en.trim() || d.name.me.trim() || d.name.sq.trim() };
+    const name = { me: d.name.me.trim() || d.name.sq.trim(), sq: d.name.sq.trim() || d.name.me.trim(), en: d.name.en.trim() || d.name.sq.trim() || d.name.me.trim() };
     const next: Service = {
       ...d,
       name,

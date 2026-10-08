@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { PD } from './dict';
 
 /** Section heading + horizontally scrolling row of product cards. */
-export function ProductRail({ eyebrow, title, products, action, className }: { eyebrow: string; title: string; products: Product[]; action?: ReactNode; className?: string }) {
+export function ProductRail({ id, eyebrow, title, products, action, className }: { id?: string; eyebrow: string; title: string; products: Product[]; action?: ReactNode; className?: string }) {
   const t = useDict(PD);
   const ref = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState({ start: true, end: false });
@@ -24,7 +24,7 @@ export function ProductRail({ eyebrow, title, products, action, className }: { e
   if (!products.length) return null;
 
   return (
-    <section className={className}>
+    <section id={id} className={cn('scroll-mt-28', className)}>
       <div className="container-x">
         <Reveal>
           <div className="flex items-end justify-between gap-6">

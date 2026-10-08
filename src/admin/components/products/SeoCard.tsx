@@ -5,7 +5,7 @@ import { useDict, useLang } from '@/i18n';
 import { useDb } from '@/store/db';
 import type { Product } from '@/lib/types';
 import { basePrice } from '@/lib/pricing';
-import { money } from '@/lib/format';
+import { money, perUnit } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { pd } from './dict';
 import { FormField, TextInput } from './parts';
@@ -40,12 +40,12 @@ export function SeoCard({
   const lang = useLang('admin');
   const adminEmail = useDb((s) => s.settings.adminEmail);
   const company = useDb((s) => s.settings.companyName);
-  const domain = adminEmail.split('@')[1] || 'selca.me';
+  const domain = adminEmail.split('@')[1] || 'paketoje.com';
   const seo = draft.seo ?? {};
   // Mirrors the storefront <title>: "{name} — {company}" (see usePageTitle).
-  const autoTitle = `${draft.name.me.trim() || t('f_title')} — ${company}`;
+  const autoTitle = `${draft.name.sq.trim() || t('f_title')} — ${company}`;
   const title = seo.title?.trim() || autoTitle;
-  const autoDesc = draft.short.me.trim() || draft.description.me.trim();
+  const autoDesc = draft.short.sq.trim() || draft.description.sq.trim();
   const desc = seo.description?.trim() || autoDesc;
   const price = basePrice(draft);
   const toOrder = draft.stock >= 999 || draft.stock <= 0;
@@ -111,11 +111,11 @@ export function SeoCard({
           </div>
           <div className="rounded-xl border border-line bg-white p-4 shadow-[0_1px_6px_rgb(32_33_36/0.08)]" style={GOOGLE_FONT}>
             <div className="flex items-center gap-2.5">
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-brand-600 text-[11px] font-extrabold text-white">{company.trim().charAt(0).toUpperCase() || 'S'}</span>
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-brand-600 text-[11px] font-extrabold text-white">{company.trim().charAt(0).toUpperCase() || 'P'}</span>
               <div className="min-w-0 leading-tight">
                 <div className="truncate text-[13.5px] text-[#202124]">{company}</div>
                 <div className="truncate text-[12px] text-[#4d5156]">
-                  https://{domain} › proizvod › {draft.slug || '…'}
+                  https://{domain} › produkt › {draft.slug || '…'}
                 </div>
               </div>
             </div>
@@ -123,7 +123,7 @@ export function SeoCard({
             <p className="mt-1 line-clamp-2 text-[13.5px] leading-[1.55] text-[#4d5156]">{desc || '—'}</p>
             {price > 0 && (
               <div className="mt-1.5 text-[13px] text-[#4d5156]">
-                {money(price, lang)} · <span className={toOrder ? '' : 'text-[#188038]'}>{stockLabel}</span>
+                {money(price, lang)} {perUnit(draft.unit, lang)} · <span className={toOrder ? '' : 'text-[#188038]'}>{stockLabel}</span>
               </div>
             )}
           </div>

@@ -48,7 +48,7 @@ export const ROLE_META: Record<RoleId, { name: L10n; description: L10n }> = {
   },
   orders: {
     name: { me: 'Narudžbe', sq: 'Porosi', en: 'Orders' },
-    description: { me: 'Isporuka, montaža i kontakt sa kupcima.', sq: 'Përmbushje, montim dhe kontakt me klientët.', en: 'Fulfilment, installation and customer contact.' },
+    description: { me: 'Priprema, štampa, dostava i kontakt sa kupcima.', sq: 'Përgatitja, printimi, dërgesa dhe kontakti me klientët.', en: 'Picking, logo print, delivery and customer contact.' },
   },
   editor: {
     name: { me: 'Urednik', sq: 'Redaktor', en: 'Editor' },
@@ -59,7 +59,7 @@ export const ROLE_META: Record<RoleId, { name: L10n; description: L10n }> = {
     description: { me: 'Ponude i popusti — objavu odobrava menadžer.', sq: 'Oferta dhe zbritje — publikimi miratohet nga menaxheri.', en: 'Offers and discounts — publishing approved by a manager.' },
   },
   reception: {
-    name: { me: 'Recepcija', sq: 'Recepsion', en: 'Reception' },
+    name: { me: 'Prodaja i recepcija', sq: 'Shitje & recepsion', en: 'Sales & front desk' },
     description: { me: 'Kontakti, upiti i termini.', sq: 'Kontakte, kërkesa dhe termine.', en: 'Contacts, enquiries and appointments.' },
   },
 };

@@ -12,12 +12,13 @@ import { discountState } from '@/lib/discounts';
 import { basePrice } from '@/lib/pricing';
 import { stockLevels } from '@/lib/inventory';
 import { money } from '@/lib/format';
+import { unitsText, unitWord } from '@/admin/components/products/units';
 import { fold } from '@/lib/search';
 import { href } from '@/lib/paths';
 import { cn, slugify } from '@/lib/utils';
 import type { Discount, DiscountState, Product } from '@/lib/types';
 import type { OfferData } from './hooks';
-import { DAY, fmtDay, fromLocalInput, offerProducts, rangeLabel, sameMoment, sourceOf, toLocalInput, type OfferX, type ProductSource, type RuleMode } from './model';
+import { DAY, defaultMarkets, fmtDay, fromLocalInput, offerProducts, rangeLabel, sameMoment, sourceOf, toLocalInput, type OfferX, type ProductSource, type RuleMode } from './model';
 import { FieldLabel, Help, Note, OfferStatusPill, SelectBox, TextInput, ruleLines, useOT } from './ui';
 
 export interface PrepareProps {
@@ -41,7 +42,7 @@ export function PrepareStep({ draft, set, mode, setMode, data, isNew, slugTaken 
 
   const setName = (name: OfferX['name']) => {
     const patch: Partial<OfferX> = { name };
-    if (slugAuto) patch.slug = slugify(name.me || name.sq || name.en);
+    if (slugAuto) patch.slug = slugify(name.sq || name.en || name.me);
     set(patch);
   };
 
@@ -85,7 +86,7 @@ export function PrepareStep({ draft, set, mode, setMode, data, isNew, slugTaken 
                 className="pl-[62px]"
               />
             </div>
-            {slugTaken ? <Help tone="error">{t('f_slugTaken')}</Help> : <Help>{t('f_slugHint', { url: `selca.me/oferta/${draft.slug || '…'}` })}</Help>}
+            {slugTaken ? <Help tone="error">{t('f_slugTaken')}</Help> : <Help>{t('f_slugHint', { url: `paketoje.com/oferta/${draft.slug || '…'}` })}</Help>}
           </div>
           <div>
             <FieldLabel htmlFor="of-owner">{t('f_owner')}</FieldLabel>
@@ -106,7 +107,7 @@ export function PrepareStep({ draft, set, mode, setMode, data, isNew, slugTaken 
       </Card>
 
       {/* ---------------- period ---------------- */}
-      <PeriodCard draft={draft} set={set} discount={mode === 'link' ? discount : undefined} tz={data.settings.timezone || 'Europe/Podgorica'} />
+      <PeriodCard draft={draft} set={set} discount={mode === 'link' ? discount : undefined} tz={data.settings.timezone || 'Europe/Belgrade'} />
 
       {/* ---------------- products ---------------- */}
       <ProductsCard draft={draft} set={set} data={data} discount={mode === 'link' ? discount : undefined} />
@@ -344,7 +345,7 @@ function ProductRow({ p, lang, onRemove, data }: { p: Product; lang: 'me' | 'sq'
   const l = useL('admin');
   const st = stockLevels(p, data.committed);
   const flag =
-    p.status !== 'active' ? { text: t('inactive'), cls: 'text-red-700' } : !st.tracked ? { text: t('madeToOrder'), cls: 'text-muted' } : st.available <= 0 ? { text: t('outOfStock'), cls: 'text-red-700' } : { text: t('lowStock', { n: st.available }), cls: st.available <= 5 ? 'text-amber-800' : 'text-muted' };
+    p.status !== 'active' ? { text: t('inactive'), cls: 'text-red-700' } : !st.tracked ? { text: t('madeToOrder'), cls: 'text-muted' } : st.available <= 0 ? { text: t('outOfStock'), cls: 'text-red-700' } : { text: t('lowStock', { n: unitsText(st.available, p.unit, lang) }), cls: st.available <= 5 ? 'text-amber-800' : 'text-muted' };
   return (
     <li className="flex items-center gap-3 bg-white px-3 py-2">
       <Thumb src={p.images[0]} className="h-9 w-9" />
@@ -354,7 +355,10 @@ function ProductRow({ p, lang, onRemove, data }: { p: Product; lang: 'me' | 'sq'
           {p.sku} · <span className={flag.cls}>{flag.text}</span>
         </div>
       </div>
-      <span className="shrink-0 text-[13px] font-semibold tabular-nums text-ink">{money(basePrice(p), lang)}</span>
+      <span className="shrink-0 text-[13px] font-semibold tabular-nums text-ink">
+        {money(basePrice(p), lang)}
+        <span className="font-normal text-muted"> / {unitWord(p.unit, 1, lang)}</span>
+      </span>
       {onRemove && (
         <button type="button" onClick={onRemove} aria-label="×" className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted hover:bg-canvas hover:text-ink">
           <X className="h-4 w-4" />
@@ -407,7 +411,10 @@ function ProductPicker({ open, onClose, selected, onChange, products }: { open: 
                     {p.status !== 'active' && ` · ${t('inactive')}`}
                   </span>
                 </span>
-                <span className="shrink-0 text-[13px] font-semibold tabular-nums">{money(basePrice(p), lang)}</span>
+                <span className="shrink-0 text-[13px] font-semibold tabular-nums">
+                  {money(basePrice(p), lang)}
+                  <span className="font-normal text-muted"> / {unitWord(p.unit, 1, lang)}</span>
+                </span>
               </button>
             </li>
           );
@@ -468,7 +475,7 @@ function DiscountSummary({ d, data, offerId }: { d: Discount; data: OfferData; o
 function AudienceCard({ draft, set, data, discount }: { draft: OfferX; set: (p: Partial<OfferX>) => void; data: OfferData; discount?: Discount }) {
   const t = useOT();
   const l = useL('admin');
-  const markets = draft.markets ?? ['mk-me'];
+  const markets = draft.markets ?? defaultMarkets(data.settings.markets);
   const seg = discount?.audience.type === 'segment' ? data.segments.find((s) => s.id === discount.audience.segmentId) : undefined;
   const combos = discount ? (['products', 'order', 'shipping'] as const).filter((k) => discount.combines[k]) : [];
   const toggle = (id: string) => set({ markets: markets.includes(id) ? markets.filter((x) => x !== id) : [...markets, id] });

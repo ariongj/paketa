@@ -7,8 +7,8 @@ import { useSettings } from '@/store/hooks';
 import { cn, rng } from '@/lib/utils';
 import { C } from './dict';
 
-/* Stylised, dependency-free "map": a rotated street grid, a river running into a
-   lake/coast, two main roads crossing at the showroom and a pulsing brand pin.
+/* Stylised, dependency-free "map" of the depot: a rotated street grid, the Ibar river
+   crossing the top, two main roads meeting at the warehouse and a pulsing brand pin.
    The SVG uses `slice` scaling, so its centre (400,320) is always the card centre
    — that's where the pin sits. */
 const VW = 800;
@@ -18,8 +18,7 @@ const CELL = 80;
 const MAIN_ROAD = 'M -40 418 C 170 372 300 336 400 320 C 520 301 650 262 840 196';
 const CROSS_ROAD = 'M 366 -40 C 382 90 392 210 400 320 C 409 430 432 540 458 680';
 const ROUTE = 'M 400 320 C 520 301 650 262 840 196';
-const RIVER = 'M 168 -20 C 196 70 128 150 160 236 C 190 316 120 380 104 470';
-const LAKE = 'M -10 432 C 64 418 124 452 176 500 C 226 546 262 596 338 650 L -10 650 Z';
+const RIVER = 'M -30 168 C 90 206 190 120 320 146 C 450 172 560 96 830 132';
 
 type Block = { x: number; y: number; w: number; h: number; o: number; park: boolean };
 
@@ -31,7 +30,7 @@ function useBlocks() {
       for (let col = -3; col < 13; col++) {
         const v = r();
         if (v < 0.07) continue; // empty lot
-        const park = v > 0.93;
+        const park = v > 0.9;
         const x = col * CELL + 12;
         const y = row * CELL + 12;
         const s = CELL - 24;
@@ -48,8 +47,8 @@ function useBlocks() {
   }, []);
 }
 
-/** Street name for the road label: "Magistralni put bb" → "Magistralni put". */
-const streetOf = (address: string) => address.replace(/\s+(bb|b\.b\.|\d+[a-z]?)$/i, '').trim();
+/** Street name for the road label: "Sylyshaj, Suhodoll" stays, "Rruga X nr. 12" → "Rruga X". */
+const streetOf = (address: string) => address.replace(/\s+(bb|b\.b\.|nr\.?\s*\d+[a-z]?|\d+[a-z]?)$/i, '').trim();
 
 export function MapCard({ className }: { className?: string }) {
   const c = useDict(C);
@@ -66,69 +65,69 @@ export function MapCard({ className }: { className?: string }) {
         rel="noreferrer"
         aria-label={c('map_open')}
         tabIndex={-1}
-        className="group relative block min-h-[340px] flex-1 overflow-hidden bg-[#ece4d7] sm:min-h-[400px]"
+        className="group relative block min-h-[320px] flex-1 overflow-hidden bg-[#eeeadf] sm:min-h-[380px]"
       >
         <svg viewBox={`0 0 ${VW} ${VH}`} preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full transition-transform duration-[1.6s] ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-[1.035]" aria-hidden>
           <defs>
             <path id={`${pathId}-main`} d={MAIN_ROAD} />
+            <path id={`${pathId}-river`} d={RIVER} />
           </defs>
-          <rect width={VW} height={VH} fill="#ece4d7" />
+          <rect width={VW} height={VH} fill="#eeeadf" />
 
           {/* City blocks + minor streets, slightly rotated for an organic feel */}
           <g transform={`rotate(-11 ${VW / 2} ${VH / 2})`}>
             {blocks.map((b, i) => (
-              <rect key={i} x={b.x} y={b.y} width={b.w} height={b.h} rx={5} fill={b.park ? '#d2dac2' : '#e0d3c0'} fillOpacity={b.park ? 1 : b.o} />
+              <rect key={i} x={b.x} y={b.y} width={b.w} height={b.h} rx={5} fill={b.park ? '#d3e6c9' : '#e2dccb'} fillOpacity={b.park ? 1 : b.o} />
             ))}
             {Array.from({ length: 17 }, (_, k) => (k - 3) * CELL).map((p) => (
-              <g key={p} stroke="#fbf8f3" strokeLinecap="round">
+              <g key={p} stroke="#fbfaf6" strokeLinecap="round">
                 <line x1={p} y1={-300} x2={p} y2={VH + 300} strokeWidth={(p / CELL) % 2 === 0 ? 9 : 5} />
                 <line x1={-300} y1={p} x2={VW + 300} y2={p} strokeWidth={(p / CELL) % 2 === 0 ? 9 : 5} />
               </g>
             ))}
           </g>
 
-          {/* Water: river flowing into a lake / coastline */}
-          <path d={RIVER} fill="none" stroke="#c6d6d5" strokeWidth={16} strokeLinecap="round" />
-          <path d={LAKE} fill="#c6d6d5" />
-          <path d={LAKE} fill="none" stroke="#b4c8c7" strokeWidth={2} />
-          <g fill="none" stroke="#ffffff" strokeOpacity={0.7} strokeWidth={2} strokeLinecap="round">
-            <path d="M 34 528 q 10 -6 20 0 t 20 0" />
-            <path d="M 92 574 q 10 -6 20 0 t 20 0" />
-            <path d="M 30 606 q 10 -6 20 0 t 20 0" />
-            <path d="M 170 612 q 10 -6 20 0 t 20 0" />
-          </g>
+          {/* River */}
+          <path d={RIVER} fill="none" stroke="#b6d8d2" strokeWidth={30} strokeLinecap="round" />
+          <path d={RIVER} fill="none" stroke="#c6e2dd" strokeWidth={20} strokeLinecap="round" />
+          <text fill="#5f938a" fontSize={12} fontStyle="italic" fontWeight={700} letterSpacing={3} dy={4} style={{ fontFamily: 'var(--font-sans)' }}>
+            <textPath href={`#${pathId}-river`} startOffset="64%">
+              {c('map_river')}
+            </textPath>
+          </text>
 
           {/* Main roads */}
-          <path d={CROSS_ROAD} fill="none" stroke="#d9cbb6" strokeWidth={19} strokeLinecap="round" />
-          <path d={CROSS_ROAD} fill="none" stroke="#fffdf9" strokeWidth={14} strokeLinecap="round" />
-          <path d={MAIN_ROAD} fill="none" stroke="#dcc49a" strokeWidth={25} strokeLinecap="round" />
-          <path d={MAIN_ROAD} fill="none" stroke="#f6e6c4" strokeWidth={20} strokeLinecap="round" />
-          <text fill="#8f7d62" fontSize={11} fontWeight={700} letterSpacing={2.4} dy={4} style={{ fontFamily: 'var(--font-sans)', textTransform: 'uppercase' }}>
-            <textPath href={`#${pathId}-main`} startOffset="19%">
+          <path d={CROSS_ROAD} fill="none" stroke="#dcd4c0" strokeWidth={19} strokeLinecap="round" />
+          <path d={CROSS_ROAD} fill="none" stroke="#ffffff" strokeWidth={14} strokeLinecap="round" />
+          <path d={MAIN_ROAD} fill="none" stroke="#e1cf9f" strokeWidth={25} strokeLinecap="round" />
+          <path d={MAIN_ROAD} fill="none" stroke="#fbf1d2" strokeWidth={20} strokeLinecap="round" />
+          <text fill="#8a7a55" fontSize={11} fontWeight={700} letterSpacing={2.4} dy={4} style={{ fontFamily: 'var(--font-sans)', textTransform: 'uppercase' }}>
+            <textPath href={`#${pathId}-main`} startOffset="12%">
               {street}
             </textPath>
           </text>
 
-          {/* Route to the showroom */}
+          {/* Route to the depot */}
           <path d={ROUTE} fill="none" className="stroke-brand-600" strokeWidth={5} strokeDasharray="0 11" strokeLinecap="round" />
         </svg>
 
         {/* soft vignette + grain */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_50%,rgba(226,216,200,0.75))]" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_50%,rgba(226,220,203,0.75))]" />
         <div className="bg-grain pointer-events-none absolute inset-0" />
 
         {/* Pin */}
         <div className="pointer-events-none absolute left-1/2 top-1/2">
-          <span className="absolute -left-12 -top-12 h-24 w-24 animate-ping rounded-full bg-brand-500/25 [animation-duration:2.4s]" />
-          <span className="absolute -left-7 -top-7 h-14 w-14 rounded-full bg-brand-500/15 ring-1 ring-brand-600/20" />
+          <span className="absolute -left-12 -top-12 h-24 w-24 animate-ping rounded-full bg-signal/25 [animation-duration:2.4s]" />
+          <span className="absolute -left-7 -top-7 h-14 w-14 rounded-full bg-signal/15 ring-1 ring-brand-600/20" />
           <span className="absolute -left-[5px] -top-[5px] h-2.5 w-2.5 rounded-full bg-brand-800 ring-[3px] ring-white" />
-          <svg viewBox="0 0 40 52" className="absolute bottom-[3px] left-0 h-[54px] w-[42px] -translate-x-1/2 drop-shadow-[0_12px_14px_rgba(77,24,25,0.35)] transition-transform duration-500 group-hover:-translate-y-1.5">
+          <svg viewBox="0 0 40 52" className="absolute bottom-[3px] left-0 h-[54px] w-[42px] -translate-x-1/2 drop-shadow-[0_12px_14px_rgba(0,48,24,0.35)] transition-transform duration-500 group-hover:-translate-y-1.5">
             <path d="M20 0C9 0 0 8.7 0 19.5 0 34 20 52 20 52s20-18 20-32.5C40 8.7 31 0 20 0Z" className="fill-brand-600" />
             <circle cx="20" cy="19.5" r="11" fill="#fff" />
-            <path d="M13.5 22 20 16.5 26.5 22" fill="none" className="stroke-brand-600" strokeWidth={2.6} />
-            <path d="M16.5 25 20 22 23.5 25" fill="none" stroke="#1c1a17" strokeWidth={1.8} />
+            {/* little box */}
+            <path d="M13.5 16.2 20 13 26.5 16.2V23L20 26.2 13.5 23Z" className="fill-lime" stroke="#0f1d16" strokeWidth={1.4} strokeLinejoin="round" />
+            <path d="M13.5 16.2 20 19.4 26.5 16.2M20 19.4V26.2" fill="none" stroke="#0f1d16" strokeWidth={1.4} strokeLinejoin="round" />
           </svg>
-          <div className="absolute bottom-[68px] left-0 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-white py-1.5 pl-2 pr-3.5 text-[12.5px] font-bold text-ink shadow-[0_14px_30px_-14px_rgba(28,26,23,0.5)] ring-1 ring-line">
+          <div className="absolute bottom-[68px] left-0 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-white py-1.5 pl-2 pr-3.5 text-[12.5px] font-bold text-ink shadow-[0_14px_30px_-14px_rgba(15,29,22,0.5)] ring-1 ring-line">
             <LogoMark className="h-[14px]" />
             {settings.companyName}
           </div>
@@ -139,7 +138,7 @@ export function MapCard({ className }: { className?: string }) {
           <span className="text-[10px] font-extrabold tracking-[0.08em] text-ink">{c('map_north')}</span>
           <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden>
             <path d="M12 2 16 12 12 10.4 8 12Z" className="fill-brand-600" />
-            <path d="M12 22 8 12 12 13.6 16 12Z" fill="#c9bba6" />
+            <path d="M12 22 8 12 12 13.6 16 12Z" fill="#c9c2ad" />
           </svg>
         </div>
         <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-full bg-white/85 px-3 py-1.5 text-[11px] font-semibold text-ink-soft ring-1 ring-line backdrop-blur">

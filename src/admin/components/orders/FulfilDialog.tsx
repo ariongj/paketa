@@ -8,7 +8,7 @@ import { defineDict, useDict, useLang } from '@/i18n';
 import { common } from '@/i18n/common';
 import { useDb } from '@/store/db';
 import type { Order } from '@/lib/types';
-import { CARRIERS, localizeLine, qtyLabel, type CarrierKey } from './helpers';
+import { CARRIERS, carrierKey, localizeLine, qtyLabel, type CarrierKey } from './helpers';
 import { Check, SelectInput, TextInput } from './ui';
 import { od } from './dict';
 
@@ -68,16 +68,17 @@ export function FulfilDialog({ order, open, onClose }: { order: Order; open: boo
   const lang = useLang('admin');
   const products = useDb((s) => s.products);
   const fulfillOrder = useDb((s) => s.fulfillOrder);
+  const setOrderStatus = useDb((s) => s.setOrderStatus);
   const addOrderNote = useDb((s) => s.addOrderNote);
 
   const [lines, setLines] = useState<Set<number>>(new Set());
-  const [carrier, setCarrier] = useState<CarrierKey>('selca');
+  const [carrier, setCarrier] = useState<CarrierKey>('van');
   const [tracking, setTracking] = useState('');
 
   useEffect(() => {
     if (!open) return;
     setLines(new Set(order.items.map((_, i) => i)));
-    setCarrier(order.delivery.method === 'pickup' ? 'pickup' : order.fulfillment?.carrier && (CARRIERS as readonly string[]).includes(order.fulfillment.carrier) ? (order.fulfillment.carrier as CarrierKey) : 'selca');
+    setCarrier(order.delivery.method === 'pickup' ? 'pickup' : carrierKey(order.fulfillment?.carrier) ?? 'van');
     setTracking('');
   }, [open, order]);
 
@@ -87,6 +88,8 @@ export function FulfilDialog({ order, open, onClose }: { order: Order; open: boo
   const submit = () => {
     if (!lines.size) return toast.error(t('noneSelected'));
     fulfillOrder(order.id, { carrier, tracking: tracking.trim() || undefined, partial });
+    // printing is done once the goods leave: "Në printim" → "E dërguar"
+    if (order.status === 'installation') setOrderStatus(order.id, 'shipped');
     if (partial) addOrderNote(order.id, t('partialNote', { items: names([...lines].sort((a, b) => a - b)) }));
     toast.success(partial ? t('donePartial', { n: order.number }) : t('done', { n: order.number }));
     onClose();
@@ -136,7 +139,7 @@ export function FulfilDialog({ order, open, onClose }: { order: Order; open: boo
                     <span className="block truncate text-[13.5px] font-medium text-ink">{loc.name}</span>
                     {loc.options && <span className="block truncate text-[12px] text-muted">{loc.options}</span>}
                   </span>
-                  <span className="shrink-0 text-[13px] tabular-nums text-ink-soft">{qtyLabel(l, lang, tc('packs'))}</span>
+                  <span className="shrink-0 text-[13px] tabular-nums text-ink-soft">{qtyLabel(l, lang, { short: true })}</span>
                 </li>
               );
             })}

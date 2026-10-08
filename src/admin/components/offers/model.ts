@@ -18,9 +18,18 @@ export type Step = 1 | 2 | 3;
 
 export const DAY = 86400000;
 const E = (): L10n => ({ me: '', sq: '', en: '' });
-export const LANG_CODES: Lang[] = ['me', 'sq', 'en'];
+/** Tab / check order: Albanian (primary) · English · Serbian. */
+export const LANG_CODES: Lang[] = ['sq', 'en', 'me'];
+/** Short labels — the internal `me` key is Serbian (Latin) now. */
+export const LANG_SHORT: Record<Lang, string> = { sq: 'SQ', en: 'EN', me: 'SR' };
 
-export function emptyOffer(ownerId: string): OfferX {
+/** Markets a new offer appears in: Kosovo when configured, otherwise the first active market. */
+export function defaultMarkets(markets: { id: string; status: string }[]): string[] {
+  const m = markets.find((x) => x.id === 'mk-xk') ?? markets.find((x) => x.status === 'active') ?? markets[0];
+  return m ? [m.id] : [];
+}
+
+export function emptyOffer(ownerId: string, markets: string[] = ['mk-xk']): OfferX {
   const start = new Date();
   start.setDate(start.getDate() + 1);
   start.setHours(0, 0, 0, 0);
@@ -42,7 +51,7 @@ export function emptyOffer(ownerId: string): OfferX {
     utm: '',
     metrics: { visits: 0, ctaClicks: 0, codeUses: 0, orders: 0, revenue: 0, discountTotal: 0 },
     createdAt: new Date().toISOString(),
-    markets: ['mk-me'],
+    markets,
   };
 }
 
@@ -72,7 +81,7 @@ const MONTHS: Record<Lang, string[]> = {
   sq: ['janar', 'shkurt', 'mars', 'prill', 'maj', 'qershor', 'korrik', 'gusht', 'shtator', 'tetor', 'nëntor', 'dhjetor'],
   en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
 };
-/** "26. sep" (ME) · "26 shtator" (SQ) · "26 Sep" (EN), optionally with the year and the time. */
+/** "26 shtator" (SQ) · "26 Sep" (EN) · "26. sep" (SR), optionally with the year and the time. */
 export function fmtDay(iso: string, lang: Lang, opts: { year?: boolean; time?: boolean } = {}) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
@@ -131,7 +140,7 @@ export function slotsFor(linked: Placement[], homeBlock: boolean): OfferSlot[] {
   return (['hero', 'banner', 'announcement', 'home-block'] as OfferSlot[]).filter((s) => set.has(s));
 }
 
-/** ME plural forms (1 slajd · 2 slajda · 5 slajdova); SQ/EN use one/many. */
+/** SR plural forms (1 slajd · 2 slajda · 5 slajdova); SQ/EN use one/many. */
 export function pluralForm(n: number): 'one' | 'few' | 'many' {
   const m10 = n % 10;
   const m100 = n % 100;
@@ -147,14 +156,14 @@ const CTA_LABEL: L10n = { me: 'Pogledajte ponudu', sq: 'Shikoni ofertën', en: '
 
 export function placementFromOffer(o: OfferX, kind: PlacementKind, order: number, status: Placement['status']): Placement {
   const href = `/oferta/${o.slug}`;
-  const nameMe = o.name.me || o.name.sq || o.name.en || 'Ponuda';
-  const label = { slide: 'Hero', banner: 'Katalog', announcement: 'Traka' }[kind];
+  const name = o.name.sq || o.name.en || o.name.me || 'Oferta';
+  const label = { slide: 'Slide', banner: 'Katalog', announcement: 'Shirit' }[kind];
   const barText = (lang: Lang) => [plain(o.badge[lang] || ''), plain(o.landing.title[lang] || o.name[lang] || '')].filter(Boolean).join(' — ');
   return {
     id: uid('pl'),
     kind,
     position: KIND_POSITION[kind],
-    name: `${label} — ${nameMe}`,
+    name: `${label} — ${name}`,
     eyebrow: kind === 'announcement' ? E() : { ...o.badge },
     title: kind === 'announcement' ? { me: barText('me'), sq: barText('sq'), en: barText('en') } : { ...o.landing.title },
     subtitle: kind === 'announcement' ? E() : { ...o.landing.text },
@@ -182,7 +191,7 @@ export interface LinkCtx {
   /** Slug of the offer being edited (valid even before it is saved) */
   selfSlug?: string;
 }
-const STATIC = new Set(['/', '/produktet', '/sherbimet', '/referencat', '/rreth-nesh', '/kontakti', '/blog', '/shporta', '/kerko', '/te-preferuarat']);
+const STATIC = new Set(['/', '/produktet', '/sherbimet', '/referencat', '/rreth-nesh', '/kontakti', '/blog', '/shporta', '/pagesa', '/kerko', '/te-preferuarat']);
 
 export function linkOk(href: string, c: LinkCtx): boolean {
   const h = (href ?? '').trim();
@@ -194,17 +203,17 @@ export function linkOk(href: string, c: LinkCtx): boolean {
   const [, a, b, extra] = path.split('/');
   if (!b || extra) return false;
   switch (a) {
-    case 'proizvodi':
+    case 'produktet':
       return c.categories.some((x) => x.slug === b);
-    case 'proizvod':
+    case 'produkt':
       return c.products.some((p) => p.slug === b && p.status === 'active');
-    case 'kolekcija':
+    case 'koleksioni':
       return c.collections.some((x) => x.slug === b && x.published);
     case 'oferta':
       return b === c.selfSlug || c.offers.some((o) => o.slug === b);
-    case 'stranica':
+    case 'faqe':
       return c.pages.some((x) => x.slug === b);
-    case 'savjeti':
+    case 'blog':
       return c.posts.some((x) => x.slug === b);
     default:
       return false;
@@ -333,7 +342,7 @@ export function runChecks(x: CheckInput): Check[] {
   const missing: { key: OfKey; langs: string }[] = [];
   for (const [v, key] of fields) {
     const langs = LANG_CODES.filter((lg) => !v[lg]?.trim());
-    if (langs.length) missing.push({ key, langs: langs.map((s) => s.toUpperCase()).join('/') });
+    if (langs.length) missing.push({ key, langs: langs.map((s) => LANG_SHORT[s]).join('/') });
   }
   if (missing.length) out.push({ id: 'i18n', group: 'content', level: 'warn', key: 'ck_translationsMissing', fields: missing, fix: missing[0].key === 'f_name' ? 'basics' : missing[0].key === 'badge' ? 'badge' : 'landing' });
   else out.push({ id: 'i18n', group: 'content', level: 'ok', key: 'ck_translationsOk' });

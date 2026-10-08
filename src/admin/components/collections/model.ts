@@ -29,7 +29,7 @@ export function defaultRule(field: CollectionRuleField = 'category', categories:
   return { field, op, value };
 }
 
-/** "Kategoria është Dysheme" — for lists and previews. */
+/** "Kategoria është Gota" — for lists and previews. */
 export function ruleText(r: CollectionRule, ctx: { t: T; l: (v: L10n) => string; categories: Category[]; badge: (b: string) => string; status: (s: string) => string; money: (v: number) => string }) {
   const { t, l, categories } = ctx;
   let value = r.value;
@@ -62,7 +62,7 @@ export function collectionUsage(c: Collection, db: Pick<Db, 'discounts' | 'offer
 export const usageCount = (u: CollectionUsage) => u.discounts.length + u.offers.length + u.menus.length;
 
 export function uniqueCollectionSlug(base: string, selfId: string, list: Pick<Collection, 'id' | 'slug'>[]) {
-  const root = base || 'kolekcija';
+  const root = base || 'koleksion';
   let s = root;
   let n = 2;
   while (list.some((c) => c.slug === s && c.id !== selfId)) s = `${root}-${n++}`;

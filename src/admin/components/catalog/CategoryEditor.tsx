@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import { toast } from 'sonner';
-import { Link2, RefreshCw, Star } from 'lucide-react';
+import { Hourglass, Link2, RefreshCw, Star } from 'lucide-react';
 import { Modal } from '@/components/ui/Overlay';
 import { Button } from '@/components/ui/Button';
 import { FieldError, Hint, Label, Switch } from '@/components/ui/Field';
@@ -19,7 +19,7 @@ const T = defineDict({
     newText: 'Kategorija se odmah pojavljuje u meniju, na početnoj i u prodavnici.',
     editText: 'Izmjene su vidljive na sajtu čim ih sačuvate.',
     name: 'Naziv',
-    namePh: 'npr. Rasvjeta',
+    namePh: 'npr. Kutije za picu',
     tagline: 'Podnaslov',
     taglinePh: 'Kratak opis ispod naziva',
     description: 'Opis',
@@ -27,12 +27,14 @@ const T = defineDict({
     image: 'Naslovna fotografija',
     imageHint: 'Uspravna fotografija (4:5) najbolje izgleda na početnoj.',
     slug: 'Adresa (URL)',
-    slugAuto: 'Generiše se automatski iz crnogorskog naziva.',
+    slugAuto: 'Generiše se automatski iz albanskog naziva.',
     slugManual: 'Adresa je ručno podešena.',
     slugRegen: 'Generiši iz naziva',
     featured: 'Istaknuta kategorija',
     featuredText: 'Označava kategoriju kao jednu od glavnih ponuda.',
-    errName: 'Unesite naziv na crnogorskom.',
+    soon: 'Uskoro',
+    soonText: 'Asortiman je najavljen, ali još nije u prodaji — na sajtu se umjesto proizvoda prikazuje obrazac „Javite mi“.',
+    errName: 'Unesite naziv na albanskom (SQ).',
     errSlug: 'Unesite adresu kategorije.',
     errSlugTaken: 'Ova adresa je već zauzeta.',
     saved: 'Kategorija je sačuvana',
@@ -44,7 +46,7 @@ const T = defineDict({
     newText: 'Kategoria shfaqet menjëherë në meny, në faqen kryesore dhe në dyqan.',
     editText: 'Ndryshimet shfaqen në faqe sapo t’i ruani.',
     name: 'Emri',
-    namePh: 'p.sh. Ndriçimi',
+    namePh: 'p.sh. Kuti pice',
     tagline: 'Nëntitulli',
     taglinePh: 'Përshkrim i shkurtër nën emër',
     description: 'Përshkrimi',
@@ -52,12 +54,14 @@ const T = defineDict({
     image: 'Fotografia kryesore',
     imageHint: 'Një foto vertikale (4:5) duket më mirë në faqen kryesore.',
     slug: 'Adresa (URL)',
-    slugAuto: 'Krijohet automatikisht nga emri në malazezisht.',
+    slugAuto: 'Krijohet automatikisht nga emri në shqip.',
     slugManual: 'Adresa është vendosur manualisht.',
     slugRegen: 'Krijo nga emri',
     featured: 'Kategori e veçuar',
     featuredText: 'E shënon kategorinë si një nga ofertat kryesore.',
-    errName: 'Shkruani emrin në malazezisht.',
+    soon: 'Së shpejti',
+    soonText: 'Gama është e paralajmëruar, por ende jo në shitje — në faqe shfaqet formulari „Më njoftoni“ në vend të produkteve.',
+    errName: 'Shkruani emrin në shqip (SQ).',
     errSlug: 'Shkruani adresën e kategorisë.',
     errSlugTaken: 'Kjo adresë është tashmë e zënë.',
     saved: 'Kategoria u ruajt',
@@ -69,7 +73,7 @@ const T = defineDict({
     newText: 'The category appears straight away in the menu, on the homepage and in the shop.',
     editText: 'Changes go live on the site as soon as you save.',
     name: 'Name',
-    namePh: 'e.g. Lighting',
+    namePh: 'e.g. Pizza boxes',
     tagline: 'Tagline',
     taglinePh: 'Short line under the name',
     description: 'Description',
@@ -77,12 +81,14 @@ const T = defineDict({
     image: 'Cover photo',
     imageHint: 'A portrait photo (4:5) looks best on the homepage.',
     slug: 'Address (URL)',
-    slugAuto: 'Generated automatically from the Montenegrin name.',
+    slugAuto: 'Generated automatically from the Albanian name.',
     slugManual: 'The address was set manually.',
     slugRegen: 'Generate from name',
     featured: 'Featured category',
     featuredText: 'Marks the category as one of your main offers.',
-    errName: 'Enter the Montenegrin name.',
+    soon: 'Coming soon',
+    soonText: 'The range is announced but not on sale yet — the site shows a “Notify me” form instead of products.',
+    errName: 'Enter the Albanian (SQ) name.',
     errSlug: 'Enter the category address.',
     errSlugTaken: 'This address is already taken.',
     saved: 'Category saved',
@@ -114,15 +120,15 @@ export function CategoryEditor({ open, category, onClose }: { open: boolean; cat
 
   const isNew = !category;
   const [draft, setDraft] = useState<Category>(() => (category ? structuredClone(category) : blank(categories.reduce((m, c) => Math.max(m, c.order), 0) + 1)));
-  const [slugAuto, setSlugAuto] = useState(() => !category || category.slug === slugify(category.name.me));
+  const [slugAuto, setSlugAuto] = useState(() => !category || category.slug === slugify(category.name.sq));
   const [touched, setTouched] = useState(false);
 
   const set = (patch: Partial<Category>) => setDraft((d) => ({ ...d, ...patch }));
-  const slug = slugAuto ? slugify(draft.name.me) : draft.slug;
+  const slug = slugAuto ? slugify(draft.name.sq) : draft.slug;
   const finalSlug = slugify(slug);
   const slugTaken = !!finalSlug && categories.some((c) => c.id !== draft.id && c.slug === finalSlug);
   const errors = {
-    name: !draft.name.me.trim() ? t('errName') : undefined,
+    name: !draft.name.sq.trim() ? t('errName') : undefined,
     slug: !finalSlug ? t('errSlug') : slugTaken ? t('errSlugTaken') : undefined,
   };
 
@@ -171,6 +177,18 @@ export function CategoryEditor({ open, category, onClose }: { open: boolean; cat
                 <p className="mt-1 text-xs leading-snug text-muted">{t('featuredText')}</p>
               </div>
               <Switch size="sm" checked={draft.featured} onChange={(featured) => set({ featured })} />
+            </div>
+          </div>
+          <div className={cn('rounded-xl border p-3.5 transition-colors', draft.soon ? 'border-ink/25 bg-ink/[0.03]' : 'border-line bg-canvas/40')}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 text-[13px] font-bold text-ink">
+                  <Hourglass className={cn('h-3.5 w-3.5', draft.soon ? 'text-ink' : 'text-muted')} />
+                  {t('soon')}
+                </div>
+                <p className="mt-1 text-xs leading-snug text-muted">{t('soonText')}</p>
+              </div>
+              <Switch size="sm" checked={!!draft.soon} onChange={(soon) => set({ soon: soon || undefined })} />
             </div>
           </div>
         </div>

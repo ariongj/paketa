@@ -3,7 +3,8 @@ import { Link } from 'react-router';
 import { AlertTriangle, ArrowUpRight, Check, ChevronDown, Eye, EyeOff, Infinity as InfinityIcon, Pencil, Wand2 } from 'lucide-react';
 import { Card } from '@/admin/components/kit';
 import { useDict, useL, useLang } from '@/i18n';
-import { money, num, unitLabel } from '@/lib/format';
+import { money, num } from '@/lib/format';
+import { piecesNote, unitWord } from './units';
 import type { Lang, Product, ProductOption } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { pd } from './dict';
@@ -33,7 +34,7 @@ export function VariantsCard({
   takenSkus,
   skuError,
 }: {
-  product: Pick<Product, 'price' | 'salePrice' | 'options' | 'unit' | 'incoming' | 'unavailable'>;
+  product: Pick<Product, 'price' | 'salePrice' | 'options' | 'unit' | 'packSize' | 'incoming' | 'unavailable'>;
   options: ProductOption[];
   onOptions: (o: ProductOption[]) => void;
   variants: Variant[];
@@ -56,10 +57,11 @@ export function VariantsCard({
   const [editing, setEditing] = useState(options.length === 0);
   const l = useL('admin');
   const missing = useMemo(() => missingCounts(options.flatMap((o) => [o.name, ...o.values.map((v) => v.label)])), [options]);
-  const unit = product.unit === 'm2' ? t('packsUnit') : unitLabel(product.unit, lang);
+  const unit = unitWord(product.unit, 2, lang);
   const incoming = product.incoming ?? 0;
   const blocked = product.unavailable ?? 0;
-  const stockHint = !tracked ? undefined : stock <= 0 ? t('outOfStockWarn') : stock <= LOW_STOCK ? t('lowStockWarn') : product.unit === 'm2' ? t('stockPacksH') : undefined;
+  const pcs = tracked && stock > 0 ? piecesNote(product, stock, lang) : '';
+  const stockHint = !tracked ? undefined : stock <= 0 ? t('outOfStockWarn') : stock <= LOW_STOCK ? `${t('lowStockWarn')}${pcs ? ` (${pcs})` : ''}` : pcs ? t('stockPacksH', { pieces: pcs }) : undefined;
 
   return (
     <Card title={t('c_variants')} description={t('c_variants_d')} actions={options.length > 0 && editing && <LangTabs value={optLang} onChange={setOptLang} missing={missing} title={t('langHint')} />} padded={false}>
@@ -93,7 +95,7 @@ export function VariantsCard({
                     <span key={v.id} className="inline-flex items-center gap-1.5 rounded-md bg-ink/[0.05] px-2 py-0.5 text-[12.5px] text-ink">
                       {o.type === 'swatch' && <span className="h-3 w-3 rounded-full ring-1 ring-inset ring-ink/15" style={{ background: v.swatch }} />}
                       {l(v.label) || '—'}
-                      {!!v.priceDelta && <span className="tabular-nums text-muted">{v.priceDelta > 0 ? '+' : '−'}{money(Math.abs(v.priceDelta), lang, { decimals: false })}</span>}
+                      {!!v.priceDelta && <span className="tabular-nums text-muted">{v.priceDelta > 0 ? '+' : '−'}{money(Math.abs(v.priceDelta), lang, { decimals: v.priceDelta % 1 !== 0 })}</span>}
                     </span>
                   ))}
                 </span>
@@ -113,10 +115,10 @@ export function VariantsCard({
         )}
         <div className={cn('grid gap-4', variants.length ? 'sm:grid-cols-2' : 'sm:grid-cols-3')}>
           <FormField label={t('f_sku')} hint={variants.length ? t('f_sku_h') : undefined} error={skuError}>
-            <TextInput value={sku} onChange={(e) => onSku(e.target.value.toUpperCase())} placeholder="SC-VR-101" mono spellCheck={false} invalid={!!skuError} aria-label={t('f_sku')} />
+            <TextInput value={sku} onChange={(e) => onSku(e.target.value.toUpperCase())} placeholder="PAK-104" mono spellCheck={false} invalid={!!skuError} aria-label={t('f_sku')} />
           </FormField>
           <FormField label={t('f_barcode')}>
-            <TextInput value={barcode} onChange={(e) => onBarcode(e.target.value.replace(/[^\d]/g, ''))} placeholder="389…" mono inputMode="numeric" aria-label={t('f_barcode')} />
+            <TextInput value={barcode} onChange={(e) => onBarcode(e.target.value.replace(/[^\d]/g, ''))} placeholder="EAN-13" mono inputMode="numeric" aria-label={t('f_barcode')} />
           </FormField>
           {!variants.length && (
             <FormField label={t('f_stock')} hint={stockHint}>
