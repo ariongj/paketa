@@ -23,7 +23,9 @@ import { common } from '@/i18n/common';
 import { useDb } from '@/store/db';
 import { useCan, useCategories } from '@/store/hooks';
 import { collectionProducts, inCollection } from '@/lib/collections';
-import { date, money } from '@/lib/format';
+import { money } from '@/lib/format';
+// own month names — headless/minimal Chromium builds lack Albanian date data ("7 Aug" instead of "7 gusht")
+import { fmtDay } from '@/admin/components/offers/model';
 import { href } from '@/lib/paths';
 import type { Collection, CollectionSort, Product } from '@/lib/types';
 import { cn, slugify, uid } from '@/lib/utils';
@@ -266,7 +268,7 @@ function Editor({ source }: { source?: Collection }) {
         breadcrumbs={[{ label: ta('nav_products'), to: '/admin/proizvodi' }, { label: ta('nav_collections'), to: '/admin/kolekcije' }, l(original.title) || t('newTitle')]}
         title={<span className="line-clamp-2">{l(form.title) || t('newTitle')}</span>}
         badge={!isNew && <PublishedLabel published={original.published} />}
-        description={!isNew && original.createdAt ? t('createdOn', { date: date(original.createdAt, lang) }) : t('description')}
+        description={!isNew && original.createdAt ? t('createdOn', { date: fmtDay(original.createdAt, lang, { year: true }) }) : t('description')}
         actions={
           <>
             {!isNew && (

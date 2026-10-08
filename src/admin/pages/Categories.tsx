@@ -287,7 +287,7 @@ export default function Categories() {
                             target="_blank"
                             rel="noreferrer"
                             title={t('openOnSite')}
-                            className="hidden shrink-0 items-center gap-1 rounded-md bg-canvas px-1.5 py-0.5 font-mono text-[11px] text-muted transition-colors hover:bg-brand-50 hover:text-brand-700 sm:inline-flex"
+                            className="hidden shrink-0 items-center gap-1 rounded-md bg-canvas px-1.5 py-0.5 font-mono text-[11px] text-muted transition-colors hover:bg-brand-50 hover:text-brand-700 sm:inline-flex xl:hidden 2xl:inline-flex"
                           >
                             /{c.slug}
                             <ExternalLink className="h-2.5 w-2.5" />

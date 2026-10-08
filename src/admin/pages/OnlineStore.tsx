@@ -138,7 +138,7 @@ export default function OnlineStore() {
                       <p className="text-xs text-muted">{t('logo_h')}</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2" style={storefrontVars(form.brandColor)}>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-1" style={storefrontVars(form.brandColor)}>
                     <LogoTile label={t('onLight')} variant={form.theme.logo} size={form.theme.logoSize} />
                     <LogoTile label={t('onDark')} variant={form.theme.logo} size={form.theme.logoSize} dark />
                   </div>

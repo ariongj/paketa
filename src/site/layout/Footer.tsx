@@ -53,7 +53,7 @@ export function Footer() {
         <div className="pt-14 sm:pt-16">
           <div className="relative grid gap-7 overflow-hidden rounded-[30px] bg-lime p-7 text-ink sm:p-10 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-12 lg:p-12">
             <div aria-hidden className="pointer-events-none absolute inset-2.5 rounded-[22px] border-2 border-dashed border-ink/15" />
-            <div aria-hidden className="pointer-events-none absolute -right-6 -top-7 hidden rotate-[14deg] sm:block">
+            <div aria-hidden className="pointer-events-none absolute -top-4 right-4 hidden rotate-[14deg] sm:block">
               <span className="grid h-28 w-28 place-items-center rounded-full bg-pink shadow-[0_14px_30px_-14px_rgba(15,29,22,0.6)]">
                 <span className="flex flex-col items-center gap-1 pt-2">
                   <LogoMark className="h-8" />
@@ -182,13 +182,13 @@ export function Footer() {
         </div>
 
         {/* Oversized wordmark */}
-        <div aria-hidden className="pointer-events-none -mb-[3.2%] select-none pt-2">
-          <img src="/images/brand/wordmark-white.png" alt="" draggable={false} className="w-full opacity-[0.07]" />
+        <div aria-hidden className="pointer-events-none h-[13vw] max-h-[172px] select-none overflow-hidden pt-4">
+          <img src="/images/brand/wordmark-white.png" alt="" draggable={false} className="w-full opacity-[0.08]" />
         </div>
       </div>
 
       <div className="relative bg-brand-800/70">
-        <div className="container-x flex flex-col gap-3 py-5 text-[12.5px] text-paper/55 md:flex-row md:items-center md:justify-between">
+        <div className={cn('container-x flex flex-col gap-3 pt-5 text-[12.5px] text-paper/55 md:flex-row md:items-center md:justify-between', settings.demoBanner ? 'pb-20' : 'pb-5')}>
           <span>
             © {year} {settings.legalName || settings.companyName}
             {settings.pib ? ` · ${c('nui')} ${settings.pib}` : ''} · {t('rights')}

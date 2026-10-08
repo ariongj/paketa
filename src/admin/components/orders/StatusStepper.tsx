@@ -61,7 +61,7 @@ export function StatusStepper({ order }: { order: Order }) {
             >
               {done ? <Check className="h-4 w-4" strokeWidth={2.6} /> : <Icon className="h-4 w-4" />}
             </span>
-            <span className={cn('mt-2 text-[10.5px] font-semibold leading-tight sm:text-[12.5px]', active ? 'text-brand-700' : i <= current ? 'text-ink' : 'text-muted')}>{tc(`status_${s}`)}</span>
+            <span className={cn('mt-2 text-[11px] font-semibold leading-tight sm:text-[12.5px]', active ? 'text-brand-700' : i <= current ? 'text-ink' : 'text-muted', i !== current && 'max-sm:sr-only')}>{tc(`status_${s}`)}</span>
             <span className="mt-0.5 hidden text-[11px] tabular-nums text-muted sm:block">{at ? date(at, lang, { day: 'numeric', month: 'short' }) : ' '}</span>
           </li>
         );

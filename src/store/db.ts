@@ -388,17 +388,18 @@ export const useDb = create<DbStore>()(
           const payment =
             status === 'completed' && o.payment.method === 'cod' ? { ...o.payment, status: 'paid' as const } : status === 'cancelled' && o.payment.status === 'paid' ? { ...o.payment, status: 'refunded' as const, refunded: o.total } : o.payment;
           const fulfillment =
-            status === 'shipped' || status === 'installation' ? { ...o.fulfillment, shippedAt: o.fulfillment?.shippedAt ?? now } : status === 'completed' ? { ...o.fulfillment, deliveredAt: now } : o.fulfillment;
+            // Paketoje: 'installation' = "Në printim" (logo print in production) happens BEFORE shipping — no ship date yet
+            status === 'shipped' ? { ...o.fulfillment, shippedAt: o.fulfillment?.shippedAt ?? now } : status === 'completed' ? { ...o.fulfillment, deliveredAt: now } : o.fulfillment;
           const next: Order = { ...o, status, payment, fulfillment, seen: true, timeline: [...o.timeline, { at: now, status, note, by: 'admin' }] };
           // cancelling an open order releases the reserved stock
           let products = s.products;
           let movements = s.movements;
-          if (status === 'cancelled' && (o.status === 'new' || o.status === 'confirmed' || o.status === 'processing')) {
+          if (status === 'cancelled' && (o.status === 'new' || o.status === 'confirmed' || o.status === 'processing' || o.status === 'installation')) {
             const moves: InventoryMovement[] = [];
             products = s.products.map((p) => {
               const qty = o.items.filter((l) => l.productId === p.id).reduce((n, l) => n + l.qty, 0);
               if (!qty || !isTracked(p)) return p;
-              moves.push(movement(p.id, qty, 'correction', by, `Otkazana narudžba / Porosi e anuluar`, o.number));
+              moves.push(movement(p.id, qty, 'correction', by, `Porosi e anuluar / Otkazana narudžba`, o.number));
               return { ...p, stock: p.stock + qty };
             });
             movements = [...moves, ...s.movements].slice(0, MOVEMENTS_MAX);
@@ -426,7 +427,8 @@ export const useDb = create<DbStore>()(
           const o = s.orders.find((x) => x.id === id);
           if (!o || o.status === 'cancelled' || o.status === 'completed') return {};
           const now = new Date().toISOString();
-          const status: OrderStatus = o.status === 'shipped' || o.status === 'installation' ? o.status : 'shipped';
+          // shipping an order that is in print production moves it on to 'shipped'
+          const status: OrderStatus = o.status === 'shipped' ? o.status : 'shipped';
           const next: Order = {
             ...o,
             status,

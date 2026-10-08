@@ -67,10 +67,10 @@ export function combos(options: ProductOption[]): Record<string, string>[] {
   return out;
 }
 
-/** Short SKU code for an option value: seeded ids ("70", "l", "natur") or initials of the ME label. */
+/** Short SKU code for an option value: seeded ids ("70", "l", "natur") or initials of the SQ label. */
 export function valueCode(v: ProductOptionValue, index: number) {
   if (/^[a-z0-9]{1,8}$/i.test(v.id)) return v.id.toUpperCase();
-  const words = slugify(v.label.me || v.label.sq || v.label.en).split('-').filter(Boolean);
+  const words = slugify(v.label.sq || v.label.en || v.label.me).split('-').filter(Boolean);
   const code = words.length > 1 ? words.map((w) => w.slice(0, 3)).join('') : (words[0] ?? '').slice(0, 6);
   return (code || String(index + 1)).toUpperCase().slice(0, 8);
 }

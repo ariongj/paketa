@@ -244,7 +244,7 @@ function RuleRow({ rule, onChange, onRemove, count, cities, tags, disabled, canR
         <div className="relative sm:col-start-3 sm:row-start-1">
           {rule.field === 'lang' ? (
             <select value={rule.value} disabled={disabled} onChange={(e) => onChange({ ...rule, value: e.target.value })} aria-label={tx('f_lang')} className={cn(ctl, 'cursor-pointer appearance-none border-line')}>
-              {(['me', 'sq', 'en'] as const).map((x) => (
+              {(['sq', 'en', 'me'] as const).map((x) => (
                 <option key={x} value={x}>
                   {tx(`lang_${x}`)}
                 </option>

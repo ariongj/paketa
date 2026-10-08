@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { AlertTriangle, ArrowUpDown, ChevronDown, ChevronRight, Download, GitMerge, Info, MapPin, ShieldCheck, Tag, Upload, UserPlus, Users } from 'lucide-react';
+import { AlertTriangle, ArrowUpDown, Building2, ChevronDown, ChevronRight, Download, GitMerge, Info, MapPin, ShieldCheck, Tag, Upload, UserPlus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge, EmptyState } from '@/components/ui/misc';
 import { Card, FilterPills, PageHeader, SearchInput, Table, Td, Th, Tr } from '@/admin/components/kit';
@@ -24,14 +24,18 @@ import { download } from '@/lib/utils';
 
 const T = defineDict({
   me: {
-    subtitle: 'Svi kupci — iz web narudžbi, salona i uvoza. Profil, istorija i saglasnosti na jednom mjestu.',
+    subtitle: 'Svi kupci — firme (B2B) i fizička lica iz web narudžbi, depoa i uvoza. Profil, istorija i saglasnosti na jednom mjestu.',
     import: 'Uvezi',
     export: 'Izvezi',
     add: 'Dodaj kupca',
     exported: 'Izvezeno: {n}',
     exportedText: 'CSV bez privatnih bilješki.',
     kpiCustomers: 'Kupci',
-    kpiCustomersSub: '+{n} novih za 30 dana',
+    kpiCustomersSub: '+{n} novih za 30 dana · {b} firmi (B2B)',
+    type_label: 'Vrsta kupca',
+    type_all: 'B2B i maloprodaja',
+    type_b2b: 'Firme (B2B)',
+    type_retail: 'Maloprodaja',
     kpiRepeat: 'Stalni kupci',
     kpiRepeatSub: '{pct}% kupaca naručilo 2+ puta',
     kpiLtv: 'Prosječno po kupcu',
@@ -44,7 +48,7 @@ const T = defineDict({
     dupText: 'Isti telefon ili isto ime u istom gradu. Pregledajte prije spajanja — narudžbe ostaju netaknute.',
     dupReview: 'Pregledaj i spoji',
     manageSegments: 'Segmenti',
-    searchPh: 'Ime, e-mail, telefon, grad ili oznaka…',
+    searchPh: 'Ime, firma, e-mail, telefon, grad ili oznaka…',
     mk_label: 'Marketing saglasnost',
     mk_all: 'Svi kanali',
     mk_email: 'Prijavljeni na e-mail',
@@ -79,14 +83,18 @@ const T = defineDict({
     noneText: 'Kupci se pojavljuju automatski uz prvu web narudžbu — ili ih dodajte i uvezite ručno.',
   },
   sq: {
-    subtitle: 'Të gjithë klientët — nga porositë online, salloni dhe importi. Profili, historiku dhe pëlqimet në një vend.',
+    subtitle: 'Të gjithë klientët — biznese (B2B) dhe individë nga porositë online, depoja dhe importi. Profili, historiku dhe pëlqimet në një vend.',
     import: 'Importo',
     export: 'Eksporto',
     add: 'Shto klient',
     exported: 'U eksportuan: {n}',
     exportedText: 'CSV pa shënimet private.',
     kpiCustomers: 'Klientët',
-    kpiCustomersSub: '+{n} të rinj në 30 ditë',
+    kpiCustomersSub: '+{n} të rinj në 30 ditë · {b} biznese (B2B)',
+    type_label: 'Lloji i klientit',
+    type_all: 'B2B dhe pakicë',
+    type_b2b: 'Biznese (B2B)',
+    type_retail: 'Pakicë (individë)',
     kpiRepeat: 'Klientë të rregullt',
     kpiRepeatSub: '{pct}% kanë porositur 2+ herë',
     kpiLtv: 'Mesatarja për klient',
@@ -134,14 +142,18 @@ const T = defineDict({
     noneText: 'Klientët shfaqen automatikisht me porosinë e parë online — ose shtojini dhe importojini vetë.',
   },
   en: {
-    subtitle: 'Every customer — from web orders, the showroom and imports. Profile, history and consent in one place.',
+    subtitle: 'Every customer — businesses (B2B) and individuals from web orders, the warehouse and imports. Profile, history and consent in one place.',
     import: 'Import',
     export: 'Export',
     add: 'Add customer',
     exported: 'Exported: {n}',
     exportedText: 'CSV without private notes.',
     kpiCustomers: 'Customers',
-    kpiCustomersSub: '+{n} new in 30 days',
+    kpiCustomersSub: '+{n} new in 30 days · {b} businesses (B2B)',
+    type_label: 'Customer type',
+    type_all: 'B2B and retail',
+    type_b2b: 'Businesses (B2B)',
+    type_retail: 'Retail',
     kpiRepeat: 'Repeat customers',
     kpiRepeatSub: '{pct}% ordered 2+ times',
     kpiLtv: 'Avg. per customer',
@@ -192,6 +204,7 @@ const T = defineDict({
 
 type Sort = 'spent' | 'orders' | 'recent' | 'new' | 'name';
 type Mk = 'all' | 'email' | 'sms' | 'any' | 'none';
+type Kind = 'all' | 'b2b' | 'retail';
 const PAGE = 25;
 const COLLATOR: Record<string, string> = { me: 'sr-Latn', sq: 'sq', en: 'en' };
 const DAY = 86400000;
@@ -215,6 +228,7 @@ export default function Customers() {
   const segment = segments.some((s) => s.id === segParam) ? segParam : 'all';
   const tag = params.get('tag') ?? 'all';
   const mk = (params.get('mk') ?? 'all') as Mk;
+  const kind = (params.get('type') ?? 'all') as Kind;
   const sort = (params.get('sort') ?? 'spent') as Sort;
   const setParam = (patch: Record<string, string | null>) =>
     setParams(
@@ -246,6 +260,7 @@ export default function Customers() {
     return {
       n: customers.length,
       fresh: customers.filter((c) => now - new Date(c.since).getTime() < 30 * DAY).length,
+      b2b: customers.filter((c) => !!c.company).length,
       repeat,
       repeatPct: buyers.length ? Math.round((repeat / buyers.length) * 100) : 0,
       ltv: buyers.length ? spent / buyers.length : 0,
@@ -265,6 +280,8 @@ export default function Customers() {
       if (mk === 'sms' && !isSubscribed(c, 'sms')) return false;
       if (mk === 'any' && !isSubscribed(c)) return false;
       if (mk === 'none' && isSubscribed(c)) return false;
+      if (kind === 'b2b' && !c.company) return false;
+      if (kind === 'retail' && c.company) return false;
       return matches(q, [c.name, c.company, c.city, ...c.emails, ...c.phones, ...c.tags]);
     });
     const cmp: Record<Sort, (a: CustomerRecord, b: CustomerRecord) => number> = {
@@ -275,11 +292,11 @@ export default function Customers() {
       name: (a, b) => coll.compare(a.name, b.name),
     };
     return list.sort(cmp[sort] ?? cmp.spent);
-  }, [customers, segCounts, segment, tag, mk, q, sort, lang]);
+  }, [customers, segCounts, segment, tag, mk, kind, q, sort, lang]);
 
   const visible = filtered.slice(0, limit);
-  const filtersActive = !!q || segment !== 'all' || tag !== 'all' || mk !== 'all';
-  const clearFilters = () => setParam({ q: null, segment: null, tag: null, mk: null });
+  const filtersActive = !!q || segment !== 'all' || tag !== 'all' || mk !== 'all' || kind !== 'all';
+  const clearFilters = () => setParam({ q: null, segment: null, tag: null, mk: null, type: null });
   const selectedSeg = segments.find((s) => s.id === segment);
 
   /* ------------------------- profile drawer ------------------------ */
@@ -298,7 +315,7 @@ export default function Customers() {
   };
 
   const doExport = () => {
-    download(`selca-klijenti-${new Date().toISOString().slice(0, 10)}.csv`, exportCsv(filtered), 'text/csv;charset=utf-8');
+    download(`paketoje-klientet-${new Date().toISOString().slice(0, 10)}.csv`, exportCsv(filtered), 'text/csv;charset=utf-8');
     toast.success(t('exported', { n: filtered.length }), { description: t('exportedText') });
   };
 
@@ -344,7 +361,7 @@ export default function Customers() {
           <KpiStrip
             className="mb-4"
             items={[
-              { label: t('kpiCustomers'), value: num(stats.n, lang), sub: t('kpiCustomersSub', { n: stats.fresh }) },
+              { label: t('kpiCustomers'), value: num(stats.n, lang), sub: t('kpiCustomersSub', { n: stats.fresh, b: stats.b2b }) },
               { label: t('kpiRepeat'), value: num(stats.repeat, lang), sub: t('kpiRepeatSub', { pct: stats.repeatPct }) },
               { label: t('kpiLtv'), value: money(stats.ltv, lang, { decimals: false }), sub: t('kpiLtvSub', { v: money(stats.aov, lang, { decimals: false }) }) },
               { label: t('kpiConsent'), value: `${stats.emailPct}%`, sub: t('kpiConsentSub', { n: stats.emailOk }) },
@@ -415,7 +432,12 @@ export default function Customers() {
                     </option>
                   ))}
                 </SelectBox>
-                <SelectBox label={t('sort_label')} value={sort} onChange={(v) => setParam({ sort: v })} icon={<ArrowUpDown className="h-4 w-4" />} className="col-span-2 lg:w-52">
+                <SelectBox label={t('type_label')} value={kind} onChange={(v) => { setParam({ type: v }); setLimit(PAGE); }} active={kind !== 'all'} icon={<Building2 className="h-4 w-4" />} className="lg:w-48">
+                  <option value="all">{t('type_all')}</option>
+                  <option value="b2b">{t('type_b2b')}</option>
+                  <option value="retail">{t('type_retail')}</option>
+                </SelectBox>
+                <SelectBox label={t('sort_label')} value={sort} onChange={(v) => setParam({ sort: v })} icon={<ArrowUpDown className="h-4 w-4" />} className="lg:w-52">
                   <option value="spent">{t('sort_spent')}</option>
                   <option value="orders">{t('sort_orders')}</option>
                   <option value="recent">{t('sort_recent')}</option>
@@ -478,7 +500,10 @@ export default function Customers() {
                           <div className="flex min-w-0 items-center gap-2.5">
                             <Avatar name={c.name} size="sm" />
                             <div className="min-w-0">
-                              <div className="max-w-[190px] truncate font-semibold text-ink">{c.name}</div>
+                              <div className="flex min-w-0 items-center gap-1.5">
+                                <span className="max-w-[190px] truncate font-semibold text-ink">{c.name}</span>
+                                {c.company && <span className="shrink-0 rounded border border-line bg-white px-1 py-px text-[9.5px] font-bold uppercase tracking-wide text-ink-soft" title={c.company}>B2B</span>}
+                              </div>
                               <div className="max-w-[190px] truncate text-[12px] text-muted xl:hidden">{c.email || c.phone}</div>
                               {(c.company || c.source !== 'web') && <div className="hidden max-w-[190px] truncate text-[12px] text-muted xl:block">{c.company ?? tx(`src_${c.source}`)}</div>}
                             </div>

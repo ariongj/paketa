@@ -116,8 +116,8 @@ const slugAfter = (href: string, prefix: string) => {
   return decodeURIComponent(href.slice(prefix.length).split(/[?#/]/)[0] ?? '') || null;
 };
 
-/** Storefront anchor of the free-samples form (the section id kept from the platform is `mjerenje`; `#mostra` is accepted too). */
-export const SAMPLES_HREF = '/#mjerenje';
+/** Storefront anchor of the free-samples form on the homepage (`#mjerenje` from older data is still recognised). */
+export const SAMPLES_HREF = '/#mostra';
 export const isSamplesHref = (h: string) => /^\/(sherbimet)?#(mjerenje|mostra)$/.test(h);
 
 /** What a CTA path points to: { type: 'collection', label: 'Kafeteri & bar' } — used by "Lidhja" and the destination field. */

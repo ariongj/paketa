@@ -75,7 +75,7 @@ export function TierTable({ cfg }: { cfg: Configurator }) {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <span className="inline-flex items-center gap-2 text-[13px] font-semibold text-ink">
               <TrendingDown className="h-4 w-4 text-pink-ink" />
-              {t('nextTier', { n: missing, pct: next.pct })}
+              {t('nextTier', { n: missing, pct: pctOff(next.pct, lang) })}
             </span>
             <button
               type="button"
@@ -88,7 +88,7 @@ export function TierTable({ cfg }: { cfg: Configurator }) {
           </div>
         ) : (
           <span className="inline-flex items-center gap-2 text-[13px] font-semibold text-brand-700">
-            <Sparkles className="h-4 w-4" /> {t('tierReached', { pct: top.pct })}
+            <Sparkles className="h-4 w-4" /> {t('tierReached', { pct: pctOff(top.pct, lang) })}
           </span>
         )}
       </div>

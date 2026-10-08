@@ -9,13 +9,14 @@ const r2 = (n: number) => Math.round(n * 100) / 100;
 
 /**
  * Fulfilment is derived from the order status:
- * new / confirmed / processing → unfulfilled · shipped / installation → fulfilled ·
+ * new / confirmed / processing / installation → unfulfilled · shipped → fulfilled ·
  * completed → delivered · cancelled → unfulfilled. A shipment flagged partial → 'partial'.
+ * Paketoje: 'installation' is "Në printim" (logo print in production) — it comes BEFORE shipping,
+ * so those orders are still unfulfilled.
  */
 export function fulfillmentOf(o: Pick<Order, 'status' | 'fulfillment'>): FulfillmentState {
   switch (o.status) {
     case 'shipped':
-    case 'installation':
       return o.fulfillment?.partial ? 'partial' : 'fulfilled';
     case 'completed':
       return 'delivered';
@@ -94,4 +95,4 @@ export function refundForLines(o: Pick<Order, 'items' | 'discount' | 'subtotal'>
 }
 
 /** Order is still open for fulfilment (counts as "committed" stock). */
-export const isOpenOrder = (o: Pick<Order, 'status'>) => o.status === 'new' || o.status === 'confirmed' || o.status === 'processing';
+export const isOpenOrder = (o: Pick<Order, 'status'>) => o.status === 'new' || o.status === 'confirmed' || o.status === 'processing' || o.status === 'installation';

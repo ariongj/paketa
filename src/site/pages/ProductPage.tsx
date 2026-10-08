@@ -14,7 +14,7 @@ import { useUi } from '@/store/ui';
 import { useActiveProducts, useCategories, useCategory, useProduct, useSettings } from '@/store/hooks';
 import { optionsLabel } from '@/lib/pricing';
 import { money, num, pieces, unitLabel } from '@/lib/format';
-import { PD } from '@/site/components/product/dict';
+import { PD, keepUnits } from '@/site/components/product/dict';
 import { useConfigurator } from '@/site/components/product/useConfigurator';
 import { compatibleProducts } from '@/site/components/product/compat';
 import { Gallery } from '@/site/components/product/Gallery';
@@ -221,7 +221,7 @@ function QuoteHero({ product: p, category, ctaRef, onQuote }: { product: Product
               <Stamp className="h-3.5 w-3.5" /> {t('quoteBadge')}
             </span>
           </div>
-          <h1 className="display mt-3 text-[32px] leading-[1.02] text-ink sm:text-[40px] xl:text-[44px]">{l(p.name)}</h1>
+          <h1 className="display mt-3 text-balance text-[32px] leading-[1.02] text-ink sm:text-[40px] xl:text-[44px]">{keepUnits(l(p.name))}</h1>
           <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
             <ProductBadges product={p} size="md" />
             <span className="text-[12.5px] font-medium text-muted">

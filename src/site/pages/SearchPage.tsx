@@ -1,7 +1,7 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { ArrowRight, ArrowUpRight, ChevronDown, Phone, Search, SearchX, Sparkles, X } from 'lucide-react';
-import type { Product } from '@/lib/types';
+import type { Lang, Product } from '@/lib/types';
 import { Accent, Img } from '@/components/ui/misc';
 import { ButtonLink } from '@/components/ui/Button';
 import { Breadcrumbs } from '@/site/components/SectionHeading';
@@ -9,7 +9,7 @@ import { usePageTitle } from '@/site/layout/SiteLayout';
 import { CategoryTiles } from '@/site/components/utility/CategoryTiles';
 import { ProductGrid } from '@/site/components/utility/ProductGrid';
 import { CtaBand } from '@/site/components/utility/CtaBand';
-import { POPULAR_SEARCHES, diverseBestsellers, pluralOne } from '@/site/components/utility/shared';
+import { diverseBestsellers, pluralOne } from '@/site/components/utility/shared';
 import { defineDict, useDict, useL, useLang } from '@/i18n';
 import { useActiveProducts, useCategories, useSettings } from '@/store/hooks';
 import { searchProducts } from '@/lib/search';
@@ -19,8 +19,8 @@ import { cn } from '@/lib/utils';
 const T = defineDict({
   me: {
     title: 'Pretraga',
-    eyebrow: 'Pretražite ponudu',
-    placeholder: 'Šta tražite?',
+    eyebrow: 'Pretražite asortiman',
+    placeholder: 'Čaše, poklopci, posude…',
     submit: 'Traži',
     clear: 'Obriši pretragu',
     resultOne: '{n} rezultat',
@@ -28,7 +28,7 @@ const T = defineDict({
     forQuery: 'za „{q}“',
     productOne: '{n} proizvod',
     productMany: '{n} proizvoda',
-    startCount: 'Pretražite {count} — vrata, prozore, podove, keramiku, kupatila i kuhinje.',
+    startCount: 'Pretražite {count} — čaše, poklopce, posude, pribor, slamke i ambalažu za deserte.',
     inCategories: 'Kategorije',
     all: 'Sve',
     wholeCategory: 'Cijela kategorija',
@@ -43,19 +43,19 @@ const T = defineDict({
     browse: 'Pregledajte *kategorije*',
     allProducts: 'Svi proizvodi',
     noTitle: 'Nismo pronašli *ništa*',
-    noText: 'Za „{q}“ trenutno nemamo proizvod. Provjerite pravopis ili probajte opštiji pojam — pretraga razumije crnogorski, albanski i engleski.',
+    noText: 'Za „{q}“ trenutno nemamo proizvod. Provjerite pravopis ili probajte opštiji pojam — pretraga razumije albanski, srpski i engleski.',
     tryPopular: 'Probajte neku od popularnih pretraga',
     bestsellers: 'Kupci najčešće *biraju*',
     related: 'Možda vas *zanima* i ovo',
-    customEyebrow: 'Izrada po mjeri',
-    customTitle: 'Niste pronašli *pravo rješenje*?',
-    customText: 'Vrata, prozore i kuhinje izrađujemo po mjeri vašeg prostora. Opišite nam šta vam treba i poslaćemo ponudu u roku od 24 sata.',
+    customEyebrow: 'Veleprodaja i štampa logotipa',
+    customTitle: 'Niste pronašli *pravu ambalažu*?',
+    customText: 'Nabavljamo i druge formate, a čaše i kutije štampamo sa vašim logom. Opišite nam šta vam treba i poslaćemo ponudu u roku od 24 sata.',
     customCta: 'Zatražite ponudu',
   },
   sq: {
     title: 'Kërkimi',
-    eyebrow: 'Kërkoni në ofertë',
-    placeholder: 'Çfarë kërkoni?',
+    eyebrow: 'Kërkoni në katalog',
+    placeholder: 'Gota, kapakë, enë…',
     submit: 'Kërko',
     clear: 'Pastro kërkimin',
     resultOne: '{n} rezultat',
@@ -63,7 +63,7 @@ const T = defineDict({
     forQuery: 'për „{q}“',
     productOne: '{n} produkt',
     productMany: '{n} produkte',
-    startCount: 'Kërkoni ndër {count} — dyer, dritare, dysheme, pllaka, banjo dhe kuzhina.',
+    startCount: 'Kërkoni ndër {count} — gota, kapakë, enë, takëm, shkopinj dhe paketim për ëmbëlsira.',
     inCategories: 'Kategoritë',
     all: 'Të gjitha',
     wholeCategory: 'E gjithë kategoria',
@@ -78,19 +78,19 @@ const T = defineDict({
     browse: 'Shfletoni *kategoritë*',
     allProducts: 'Të gjitha produktet',
     noTitle: 'Nuk gjetëm *asgjë*',
-    noText: 'Për „{q}“ nuk kemi produkt për momentin. Kontrolloni drejtshkrimin ose provoni një term më të përgjithshëm — kërkimi kupton malazezisht, shqip dhe anglisht.',
+    noText: 'Për „{q}“ nuk kemi produkt për momentin. Kontrolloni drejtshkrimin ose provoni një term më të përgjithshëm — kërkimi kupton shqip, serbisht dhe anglisht.',
     tryPopular: 'Provoni një nga kërkimet popullore',
     bestsellers: 'Klientët më shpesh *zgjedhin*',
     related: 'Mund t’ju *interesojë* edhe',
-    customEyebrow: 'Punim me porosi',
-    customTitle: 'Nuk e gjetët *zgjidhjen e duhur*?',
-    customText: 'Dyert, dritaret dhe kuzhinat i prodhojmë sipas masës së hapësirës suaj. Na tregoni çfarë ju nevojitet dhe do t’ju dërgojmë ofertë brenda 24 orëve.',
+    customEyebrow: 'Shumicë dhe printim me logo',
+    customTitle: 'Nuk e gjetët *paketimin e duhur*?',
+    customText: 'Furnizojmë edhe formate të tjera, dhe gotat e kutitë i printojmë me logon tuaj. Na tregoni çfarë ju nevojitet dhe do t’ju dërgojmë ofertë brenda 24 orëve.',
     customCta: 'Kërkoni ofertë',
   },
   en: {
     title: 'Search',
     eyebrow: 'Search the range',
-    placeholder: 'What are you looking for?',
+    placeholder: 'Cups, lids, containers…',
     submit: 'Search',
     clear: 'Clear search',
     resultOne: '{n} result',
@@ -98,7 +98,7 @@ const T = defineDict({
     forQuery: 'for “{q}”',
     productOne: '{n} product',
     productMany: '{n} products',
-    startCount: 'Search {count} — doors, windows, flooring, tiles, bathrooms and kitchens.',
+    startCount: 'Search {count} — cups, lids, containers, cutlery, straws and dessert packaging.',
     inCategories: 'Categories',
     all: 'All',
     wholeCategory: 'Whole category',
@@ -113,16 +113,23 @@ const T = defineDict({
     browse: 'Browse by *category*',
     allProducts: 'All products',
     noTitle: 'We found *nothing*',
-    noText: 'We don’t have anything for “{q}” right now. Check the spelling or try a broader term — search understands Montenegrin, Albanian and English.',
+    noText: 'We don’t have anything for “{q}” right now. Check the spelling or try a broader term — search understands Albanian, Serbian and English.',
     tryPopular: 'Try one of these popular searches',
     bestsellers: 'Customer *favourites*',
     related: 'You may *also like*',
-    customEyebrow: 'Made to measure',
-    customTitle: 'Haven’t found the *right fit*?',
-    customText: 'We make doors, windows and kitchens to the exact size of your space. Tell us what you need and we’ll send a quote within 24 hours.',
+    customEyebrow: 'Wholesale & logo print',
+    customTitle: 'Haven’t found the *right packaging*?',
+    customText: 'We source other formats too, and print cups and boxes with your logo. Tell us what you need and we’ll send a quote within 24 hours.',
     customCta: 'Request a quote',
   },
 });
+
+/** Popular searches per storefront language — each one returns products (synonyms in lib/search.ts). */
+const POPULAR_SEARCHES: Record<Lang, string[]> = {
+  sq: ['gota', 'kapak', 'enë mikrovale', 'sushi', 'salcë', 'takëm', 'shkop', 'tortë', 'lugë akulloreje'],
+  en: ['cups', 'lids', 'microwave container', 'sushi', 'sauce cup', 'cutlery', 'straws', 'cake box', 'ice-cream spoon'],
+  me: ['čaša', 'poklopac', 'posuda za mikrotalasnu', 'suši', 'sos', 'pribor', 'slamka', 'torta', 'kašičica'],
+};
 
 type Sort = 'relevance' | 'popular' | 'priceAsc' | 'priceDesc';
 const SORTS: Sort[] = ['relevance', 'popular', 'priceAsc', 'priceDesc'];
@@ -132,9 +139,9 @@ function sortProducts(list: Product[], sort: Sort) {
     case 'popular':
       return [...list].sort((a, b) => b.sold - a.sold);
     case 'priceAsc':
-      return [...list].sort((a, b) => basePrice(a) - basePrice(b));
+      return [...list].sort((a, b) => Number(!!a.quoteOnly) - Number(!!b.quoteOnly) || basePrice(a) - basePrice(b));
     case 'priceDesc':
-      return [...list].sort((a, b) => basePrice(b) - basePrice(a));
+      return [...list].sort((a, b) => Number(!!a.quoteOnly) - Number(!!b.quoteOnly) || basePrice(b) - basePrice(a));
     default:
       return list;
   }
@@ -403,13 +410,13 @@ export default function SearchPage() {
         {hasQuery && (
           <CtaBand
             className="mt-16 sm:mt-24"
-            image="/images/s/majstor.webp"
+            image="/images/s/printim.webp"
             eyebrow={t('customEyebrow')}
             title={t('customTitle')}
             text={t('customText')}
             actions={
               <>
-                <ButtonLink to="/kontakti" variant="light" size="lg" iconRight={<ArrowRight className="h-4 w-4" />}>
+                <ButtonLink to="/sherbimet" variant="light" size="lg" iconRight={<ArrowRight className="h-4 w-4" />}>
                   {t('customCta')}
                 </ButtonLink>
                 <a

@@ -1,7 +1,8 @@
 import type { ComponentType } from 'react';
 import {
-  Award, BadgePercent, BookOpen, CalendarCheck, Clock, Hammer, HelpCircle, Home, Images, Instagram, LayoutGrid, Leaf, ListOrdered,
-  Phone, Quote, Ruler, ShieldCheck, Sparkles, Star, Truck, Wrench, GalleryHorizontalEnd, ShoppingBag,
+  Award, BadgeCheck, BadgePercent, BookOpen, Boxes, Clock, Coffee, CupSoda, Gift, HandCoins, Handshake, HelpCircle, Images, Instagram, LayoutGrid, Leaf,
+  ListOrdered, MapPin, Package, PackageOpen, Percent, Phone, Printer, Quote, Recycle, ShieldCheck, Sparkles, Star, Store, Timer, Truck, Utensils,
+  Warehouse, Zap, GalleryHorizontalEnd, ShoppingBag,
 } from 'lucide-react';
 import type { HomeSection, HomeSectionType, L10n } from '@/lib/types';
 import type { BKey } from './i18n';
@@ -19,29 +20,43 @@ export const SECTION_META: Record<HomeSectionType, { icon: IconC; tone: string }
   featured: { icon: ShoppingBag, tone: ICON_TILE },
   promo: { icon: BadgePercent, tone: ICON_TILE },
   process: { icon: ListOrdered, tone: ICON_TILE },
-  services: { icon: Wrench, tone: ICON_TILE },
+  services: { icon: Handshake, tone: ICON_TILE },
   projects: { icon: Images, tone: ICON_TILE },
   stats: { icon: Quote, tone: ICON_TILE },
   instagram: { icon: Instagram, tone: ICON_TILE },
   faq: { icon: HelpCircle, tone: ICON_TILE },
   blog: { icon: BookOpen, tone: ICON_TILE },
-  cta: { icon: CalendarCheck, tone: ICON_TILE },
+  cta: { icon: PackageOpen, tone: ICON_TILE },
 };
 
-/** Icons the storefront trust bar knows how to render (see site/sections/HomeSections ICONS). */
+/** Packaging-shop icons the storefront trust bar knows how to render (a subset of site/sections/HomeSections ICONS). */
 export const TRUST_ICONS: { name: string; icon: IconC }[] = [
-  { name: 'Ruler', icon: Ruler },
-  { name: 'Hammer', icon: Hammer },
-  { name: 'ShieldCheck', icon: ShieldCheck },
   { name: 'Truck', icon: Truck },
-  { name: 'Clock', icon: Clock },
+  { name: 'Package', icon: Package },
+  { name: 'PackageOpen', icon: PackageOpen },
+  { name: 'Boxes', icon: Boxes },
+  { name: 'Printer', icon: Printer },
+  { name: 'Percent', icon: Percent },
+  { name: 'BadgePercent', icon: BadgePercent },
+  { name: 'BadgeCheck', icon: BadgeCheck },
   { name: 'Award', icon: Award },
-  { name: 'Sparkles', icon: Sparkles },
+  { name: 'ShieldCheck', icon: ShieldCheck },
+  { name: 'Clock', icon: Clock },
+  { name: 'Timer', icon: Timer },
   { name: 'Leaf', icon: Leaf },
-  { name: 'Wrench', icon: Wrench },
-  { name: 'Home', icon: Home },
-  { name: 'Star', icon: Star },
+  { name: 'Recycle', icon: Recycle },
+  { name: 'Coffee', icon: Coffee },
+  { name: 'CupSoda', icon: CupSoda },
+  { name: 'Utensils', icon: Utensils },
+  { name: 'Store', icon: Store },
+  { name: 'Warehouse', icon: Warehouse },
+  { name: 'Gift', icon: Gift },
+  { name: 'HandCoins', icon: HandCoins },
+  { name: 'MapPin', icon: MapPin },
   { name: 'Phone', icon: Phone },
+  { name: 'Star', icon: Star },
+  { name: 'Sparkles', icon: Sparkles },
+  { name: 'Zap', icon: Zap },
 ];
 
 export const trustIcon = (name: string): IconC => TRUST_ICONS.find((i) => i.name === name)?.icon ?? Sparkles;

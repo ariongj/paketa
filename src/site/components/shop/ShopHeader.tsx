@@ -95,7 +95,7 @@ export function CategoryBanner({ category, products, sale }: { category: Categor
             <div className="relative aspect-[2/1] overflow-hidden rounded-[24px] bg-sand shadow-[0_40px_80px_-44px_rgb(15_29_22/0.55)] ring-1 ring-ink/5 sm:aspect-[16/9] lg:aspect-[5/4] lg:rounded-[30px]">
               <Img src={category.image} eager alt={l(category.name)} className="absolute inset-0 h-full w-full object-cover" style={{ animation: 'kenburns 2.6s cubic-bezier(.16,1,.3,1) both' }} />
             </div>
-            {(minPiece > 0 || category.soon) && (
+            {minPiece > 0 && !category.soon && (
               <div
                 className={cn(
                   'absolute -bottom-4 right-4 grid h-[104px] w-[104px] rotate-[8deg] place-items-center rounded-full text-center shadow-[0_18px_36px_-16px_rgb(15_29_22/0.5)] max-lg:hidden sm:-bottom-6 lg:-left-6 lg:right-auto lg:h-[124px] lg:w-[124px]',

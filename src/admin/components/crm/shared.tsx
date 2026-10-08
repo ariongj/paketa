@@ -51,7 +51,7 @@ export const crm = defineDict({
 });
 
 /* ------------------------------------------------------------------ */
-/* Plurals: Montenegrin has one / few (2–4) / many; SQ + EN one / many */
+/* Plurals: Serbian (`me`) has one / few (2–4) / many; SQ + EN one / many */
 /* ------------------------------------------------------------------ */
 export type PluralForm = 'one' | 'few' | 'many';
 export function pluralForm(n: number, lang: Lang): PluralForm {
@@ -73,12 +73,12 @@ export function telHref(phone: string) {
   return `tel:${phone.replace(/[^\d+]/g, '')}`;
 }
 
-/** wa.me link — local "067 …" numbers are assumed Montenegrin (+382). */
+/** wa.me link — local "044 …" numbers are assumed Kosovan (+383). */
 export function waHref(phone: string) {
   let d = phone.replace(/[^\d+]/g, '');
   if (d.startsWith('+')) d = d.slice(1);
   else if (d.startsWith('00')) d = d.slice(2);
-  else if (d.startsWith('0')) d = `382${d.slice(1)}`;
+  else if (d.startsWith('0')) d = `383${d.slice(1)}`;
   return `https://wa.me/${d}`;
 }
 

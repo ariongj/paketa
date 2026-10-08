@@ -125,7 +125,7 @@ export function ReceiveDialog({ po, onClose }: { po: PurchaseOrder | undefined; 
               </div>
 
               <ul className="divide-y divide-line/70 rounded-xl ring-1 ring-line/80">
-                <li className="hidden grid-cols-[minmax(0,1fr)_84px_104px_104px] items-center gap-3 rounded-t-xl bg-canvas/60 px-4 py-2 text-[12px] font-semibold text-muted sm:grid">
+                <li className="hidden grid-cols-[minmax(0,1fr)_80px_116px_100px] items-center gap-3 rounded-t-xl bg-canvas/60 px-4 py-2 text-[12px] font-semibold text-muted sm:grid">
                   <span>{t('col_product')}</span>
                   <span className="text-right">{t('rc_remaining')}</span>
                   <span className="text-right">{t('rc_acceptNow')}</span>
@@ -135,13 +135,13 @@ export function ReceiveDialog({ po, onClose }: { po: PurchaseOrder | undefined; 
                   const p = productById.get(x.productId);
                   const done = left === 0;
                   return (
-                    <li key={x.productId} className={cn('grid grid-cols-2 items-center gap-3 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_84px_104px_104px]', done && 'bg-canvas/40')}>
+                    <li key={x.productId} className={cn('grid grid-cols-2 items-center gap-3 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_80px_116px_100px]', done && 'bg-canvas/40')}>
                       <div className="col-span-2 flex min-w-0 items-center gap-3 sm:col-span-1">
                         <Thumb src={p?.images[0]} className="h-9 w-9" />
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-[13.5px] font-semibold text-ink">{p ? l(p.name) : x.productId}</div>
                           <div className="mt-0.5 flex items-center gap-2 text-[11.5px] text-muted">
-                            <span className="font-mono">{p?.sku}</span>
+                            <span className="shrink-0 whitespace-nowrap font-mono">{p?.sku}</span>
                             <span className="truncate">
                               {t('ed_progress', { r: num(x.received, lang), o: qtyOf(p, x.ordered, lang) })}
                               {x.rejected > 0 && ` · ${t('ed_rejectedN', { n: qtyOf(p, x.rejected, lang) })}`}
@@ -166,7 +166,7 @@ export function ReceiveDialog({ po, onClose }: { po: PurchaseOrder | undefined; 
                             <div>
                               <span className="mb-1 block text-[11.5px] font-semibold text-muted sm:hidden">{t('rc_acceptNow')}</span>
                               <IntField size="sm" value={entries[x.productId]?.now ?? null} onChange={(v) => set(x.productId, { now: v })} min={0} max={left} invalid={over} aria-label={t('rc_acceptNow')} />
-                              <div className={cn('mt-1 text-right text-[11px]', over ? 'font-medium text-red-700' : 'text-muted')}>
+                              <div className={cn('mt-1 text-right text-[11px] sm:whitespace-nowrap', over ? 'font-medium text-red-700' : 'text-muted')}>
                                 {over ? t('rc_tooMany', { n: qtyOf(p, left, lang) }) : t('rc_stockAfter', { n: qtyOf(p, (onHandById.get(x.productId) ?? 0) + now, lang) })}
                               </div>
                             </div>

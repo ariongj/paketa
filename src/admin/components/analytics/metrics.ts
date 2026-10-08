@@ -2,7 +2,7 @@
 // Pure functions over raw store slices; Analytics.tsx derives everything inside useMemo.
 // Every number below has a written definition in i18n.ts (DEF) — keep both in sync.
 //
-//   Gross  = Σ (products + installation) of non-cancelled orders created in the range   (VAT incl., before discounts)
+//   Gross  = Σ (products + logo print) of non-cancelled orders created in the range   (VAT incl., before discounts)
 //   − Discounts (product + order rules, as allocated on the order)
 //   − Returns   (refunds dated inside the range)
 //   = Net sales
@@ -532,7 +532,7 @@ export interface Ops {
   incoming: { po: PurchaseOrder; units: number }[];
   incomingUnits: number;
   unfulfilled: Order[];
-  unfulfilledBy: { new: number; confirmed: number; processing: number };
+  unfulfilledBy: { new: number; confirmed: number; processing: number; installation: number };
   pendingPayments: Order[];
   pendingAmount: number;
   unassigned: Inquiry[];
@@ -560,8 +560,9 @@ export function operations(
 
   const newest = (a: { createdAt: string }, b: { createdAt: string }) => b.createdAt.localeCompare(a.createdAt);
   const live = orders.filter(counts);
-  const unfulfilled = live.filter((o) => fulfillmentOf(o) === 'unfulfilled' && (o.status === 'new' || o.status === 'confirmed' || o.status === 'processing')).sort(newest);
-  const unfulfilledBy = { new: 0, confirmed: 0, processing: 0 };
+  // 'installation' = "Në printim" (logo print in production) — still before shipping, so still unfulfilled
+  const unfulfilled = live.filter((o) => fulfillmentOf(o) === 'unfulfilled' && (o.status === 'new' || o.status === 'confirmed' || o.status === 'processing' || o.status === 'installation')).sort(newest);
+  const unfulfilledBy = { new: 0, confirmed: 0, processing: 0, installation: 0 };
   for (const o of unfulfilled) if (o.status in unfulfilledBy) unfulfilledBy[o.status as keyof typeof unfulfilledBy]++;
   const pendingPayments = live.filter((o) => ['pending', 'authorized', 'failed'].includes(paymentOf(o))).sort(newest);
 

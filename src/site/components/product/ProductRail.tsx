@@ -53,8 +53,8 @@ export function ProductRail({ id, eyebrow, title, products, action, className }:
           className="no-scrollbar -mx-4 mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-4 px-4 pb-2 sm:-mx-6 sm:mt-10 sm:scroll-px-6 sm:px-6 lg:mx-0 lg:gap-6 lg:px-0"
         >
           {products.map((p) => (
-            <div key={p.id} className="w-[64%] shrink-0 snap-start sm:w-[40%] md:w-[31%] lg:w-[calc((100%-72px)/4)]">
-              <ProductCard product={p} />
+            <div key={p.id} className="flex w-[64%] shrink-0 snap-start sm:w-[40%] md:w-[31%] lg:w-[calc((100%-72px)/4)]">
+              <ProductCard product={p} className="w-full" />
             </div>
           ))}
         </div>

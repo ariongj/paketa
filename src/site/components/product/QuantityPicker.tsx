@@ -26,13 +26,11 @@ export function QuantityPicker({ cfg }: { cfg: Configurator }) {
       <div className="p-4 sm:p-5">
         <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <span className="text-[14px] font-bold text-ink">{t('qtyLabel')}</span>
-          {cfg.isPack && cfg.cartonPacks > 0 && (
-            <span className="text-[12.5px] font-medium tabular-nums text-muted">{t('cartonInfo', { packs: cfg.cartonPacks, pieces: pieces(cfg.cartonPacks * cfg.packSize, lang) })}</span>
-          )}
+          {cfg.isPack && <span className="text-[12.5px] font-medium text-muted">{t('packOf', { n: num(cfg.packSize, lang, 0) })}</span>}
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2.5">
           <QtyStepper value={cfg.qty} onChange={cfg.setQty} min={cfg.minQty} max={cfg.maxQty} className="h-12! bg-paper/40 [&_input]:w-12 [&_input]:text-[15px]" />
-          <span className="text-[14px] font-semibold text-ink-soft">{cfg.isPack ? t('qtyPacks') : unitLabel(p.unit, lang)}</span>
+          <span className="text-[14px] font-semibold text-ink-soft">{lang === 'en' && cfg.isPack && cfg.qty !== 1 ? t('qtyPacks') : unitLabel(p.unit, lang)}</span>
           {cfg.cartonPacks > 0 && (
             <button
               type="button"

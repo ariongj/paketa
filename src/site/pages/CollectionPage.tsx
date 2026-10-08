@@ -212,8 +212,8 @@ function CollectionView({ collection, products, preview }: { collection: Collect
             </div>
             <div key={sort} className="mt-6 grid grid-cols-2 gap-x-3.5 gap-y-9 sm:gap-x-5 md:grid-cols-3 lg:mt-8 lg:gap-x-6 lg:gap-y-12 xl:grid-cols-4 xl:gap-x-5">
               {list.map((p, i) => (
-                <div key={p.id} className="animate-fade-up" style={{ animationDelay: `${Math.min(i, 11) * 45}ms` }}>
-                  <ProductCard product={p} priority={i < 8} />
+                <div key={p.id} className="flex animate-fade-up" style={{ animationDelay: `${Math.min(i, 11) * 45}ms` }}>
+                  <ProductCard product={p} priority={i < 8} className="w-full" />
                 </div>
               ))}
             </div>

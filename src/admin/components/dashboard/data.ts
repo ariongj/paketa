@@ -228,10 +228,10 @@ export function niceTicks(max: number, count = 4): number[] {
 /* ------------------------------------------------------------------ */
 /* "Kërkojnë vëmendje" queues (PDF p.08 / p.38 operational reports)     */
 /* ------------------------------------------------------------------ */
-/** Tracked, non-archived products at or below LOW_STOCK, lowest first. */
+/** Tracked, non-archived products with 1…LOW_STOCK packs (same rule as the products filter ?zalihe=low), lowest first. */
 export function lowStockProducts(products: Product[]) {
   return products
-    .filter((p) => p.status !== 'archived' && p.stock < 999 && p.stock <= LOW_STOCK)
+    .filter((p) => p.status !== 'archived' && !p.quoteOnly && p.stock < 999 && p.stock > 0 && p.stock <= LOW_STOCK)
     .sort((a, b) => a.stock - b.stock || a.sku.localeCompare(b.sku));
 }
 

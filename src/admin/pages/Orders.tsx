@@ -1,12 +1,12 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { Archive, ArchiveRestore, ArrowDown, ArrowUp, CheckCheck, ChevronDown, Download, Eye, Plus, ShoppingBag, X } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowDown, ArrowUp, CheckCheck, ChevronDown, Download, Eye, Plus, Printer, ShoppingBag, X } from 'lucide-react';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/misc';
 import { Card, PageHeader, SearchInput, Table, Td, Th } from '@/admin/components/kit';
-import { ALL_STATUSES, archivePatch, channelOf, csvNum, customerName, discountName, isArchived, localizeLine, matchesOrder, pluralKey, qtyLabel, toCsv } from '@/admin/components/orders/helpers';
-import { ArchivedBadge, CancelledBadge, FulfilBadge, PayBadge } from '@/admin/components/orders/status';
+import { ALL_STATUSES, archivePatch, channelOf, csvNum, customerName, discountName, fulfilState, hasPrint, isArchived, localizeLine, matchesOrder, pluralKey, qtyLabel, toCsv } from '@/admin/components/orders/helpers';
+import { ArchivedBadge, CancelledBadge, FulfilBadge, PayBadge, PrintBadge } from '@/admin/components/orders/status';
 import { Check, SelectInput, Stat, Tabs, Tip } from '@/admin/components/orders/ui';
 import { od } from '@/admin/components/orders/dict';
 import { adm } from '@/admin/i18n';
@@ -14,14 +14,14 @@ import { defineDict, useDict, useLang } from '@/i18n';
 import { common } from '@/i18n/common';
 import { useDb } from '@/store/db';
 import { useCan } from '@/store/hooks';
-import { FULFILLMENT_STATES, PAYMENT_STATES, fulfillmentOf, paymentOf, refundedOf } from '@/lib/orders';
+import { FULFILLMENT_STATES, PAYMENT_STATES, paymentOf, refundedOf } from '@/lib/orders';
 import { date, money } from '@/lib/format';
 import { cn, download, round2 } from '@/lib/utils';
 import type { FulfillmentState, Lang, Order, OrderStatus, PaymentState } from '@/lib/types';
 
 const T = defineDict({
   me: {
-    description: 'Sve narudžbe iz web prodavnice i ručne narudžbe tima. Plaćanje, isporuka i povrati prate se odvojeno.',
+    description: 'Sve narudžbe iz web prodavnice i ručne narudžbe tima. Plaćanje, štampa, isporuka i povrati prate se odvojeno.',
     create: 'Kreiraj narudžbu',
     exportCsv: 'Izvezi CSV',
     exported: 'CSV je preuzet: {n}',
@@ -30,6 +30,8 @@ const T = defineDict({
     tab_all: 'Sve',
     tab_unfulfilled: 'Za slanje',
     tab_unpaid: 'Neplaćene',
+    tab_print: 'U štampi',
+    withLogo: 'Sa štampom logotipa',
     tab_archived: 'Arhivirane',
     searchPh: 'Pretraži broj, kupca, e-mail, telefon ili grad',
     f_payment: 'Plaćanje',
@@ -98,7 +100,7 @@ const T = defineDict({
     csv_archived: 'Arhivirana',
   },
   sq: {
-    description: 'Të gjitha porositë nga Online Store dhe porositë manuale të ekipit. Pagesa, përmbushja dhe kthimet ndiqen veçmas.',
+    description: 'Të gjitha porositë nga Online Store dhe porositë manuale të ekipit. Pagesa, printimi, përmbushja dhe kthimet ndiqen veçmas.',
     create: 'Krijo porosi',
     exportCsv: 'Eksporto CSV',
     exported: 'CSV u shkarkua: {n}',
@@ -107,6 +109,8 @@ const T = defineDict({
     tab_all: 'Të gjitha',
     tab_unfulfilled: 'Të papërmbushura',
     tab_unpaid: 'Të papaguara',
+    tab_print: 'Në printim',
+    withLogo: 'Me printim logoje',
     tab_archived: 'Të arkivuara',
     searchPh: 'Kërko numrin, klientin, e-mailin, telefonin ose qytetin',
     f_payment: 'Pagesa',
@@ -175,7 +179,7 @@ const T = defineDict({
     csv_archived: 'E arkivuar',
   },
   en: {
-    description: 'Every Online Store order and the team’s manual orders. Payment, fulfilment and returns are tracked separately.',
+    description: 'Every Online Store order and the team’s manual orders. Payment, logo printing, fulfilment and returns are tracked separately.',
     create: 'Create order',
     exportCsv: 'Export CSV',
     exported: 'CSV downloaded: {n}',
@@ -184,6 +188,8 @@ const T = defineDict({
     tab_all: 'All',
     tab_unfulfilled: 'Unfulfilled',
     tab_unpaid: 'Unpaid',
+    tab_print: 'In print',
+    withLogo: 'With logo print',
     tab_archived: 'Archived',
     searchPh: 'Search number, customer, e-mail, phone or city',
     f_payment: 'Payment',
@@ -253,16 +259,17 @@ const T = defineDict({
   },
 });
 
-type Tab = 'all' | 'unfulfilled' | 'unpaid' | 'archived';
+type Tab = 'all' | 'unfulfilled' | 'print' | 'unpaid' | 'archived';
 type Period = '7' | '30' | '90' | 'all';
 type Channel = 'online' | 'draft';
 type SortKey = 'date' | 'total';
-const TABS: Tab[] = ['all', 'unfulfilled', 'unpaid', 'archived'];
+const TABS: Tab[] = ['all', 'unfulfilled', 'print', 'unpaid', 'archived'];
 const PERIODS: Period[] = ['all', '7', '30', '90'];
 const PAGE = 25;
 const DAY = 86400000;
 
-const isUnfulfilled = (o: Order) => o.status !== 'cancelled' && (fulfillmentOf(o) === 'unfulfilled' || fulfillmentOf(o) === 'partial');
+const isUnfulfilled = (o: Order) => o.status !== 'cancelled' && (fulfilState(o) === 'unfulfilled' || fulfilState(o) === 'partial');
+const isInPrint = (o: Order) => o.status === 'installation';
 const isUnpaid = (o: Order) => o.status !== 'cancelled' && ['pending', 'authorized', 'failed'].includes(paymentOf(o));
 
 function inTab(o: Order, tab: Tab) {
@@ -270,6 +277,7 @@ function inTab(o: Order, tab: Tab) {
   if (isArchived(o)) return false;
   if (tab === 'unfulfilled') return isUnfulfilled(o);
   if (tab === 'unpaid') return isUnpaid(o);
+  if (tab === 'print') return isInPrint(o);
   return true;
 }
 
@@ -325,7 +333,7 @@ export default function Orders() {
       (o) =>
         matchesOrder(o, query) &&
         (!pay || paymentOf(o) === pay) &&
-        (!ful || fulfillmentOf(o) === ful) &&
+        (!ful || fulfilState(o) === ful) &&
         (!status || o.status === status) &&
         (!channel || channelOf(o) === channel) &&
         (!from || new Date(o.createdAt).getTime() >= from),
@@ -405,8 +413,8 @@ export default function Orders() {
       o.number,
       `${date(o.createdAt, lang, { year: 'numeric', month: '2-digit', day: '2-digit' })} ${timeOf(o.createdAt, lang)}`,
       customerName(o), o.customer.email, o.customer.phone, o.customer.city, o.customer.address, o.customer.company ?? '',
-      o.items.map((l) => `${localizeLine(l, products.find((p) => p.id === l.productId), o.lang, lang).name} × ${qtyLabel(l, lang, tc('packs'))}`).join(' | '),
-      to(`channel_${channelOf(o)}`), tc(`delivery_${o.delivery.method}`), tc(`pay_${o.payment.method}`), to(`pay_${paymentOf(o)}`), to(`ful_${fulfillmentOf(o)}`),
+      o.items.map((l) => `${localizeLine(l, products.find((p) => p.id === l.productId), o.lang, lang).name} × ${qtyLabel(l, lang, { short: true })}${l.installation ? ` + ${tc('installation')}` : ''}`).join(' | '),
+      to(`channel_${channelOf(o)}`), tc(`delivery_${o.delivery.method}`), tc(`pay_${o.payment.method}`), to(`pay_${paymentOf(o)}`), to(`ful_${fulfilState(o)}`),
       csvNum(o.subtotal, lang), csvNum(o.installationTotal, lang), csvNum(o.discount, lang),
       (o.discounts ?? []).map((d) => `${discountName(d.id, d.title, discounts, lang)}${d.code ? ` (${d.code})` : ''} −${csvNum(d.amount, lang)}`).join(' | '),
       csvNum(o.shipping, lang), csvNum(o.total, lang), csvNum(o.vat, lang), csvNum(refundedOf(o), lang), tc(`status_${o.status}`), isArchived(o) ? ta('yes') : ta('no'),
@@ -583,7 +591,14 @@ export default function Orders() {
                           <span className={cn('tabular-nums', o.seen ? 'font-semibold' : 'font-bold')}>#{o.number}</span>
                           {!o.seen && <span title={t('unseen')} className="h-2 w-2 rounded-full bg-ink" />}
                         </span>
-                        <span className="block text-[12px] text-muted">{plural('items', o.items.length)}</span>
+                        <span className="flex items-center gap-1 text-[12px] text-muted">
+                          {plural('items', o.items.length)}
+                          {hasPrint(o) && (
+                            <span title={t('withLogo')} className="inline-flex items-center text-ink-soft">
+                              · <Printer className="ml-1 h-3 w-3" aria-label={t('withLogo')} />
+                            </span>
+                          )}
+                        </span>
                       </Td>
                       <Td className="whitespace-nowrap">
                         <span className="block">{dayOf(o.createdAt, lang)}</span>
@@ -598,7 +613,8 @@ export default function Orders() {
                       </Td>
                       <Td className="whitespace-nowrap">
                         <span className="flex flex-wrap items-center gap-1">
-                          {o.status === 'cancelled' ? <CancelledBadge /> : <FulfilBadge state={fulfillmentOf(o)} />}
+                          {o.status === 'cancelled' ? <CancelledBadge /> : <FulfilBadge state={fulfilState(o)} />}
+                          {isInPrint(o) && <PrintBadge />}
                           {isArchived(o) && tab !== 'archived' && <ArchivedBadge />}
                         </span>
                       </Td>
@@ -638,7 +654,8 @@ export default function Orders() {
                       </span>
                       <span className="mt-2 flex flex-wrap items-center gap-1.5">
                         <PayBadge state={paymentOf(o)} />
-                        {o.status === 'cancelled' ? <CancelledBadge /> : <FulfilBadge state={fulfillmentOf(o)} />}
+                        {o.status === 'cancelled' ? <CancelledBadge /> : <FulfilBadge state={fulfilState(o)} />}
+                        {isInPrint(o) && <PrintBadge />}
                         <span className="text-[12px] text-muted">· {to(`channel_${channelOf(o)}`)}</span>
                       </span>
                     </button>

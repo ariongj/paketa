@@ -12,7 +12,7 @@ import { useDb } from '@/store/db';
 import { defaultOptions, discountPct } from '@/lib/pricing';
 import { num, unitLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import { PD, pctOff } from './product/dict';
+import { PD, keepUnits, pctOff } from './product/dict';
 
 type Sticker = { key: string; label: string; className: string };
 
@@ -134,9 +134,9 @@ export function ProductCard({ product, className, priority }: { product: Product
 
       <div className="flex flex-1 flex-col px-1.5 pb-1 pt-3 sm:px-2 sm:pb-1.5">
         <div className="truncate text-[10.5px] font-bold uppercase tracking-[0.14em] text-muted sm:text-[11px]">{category ? l(category.name) : ''}</div>
-        <h3 className="mt-1 line-clamp-2 text-[14px] font-semibold leading-snug text-ink sm:text-[15px]">
+        <h3 className="mt-1 line-clamp-2 text-pretty text-[14px] font-semibold leading-snug text-ink sm:text-[15px]">
           <Link to={href} className="link-u">
-            {l(product.name)}
+            {keepUnits(l(product.name))}
           </Link>
         </h3>
         {pack && <div className="mt-1 text-[12.5px] font-medium tabular-nums text-muted">{t('packOf', { n: num(product.packSize ?? 1, lang, 0) })}</div>}

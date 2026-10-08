@@ -15,10 +15,10 @@ export function useHomeData<T extends HomeSectionType>(type: T): SectionData<T> 
   return useMemo(() => home.find((h) => h.type === type)?.data as SectionData<T> | undefined, [home, type]);
 }
 
-/** Where "free samples" links point: the homepage form when it is shown, otherwise the contact page samples tab. */
+/** Where "free samples" links point: the homepage samples form (anchor id shared with Header / HomeSections) when it is shown, otherwise the contact page samples tab. */
 export function useMeasureHref() {
   const home = useDb((s) => s.home);
-  return useMemo(() => (home.some((h) => h.type === 'cta' && h.enabled) ? '/#mjerenje' : '/kontakti?lloji=mostra'), [home]);
+  return useMemo(() => (home.some((h) => h.type === 'cta' && h.enabled) ? '/#mostra' : '/kontakti?lloji=mostra'), [home]);
 }
 
 /** Contact-page links that open the lead form on the right tab. */

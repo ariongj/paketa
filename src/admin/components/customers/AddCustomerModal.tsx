@@ -15,17 +15,17 @@ import { useCustomerStore, type Marketing } from './store';
 const T = defineDict({
   me: {
     title: 'Novi kupac',
-    description: 'Za kupce iz salona, sa telefona ili sajma. Web kupci se dodaju automatski uz prvu narudžbu.',
+    description: 'Za kupce iz depoa, sa telefona ili sajma (kafići, restorani, poslastičarnice). Web kupci se dodaju automatski uz prvu narudžbu.',
     firstName: 'Ime',
     lastName: 'Prezime',
     email: 'E-mail',
     phone: 'Telefon',
     city: 'Grad',
     address: 'Adresa',
-    company: 'Firma (opciono)',
+    company: 'Firma / NUI (za B2B, opciono)',
     lang: 'Jezik komunikacije',
     tags: 'Oznake',
-    tagsHint: 'Odvojite zarezom, npr. arhitekta, novogradnja',
+    tagsHint: 'Odvojite zarezom, npr. kafiteri, shumicë, printim-logo',
     consentTitle: 'Marketing saglasnost',
     consentEmail: 'Pristaje na e-mail marketing',
     consentSms: 'Pristaje na SMS poruke',
@@ -40,17 +40,17 @@ const T = defineDict({
   },
   sq: {
     title: 'Klient i ri',
-    description: 'Për klientë nga salloni, telefoni ose panairi. Klientët online shtohen automatikisht me porosinë e parë.',
+    description: 'Për klientë nga depoja, telefoni ose panairi (kafiteri, restorante, ëmbëltore). Klientët online shtohen automatikisht me porosinë e parë.',
     firstName: 'Emri',
     lastName: 'Mbiemri',
     email: 'E-mail',
     phone: 'Telefoni',
     city: 'Qyteti',
     address: 'Adresa',
-    company: 'Kompania (opsionale)',
+    company: 'Biznesi / NUI (për B2B, opsionale)',
     lang: 'Gjuha e komunikimit',
     tags: 'Etiketat',
-    tagsHint: 'Ndajini me presje, p.sh. arhitekta, novogradnja',
+    tagsHint: 'Ndajini me presje, p.sh. kafiteri, shumicë, printim-logo',
     consentTitle: 'Pëlqimi për marketing',
     consentEmail: 'Pranon marketing me e-mail',
     consentSms: 'Pranon mesazhe SMS',
@@ -65,17 +65,17 @@ const T = defineDict({
   },
   en: {
     title: 'New customer',
-    description: 'For showroom, phone or trade-fair customers. Web customers are added automatically with their first order.',
+    description: 'For warehouse, phone or trade-fair customers (cafés, restaurants, pastry shops). Web customers are added automatically with their first order.',
     firstName: 'First name',
     lastName: 'Last name',
     email: 'E-mail',
     phone: 'Phone',
     city: 'City',
     address: 'Address',
-    company: 'Company (optional)',
+    company: 'Business / NUI (for B2B, optional)',
     lang: 'Preferred language',
     tags: 'Tags',
-    tagsHint: 'Separate with commas, e.g. architect, new-build',
+    tagsHint: 'Separate with commas, e.g. kafiteri, shumicë, printim-logo',
     consentTitle: 'Marketing consent',
     consentEmail: 'Accepts e-mail marketing',
     consentSms: 'Accepts SMS messages',
@@ -167,7 +167,7 @@ export function AddCustomerModal({ open, onClose, customers, cities, onCreated }
         <Input label={t('firstName')} required value={f.firstName} onChange={(e) => set('firstName', e.target.value)} error={tried ? errors.firstName : undefined} className="h-10! text-[14px]!" />
         <Input label={t('lastName')} value={f.lastName} onChange={(e) => set('lastName', e.target.value)} className="h-10! text-[14px]!" />
         <Input label={t('email')} type="email" value={f.email} onChange={(e) => set('email', e.target.value)} error={tried ? errors.email ?? errors.contact : undefined} className="h-10! text-[14px]!" />
-        <Input label={t('phone')} type="tel" value={f.phone} onChange={(e) => set('phone', e.target.value)} placeholder="+382 6_ ___ ___" error={tried && !errors.email ? errors.contact : undefined} className="h-10! text-[14px]!" />
+        <Input label={t('phone')} type="tel" value={f.phone} onChange={(e) => set('phone', e.target.value)} placeholder="+383 4_ ___ ___" error={tried && !errors.email ? errors.contact : undefined} className="h-10! text-[14px]!" />
         <div>
           <Input label={t('city')} value={f.city} list={listId} onChange={(e) => set('city', e.target.value)} className="h-10! text-[14px]!" />
           <datalist id={listId}>
@@ -179,7 +179,7 @@ export function AddCustomerModal({ open, onClose, customers, cities, onCreated }
         <Input label={t('address')} value={f.address} onChange={(e) => set('address', e.target.value)} className="h-10! text-[14px]!" />
         <Input label={t('company')} value={f.company} onChange={(e) => set('company', e.target.value)} className="h-10! text-[14px]!" />
         <Select label={t('lang')} value={f.lang} onChange={(e) => set('lang', e.target.value as Lang)} className="h-10! text-[14px]!">
-          {(['sq', 'me', 'en'] as Lang[]).map((l) => (
+          {(['sq', 'en', 'me'] as Lang[]).map((l) => (
             <option key={l} value={l}>
               {tx(`lang_${l}`)}
             </option>

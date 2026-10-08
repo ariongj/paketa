@@ -130,7 +130,7 @@ export function useCountVisit(offer: Offer | undefined, live: boolean) {
   const id = offer?.id;
   useEffect(() => {
     if (!id || !live) return;
-    const key = `selca-offer-visit:${id}`;
+    const key = `paketoje-offer-visit:${id}`;
     try {
       if (sessionStorage.getItem(key)) return;
       sessionStorage.setItem(key, '1');

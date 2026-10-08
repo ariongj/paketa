@@ -120,6 +120,7 @@ export const EXAMPLE_FIELDS: { key: keyof Settings; section: SectionId }[] = [
   { key: 'whatsapp', section: 'general' },
   { key: 'address', section: 'general' },
   { key: 'city', section: 'general' },
+  { key: 'bankName', section: 'payments' },
   { key: 'bankAccount', section: 'payments' },
 ];
 

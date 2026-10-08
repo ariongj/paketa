@@ -98,14 +98,8 @@ export function nextStatus(o: Pick<Order, 'items' | 'status' | 'timeline'>): Ord
   return i >= 0 && i < flow.length - 1 ? flow[i + 1] : null;
 }
 
-/**
- * Fulfilment for the CMS screens. lib/orders counts 'installation' as shipped (the old installation step came
- * after delivery); for Paketoje an order "in print" has not left the warehouse yet, unless a shipment was recorded.
- */
-export function fulfilState(o: Pick<Order, 'status' | 'fulfillment'>): FulfillmentState {
-  if (o.status === 'installation' && !o.fulfillment?.shippedAt) return o.fulfillment?.partial ? 'partial' : 'unfulfilled';
-  return fulfillmentOf(o);
-}
+/** Fulfilment for the CMS screens — an order "Në printim" has not left the warehouse yet (see lib/orders). */
+export const fulfilState = (o: Pick<Order, 'status' | 'fulfillment'>): FulfillmentState => fulfillmentOf(o);
 
 export const PAY_ICON: Record<PaymentMethod, LucideIcon> = { cod: Banknote, bank: Landmark, card: CreditCard };
 

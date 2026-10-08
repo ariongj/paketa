@@ -9,6 +9,7 @@ import { searchProducts } from '@/lib/search';
 import { basePrice } from '@/lib/pricing';
 import { isTracked } from '@/lib/inventory';
 import { money, perUnit } from '@/lib/format';
+import { packSizeText, unitsText } from '@/admin/components/products/units';
 import { cn } from '@/lib/utils';
 import type { Product } from '@/lib/types';
 
@@ -20,7 +21,7 @@ const T = defineDict({
     none: 'Nema proizvoda za „{q}“',
     stock: 'Stanje: {n}',
     toOrder: 'Po narudžbi',
-    quote: 'Po mjeri',
+    quote: 'Na upit',
   },
   sq: {
     placeholder: 'Kërko në katalog — emri, kodi ose kategoria',
@@ -29,7 +30,7 @@ const T = defineDict({
     none: 'Nuk ka produkte për „{q}“',
     stock: 'Stoku: {n}',
     toOrder: 'Me porosi',
-    quote: 'Me masë',
+    quote: 'Me kërkesë oferte',
   },
   en: {
     placeholder: 'Search the catalogue — name, SKU or category',
@@ -38,7 +39,7 @@ const T = defineDict({
     none: 'No products for “{q}”',
     stock: 'Stock: {n}',
     toOrder: 'Made to order',
-    quote: 'Made to measure',
+    quote: 'Quote only',
   },
 });
 
@@ -113,7 +114,7 @@ export function ProductSearch({ onPick, disabled }: { onPick: (p: Product) => vo
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[13.5px] font-medium text-ink">{l(p.name)}</span>
                       <span className="block truncate text-[12px] text-muted">
-                        {p.sku} · {p.quoteOnly ? t('quote') : isTracked(p) ? t('stock', { n: p.stock }) : t('toOrder')}
+                        {p.sku}{packSizeText(p, lang) ? ` · ${packSizeText(p, lang)}` : ''} · {p.quoteOnly ? t('quote') : isTracked(p) ? t('stock', { n: unitsText(p.stock, p.unit, lang) }) : t('toOrder')}
                       </span>
                     </span>
                     <span className="shrink-0 text-right text-[13px] tabular-nums text-ink">

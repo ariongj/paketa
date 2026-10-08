@@ -35,7 +35,7 @@ export function isExample(value?: string | null) {
   const v = (value ?? '').trim();
   if (!v) return false;
   const body = v.replace(/^XK\d{2}/, '');
-  return SAMPLE_EXACT.includes(v.replace(/\s+/g, '')) || SAMPLE_PART.some((p) => v.includes(p)) || /X(?![a-zçë])/.test(body);
+  return SAMPLE_EXACT.includes(v.replace(/\s+/g, '')) || SAMPLE_PART.some((p) => v.includes(p)) || /\((shembull|primjer|example)\)/i.test(v) || /X(?![a-zçë])/.test(body);
 }
 
 export const isEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());

@@ -125,12 +125,12 @@ function sampleCsv(existing: CustomerRecord[]) {
   const known = [...existing].filter((c) => c.email && c.count > 0).sort((a, b) => b.spent - a.spent)[0];
   const rows = [
     IMPORT_TEMPLATE_HEAD.join(','),
-    'Danijela,Šćepanović,danijela.scepanovic@example.com,+382 67 245 118,Podgorica,Ulica Slobode 22,me,arhitekta,yes,no',
-    'Fatmir,Hoxha,fatmir.hoxha@example.com,+382 68 731 402,Ulcinj,Ulica Skenderbega 9,sq,"apartmani;sajam-2026",yes,yes',
-    'Goran,Lakić,goran.lakic@example.com,+382 69 118 240,Budva,Mediteranska 31,me,izvođač,no,no',
-    known ? `${known.firstName},${known.lastName},${known.email},,${known.city},,${known.lang},sajam-2026,yes,` : '',
-    'Marta,Jovanović,,,Kotor,,en,,yes,no',
-    'Ilir,Berisha,ilir.berisha@example,+382 67 902 331,Tuzi,,sq,,no,no',
+    'Besart,Krasniqi,besart.krasniqi@example.com,+383 44 245 118,Prishtinë,Rr. Agim Ramadani 22,sq,"kafiteri;shumicë",yes,no',
+    'Marko,Jovanović,marko.jovanovic@example.com,+383 49 731 402,Mitrovicë,Ul. Kralja Petra 9,sr,restorant,yes,yes',
+    'Liridona,Hoti,liridona.hoti@example.com,+383 45 118 240,Pejë,Rr. Mbretëresha Teutë 31,shqip,"ëmbëltore;printim-logo",no,no',
+    known ? `${known.firstName},${known.lastName},${known.email},,${known.city},,${known.lang === 'me' ? 'sr' : known.lang},panairi-2026,yes,` : '',
+    'Sarah,Miller,,,Prizren,,en,catering,yes,no',
+    'Ilir,Berisha,ilir.berisha@example,+383 44 902 331,Vushtrri,,sq,,no,no',
   ].filter(Boolean);
   return rows.join('\n');
 }
@@ -241,7 +241,7 @@ export function ImportModal({ open, onClose, customers }: { open: boolean; onClo
               <span className="mt-1 text-[12.5px] text-muted">{t('dropHint')}</span>
             </label>
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" shape="rounded" size="sm" icon={<Download className="h-4 w-4" />} onClick={() => download('selca-klijenti-sablon.csv', '﻿' + IMPORT_TEMPLATE_HEAD.join(',') + '\n', 'text/csv;charset=utf-8')}>
+              <Button variant="outline" shape="rounded" size="sm" icon={<Download className="h-4 w-4" />} onClick={() => download('paketoje-klientet-shabllon.csv', '﻿' + IMPORT_TEMPLATE_HEAD.join(',') + '\n', 'text/csv;charset=utf-8')}>
                 {t('template')}
               </Button>
               <Button variant="outline" shape="rounded" size="sm" icon={<Sparkles className="h-4 w-4" />} onClick={() => setFile({ name: 'shembull.csv', text: sampleCsv(customers) })}>

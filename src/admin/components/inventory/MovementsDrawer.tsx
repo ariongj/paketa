@@ -41,10 +41,12 @@ function Level({ label, value, of, strong, hint }: { label: string; value: numbe
   return (
     <div className={cn('flex min-w-0 flex-col justify-between rounded-lg px-3 py-2.5', strong ? 'bg-ink text-white' : 'bg-white ring-1 ring-inset ring-line/80')} title={hint}>
       <div className={cn('text-[11.5px] font-semibold leading-tight', strong ? 'text-white/70' : 'text-muted')}>{label}</div>
-      <div className="mt-1 text-[19px] font-bold leading-tight tabular-nums">
-        {num(value, lang)} <span className={cn('text-[11px] font-medium', strong ? 'text-white/60' : 'text-muted')}>{unitWord(of.unit, value, lang)}</span>
+      <div className="mt-1">
+        <div className="text-[19px] font-bold leading-tight tabular-nums">
+          {num(value, lang)} <span className={cn('text-[11px] font-medium', strong ? 'text-white/60' : 'text-muted')}>{unitWord(of.unit, value, lang)}</span>
+        </div>
+        <div className={cn('mt-0.5 truncate text-[11px] leading-tight tabular-nums', strong ? 'text-white/60' : 'text-muted')}>{pcs || '\u00a0'}</div>
       </div>
-      <div className={cn('mt-0.5 truncate text-[11px] leading-tight tabular-nums', strong ? 'text-white/60' : 'text-muted')}>{pcs || '\u00a0'}</div>
     </div>
   );
 }

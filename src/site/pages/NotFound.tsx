@@ -78,7 +78,8 @@ export default function NotFound() {
                 <Img src="/images/misc/box.webp" small eager alt="" className="h-full w-full object-cover" />
                 <span className="absolute inset-[0.05em] rounded-[0.08em] border-[0.012em] border-dashed border-ink/40" />
               </span>
-              <span className="absolute -right-[0.16em] -top-[0.1em] grid h-[0.36em] w-[0.36em] rotate-[14deg] place-items-center rounded-full bg-lime font-sans text-[0.07em] font-extrabold uppercase tracking-[0.1em] text-ink shadow-[0_10px_24px_-10px_rgba(15,29,22,0.6)]">
+              <span className="absolute -right-7 -top-5 grid h-16 w-16 rotate-[14deg] place-items-center rounded-full bg-lime font-sans text-[10px] font-extrabold uppercase leading-none tracking-[0.12em] text-ink shadow-[0_10px_24px_-10px_rgba(15,29,22,0.6)] sm:-right-9 sm:-top-6 sm:h-20 sm:w-20 sm:text-[12px]">
+                <span className="absolute inset-[4px] rounded-full border border-dashed border-ink/30" />
                 {t('empty')}
               </span>
             </span>

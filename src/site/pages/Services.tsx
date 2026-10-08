@@ -68,6 +68,7 @@ const T = defineDict({
     w_total: 'Ukupno',
     w_carton: '1 karton ({n} pak.)',
     w_packs: '{n} pak.',
+    w_pack1: '1 pakovanje',
     w_save: 'Ušteda {amount}',
     w_note: 'Cijene sa PDV-om. Za veće mjesečne količine pripremamo posebnu ponudu.',
     w_shop: 'Pogledaj čaše',
@@ -86,7 +87,7 @@ const T = defineDict({
     d_more: '+{n} mjesta',
     d_pickup: 'Preuzimanje u magacinu',
     d_pickupx: 'Besplatno — narudžba spremna za 2 sata.',
-    d_region: 'Albanija, Sjeverna Makedonija i Crna Gora — na upit.',
+    d_region: 'Dostava i u Albaniju, Sjevernu Makedoniju i Crnu Goru — na upit.',
     d_fee: 'Dostava',
     // invoice
     f_title: 'Faktura sa *NUI i PDV-om*',
@@ -162,6 +163,7 @@ const T = defineDict({
     w_total: 'Totali',
     w_carton: '1 karton ({n} pako)',
     w_packs: '{n} pako',
+    w_pack1: '1 pako',
     w_save: 'Kurseni {amount}',
     w_note: 'Çmimet me TVSH. Për sasi të mëdha mujore përgatisim ofertë të veçantë.',
     w_shop: 'Shiko gotat',
@@ -252,6 +254,7 @@ const T = defineDict({
     w_total: 'Total',
     w_carton: '1 carton ({n} packs)',
     w_packs: '{n} packs',
+    w_pack1: '1 pack',
     w_save: 'You save {amount}',
     w_note: 'Prices incl. VAT. For large monthly volumes we prepare a custom quote.',
     w_shop: 'Shop cups',
@@ -387,13 +390,13 @@ function TierExample({ product }: { product: Product }) {
         </div>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[480px] text-left text-[14px]">
+        <table className="w-full text-left text-[13.5px] sm:text-[14px]">
           <thead>
             <tr className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted">
-              <th className="px-5 py-3 font-bold">{t('w_qty')}</th>
-              <th className="px-3 py-3 text-right font-bold">{t('w_pack')}</th>
+              <th className="px-4 py-3 font-bold sm:px-5">{t('w_qty')}</th>
+              <th className="hidden px-3 py-3 text-right font-bold sm:table-cell">{t('w_pack')}</th>
               <th className="px-3 py-3 text-right font-bold">{t('w_piece')}</th>
-              <th className="px-5 py-3 text-right font-bold">{t('w_total')}</th>
+              <th className="px-4 py-3 text-right font-bold sm:px-5">{t('w_total')}</th>
             </tr>
           </thead>
           <tbody>
@@ -401,16 +404,16 @@ function TierExample({ product }: { product: Product }) {
               const last = i === rows.length - 1;
               return (
                 <tr key={r.q} className={cn('border-t border-line', last && 'bg-lime-soft/60')}>
-                  <td className="px-5 py-3.5">
+                  <td className="px-4 py-3.5 sm:px-5">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-bold text-ink">{product.cartonPacks && r.q === product.cartonPacks ? t('w_carton', { n: r.q }) : t('w_packs', { n: r.q })}</span>
+                      <span className="font-bold text-ink">{product.cartonPacks && r.q === product.cartonPacks ? t('w_carton', { n: r.q }) : r.q === 1 ? t('w_pack1') : t('w_packs', { n: r.q })}</span>
                       {r.pct > 0 && <span className="rounded-full bg-ink px-2 py-0.5 text-[11px] font-extrabold text-lime">−{r.pct}%</span>}
                     </div>
                     <div className="mt-0.5 text-[12px] text-muted">{pieces(r.q * per, lang)}</div>
                   </td>
-                  <td className="px-3 py-3.5 text-right tabular-nums text-ink-soft">{money(r.unit, lang)}</td>
+                  <td className="hidden px-3 py-3.5 text-right tabular-nums text-ink-soft sm:table-cell">{money(r.unit, lang)}</td>
                   <td className={cn('px-3 py-3.5 text-right font-semibold tabular-nums', r.pct ? 'text-brand-700' : 'text-ink')}>{moneyPiece(r.piece, lang)}</td>
-                  <td className="px-5 py-3.5 text-right">
+                  <td className="px-4 py-3.5 text-right sm:px-5">
                     <div className="font-bold tabular-nums text-ink">{money(r.total, lang)}</div>
                     {r.save > 0.004 && <div className="text-[12px] font-semibold text-brand-700">{t('w_save', { amount: money(r.save, lang) })}</div>}
                   </td>
@@ -443,7 +446,7 @@ export default function Services() {
   const openLead = (type: Lead, logo = false) => {
     setLead(type);
     setLogoPick(logo);
-    scrollToId('mjerenje');
+    scrollToId('forma');
   };
 
   const example = useMemo(() => {
@@ -550,12 +553,16 @@ export default function Services() {
             {facts.logoProducts.length > 0 && (
               <div className="mt-6">
                 <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted">{t('p_on')}</div>
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
                   {facts.logoProducts.map((p) => (
-                    <Link key={p.id} to={`/produkt/${p.slug}`} className="group inline-flex items-center gap-2 rounded-full border border-line bg-white py-1 pl-1 pr-3.5 text-[13px] font-semibold text-ink transition hover:border-brand-600/40">
-                      <Img src={p.images[0]} small alt="" className="h-8 w-8 rounded-full object-cover" />
-                      <span className="max-w-[180px] truncate">{l(p.name)}</span>
-                      {p.installation && <span className="text-[12px] font-bold text-brand-700">{t('p_perPack', { price: money(p.installation.price, lang) })}</span>}
+                    <Link key={p.id} to={`/produkt/${p.slug}`} className="group flex items-center gap-2.5 rounded-2xl border border-line bg-white p-1.5 pr-3 transition hover:border-brand-600/40 hover:shadow-[0_14px_30px_-22px_rgba(15,29,22,0.5)]">
+                      <span className="h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-sand">
+                        <Img src={p.images[0]} small alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="line-clamp-2 text-[12.5px] font-semibold leading-tight text-ink">{l(p.name)}</span>
+                        {p.installation && <span className="mt-0.5 block text-[11.5px] font-bold text-brand-700">{t('p_perPack', { price: money(p.installation.price, lang) })}</span>}
+                      </span>
                     </Link>
                   ))}
                 </div>
@@ -638,7 +645,7 @@ export default function Services() {
                   <span className="grid h-9 w-9 place-items-center rounded-full bg-ink text-lime">
                     <Truck className="h-4 w-4" />
                   </span>
-                  {t('d_free', { amount: money(facts.freeFrom, lang) })}
+                  {t('d_free', { amount: money(facts.freeFrom, lang, { decimals: facts.freeFrom % 1 !== 0 }) })}
                 </div>
               )}
             </Reveal>
@@ -652,7 +659,7 @@ export default function Services() {
                         <span className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-50 text-brand-700">
                           <MapPin className="h-5 w-5" />
                         </span>
-                        <span className="display text-[30px] leading-none text-ink">{money(z.fee, lang)}</span>
+                        <span className="display text-[30px] leading-none text-ink">{money(z.fee, lang, { decimals: z.fee % 1 !== 0 })}</span>
                       </div>
                       <h3 className="mt-5 text-[17px] font-bold leading-snug text-ink">{z.name}</h3>
                       <div className="mt-1 text-[13.5px] font-semibold text-brand-700">{z.days.trim() === '1' ? t('d_day1') : t('d_days', { d: z.days })}</div>
@@ -790,14 +797,14 @@ export default function Services() {
       )}
 
       {/* Lead forms: samples / wholesale + logo quote */}
-      <section id="mjerenje" className={cn('scroll-mt-24 pb-8', !(faq && faq.items.length > 0) && 'pt-20 sm:pt-28')}>
+      <section id="forma" className={cn('scroll-mt-24 pb-8', !(faq && faq.items.length > 0) && 'pt-20 sm:pt-28')}>
         <span id="oferta" className="block scroll-mt-24" />
         <div className="container-x">
           <Reveal>
             <div className="grid gap-4 rounded-[36px] bg-sand/80 p-3 sm:p-4 lg:grid-cols-[0.9fr_1.1fr]">
               <div className="relative isolate flex min-h-[460px] flex-col justify-end overflow-hidden rounded-[28px] bg-brand-800 p-7 sm:p-10">
                 <Img key={lead} src={lead === 'quote' ? '/images/s/printim.webp' : '/images/s/mostra.webp'} alt="" className="absolute inset-0 -z-10 h-full w-full animate-fade-in object-cover" />
-                <div className="absolute inset-0 -z-10 bg-gradient-to-t from-brand-800 via-brand-800/75 to-brand-800/10" />
+                <div className="absolute inset-0 -z-10 bg-brand-800/85 lg:bg-transparent lg:bg-gradient-to-t lg:from-brand-800 lg:from-35% lg:via-brand-800/70 lg:via-55% lg:to-brand-800/0" />
                 <div className="eyebrow text-lime">{t('lead_eyebrow')}</div>
                 <h2 className="display mt-3 text-[34px] leading-[1.04] text-white sm:text-[44px]">
                   <Accent text={t('lead_title')} accentClassName={ACCENT_ON_DARK} />

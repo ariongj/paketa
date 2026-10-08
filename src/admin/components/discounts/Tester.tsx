@@ -198,7 +198,7 @@ export function Tester({ open, onClose, draft }: { open: boolean; onClose: () =>
           <section>
             <div className="mb-2.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
               <h3 className="whitespace-nowrap text-[13px] font-semibold uppercase tracking-[0.08em] text-muted">{t('sampleCart')}</h3>
-              <div className="-mr-2 flex items-center gap-1 whitespace-nowrap">
+              <div className="-ml-2 flex items-center gap-1 whitespace-nowrap">
                 <button type="button" onClick={() => setItems(autofillItems(draft, products, memberOf))} className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-[12.5px] font-semibold text-ink-soft transition-colors hover:bg-canvas hover:text-ink">
                   <Sparkles className="h-3.5 w-3.5" />
                   {t('autofill')}

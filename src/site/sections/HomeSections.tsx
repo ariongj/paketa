@@ -118,31 +118,31 @@ function QuoteTile({ items }: { items: CatInfo[] }) {
   const h = useDict(H);
   return (
     <Reveal delay={120} className="col-span-2">
-      <div className="relative flex h-full flex-col overflow-hidden rounded-[24px] bg-[color-mix(in_oklab,var(--color-kraft)_32%,var(--color-paper))] p-5 sm:rounded-[28px] sm:p-7 lg:flex-row lg:items-center lg:gap-6">
+      <div className="relative flex h-full flex-col overflow-hidden rounded-[24px] bg-[color-mix(in_oklab,var(--color-kraft)_32%,var(--color-paper))] p-5 sm:rounded-[28px] sm:p-7 lg:flex-row lg:items-center lg:gap-5 lg:px-7 lg:py-6">
         <div aria-hidden className="pointer-events-none absolute inset-2 rounded-[18px] border-2 border-dashed border-ink/15 sm:rounded-[22px]" />
         <div className="relative min-w-0 flex-1">
           <div className="text-[10.5px] font-extrabold uppercase tracking-[0.18em] text-pink-ink">{h('quoteEyebrow')}</div>
-          <h3 className="display mt-2 text-[24px] leading-[1.02] text-ink sm:text-[30px]">
+          <h3 className="display mt-2 text-[24px] leading-[1.02] text-ink sm:text-[28px]">
             <Accent text={h('quoteTitle')} />
           </h3>
-          <p className="mt-2 max-w-md text-[13.5px] leading-relaxed text-ink-soft">{h('quoteText')}</p>
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <ButtonLink to="/sherbimet" size="sm" variant="dark" iconRight={<ArrowRight className="h-3.5 w-3.5" />}>
+          <p className="mt-2 max-w-md text-[13px] leading-snug text-ink-soft">{h('quoteText')}</p>
+          <div className="mt-3.5 flex flex-wrap items-center gap-1.5">
+            <ButtonLink to="/sherbimet" size="sm" variant="dark" className="h-8! px-3.5! text-[12.5px]!" iconRight={<ArrowRight className="h-3.5 w-3.5" />}>
               {h('quoteCta')}
             </ButtonLink>
             {items.map((x) => (
-              <Link key={x.cat.id} to={`/produktet/${x.cat.slug}`} className="inline-flex h-9 items-center rounded-full bg-white/70 px-3 text-[12.5px] font-semibold text-ink ring-1 ring-ink/10 transition-colors hover:bg-white">
+              <Link key={x.cat.id} to={`/produktet/${x.cat.slug}`} className="inline-flex h-8 items-center rounded-full bg-white/70 px-3 text-[12px] font-semibold text-ink ring-1 ring-ink/10 transition-colors hover:bg-white">
                 {l(x.cat.name)}
               </Link>
             ))}
           </div>
         </div>
-        <div className="relative mt-5 hidden h-[170px] w-[210px] shrink-0 sm:block lg:mt-0">
+        <div className="relative mt-5 hidden h-[170px] w-[190px] shrink-0 sm:block lg:mt-0">
           {items.slice(0, 2).map((x, k) => (
             <div
               key={x.cat.id}
               className={cn(
-                'absolute h-[140px] w-[120px] overflow-hidden rounded-2xl border-4 border-white bg-sand shadow-[0_18px_40px_-18px_rgba(15,29,22,0.6)]',
+                'absolute h-[132px] w-[110px] overflow-hidden rounded-2xl border-4 border-white bg-sand shadow-[0_18px_40px_-18px_rgba(15,29,22,0.6)]',
                 k === 0 ? 'left-0 top-4 -rotate-6' : 'right-0 top-0 rotate-[7deg]',
               )}
             >
@@ -523,7 +523,7 @@ export function ProjectsSection({ data }: { data: DataOf<'projects'> }) {
               <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/20 to-transparent" />
               <div className="absolute left-4 right-4 top-4 flex flex-wrap gap-1.5">
                 {p.tags.map((tg, k) => (
-                  <span key={k} className={cn('rounded-full px-2.5 py-1 text-[11px] font-bold backdrop-blur', k === 0 ? 'bg-lime text-ink' : 'bg-white/15 text-white')}>
+                  <span key={k} className={cn('rounded-full px-2.5 py-1 text-[11px] font-bold backdrop-blur', k === 0 ? 'bg-lime text-ink' : 'bg-ink/60 text-white')}>
                     {l(tg)}
                   </span>
                 ))}
@@ -748,7 +748,7 @@ export function CtaSection({ data }: { data: DataOf<'cta'> }) {
                 <span className="display block text-[30px] leading-none sm:text-[36px]">0 €</span>
                 <span className="mt-0.5 block text-[10px] font-extrabold uppercase tracking-[0.12em]">{l(data.eyebrow)}</span>
               </Sticker>
-              <div className="relative mt-auto p-7 sm:p-10">
+              <div className="relative mt-auto p-7 pt-36 sm:p-10">
                 <Eyebrow tone="light">{l(data.eyebrow)}</Eyebrow>
                 <h2 className="display mt-4 text-[34px] leading-[1.02] sm:text-[48px]">
                   <Accent text={l(data.title)} accentClassName={ACCENT_ON_DARK} />

@@ -107,7 +107,7 @@ const PR = defineDict({
 });
 type PrKey = keyof typeof PR.me;
 
-const POLICY_PAGES = ['pg-uslovi', 'pg-privatnost', 'pg-reklamacije', 'pg-dostava'];
+const POLICY_PAGES = ['pg-kushtet', 'pg-privatesia', 'pg-kthimet', 'pg-dostava', 'pg-pagesa'];
 const INT_TONE: Record<Integration['status'], StateTone> = { connected: 'ok', test: 'test', disconnected: 'off' };
 const digits = (v: string) => v.replace(/\D/g, '');
 

@@ -534,14 +534,16 @@ function MobileMenu({ open, onClose, nav, shop, tiles, samplesHref }: { open: bo
                 {c('browseAll')} <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {main.map((x) => (
-                <NavTarget key={x.id} item={x} onClick={onClose} className="group flex flex-col gap-1.5 rounded-2xl bg-white p-1.5 pb-2 ring-1 ring-line">
-                  <span className="relative aspect-square overflow-hidden rounded-xl bg-sand">
+                <NavTarget key={x.id} item={x} onClick={onClose} className="group flex min-w-0 items-center gap-2.5 rounded-2xl bg-white p-1.5 pr-2 ring-1 ring-line active:bg-sand">
+                  <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-xl bg-sand">
                     {x.image && <Img src={x.image} small alt="" className="h-full w-full object-cover" />}
-                    {x.kind === 'quote' && <span className="absolute left-1 top-1 rounded-full bg-pink px-1.5 py-0.5 text-[8.5px] font-extrabold uppercase tracking-wide text-ink">Logo</span>}
                   </span>
-                  <span className="line-clamp-2 px-0.5 text-[12px] font-bold leading-tight text-ink">{x.label}</span>
+                  <span className="min-w-0">
+                    <span className="line-clamp-2 text-[13px] font-bold leading-tight text-ink">{x.label}</span>
+                    {x.kind === 'quote' && <span className="mt-0.5 block text-[10px] font-extrabold uppercase tracking-wide text-pink-ink">{c('madeToOrder')}</span>}
+                  </span>
                 </NavTarget>
               ))}
             </div>

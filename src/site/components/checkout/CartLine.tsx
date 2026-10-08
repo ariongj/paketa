@@ -43,61 +43,66 @@ export function CartLine({ line, compact }: { line: PricedLine; compact?: boolea
   const qtyText = isPack ? `${packs(qty)} · ${pieces(piecesFor(p, qty), lang)}` : `${qty} ${unitLabel(p.unit, lang)}`;
 
   return (
-    <div className={cn('flex gap-3.5 sm:gap-5', compact ? 'py-4' : 'py-5 sm:py-6')}>
-      <Link
-        to={`/produkt/${p.slug}`}
-        onClick={close}
-        className={cn('shrink-0 overflow-hidden rounded-2xl bg-sand ring-1 ring-line', compact ? 'h-[72px] w-[72px]' : 'h-20 w-20 sm:h-28 sm:w-28')}
-      >
-        <Img src={p.images[0]} small alt="" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
-      </Link>
+    <div className={compact ? 'py-4' : 'py-5 sm:py-6'}>
+      <div className="flex gap-3.5 sm:gap-5">
+        <Link
+          to={`/produkt/${p.slug}`}
+          onClick={close}
+          className={cn('shrink-0 overflow-hidden rounded-2xl bg-sand ring-1 ring-line', compact ? 'h-[72px] w-[72px]' : 'h-20 w-20 sm:h-28 sm:w-28')}
+        >
+          <Img src={p.images[0]} small alt="" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" />
+        </Link>
 
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <Link
-              to={`/produkt/${p.slug}`}
-              onClick={close}
-              className={cn('line-clamp-2 font-semibold leading-snug text-ink transition-colors hover:text-brand-700', compact ? 'text-[14px]' : 'text-[15px] sm:text-[16px]')}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <Link
+                to={`/produkt/${p.slug}`}
+                onClick={close}
+                className={cn('line-clamp-2 font-semibold leading-snug text-ink transition-colors hover:text-brand-700', compact ? 'text-[14px]' : 'text-[15px] sm:text-[16px]')}
+              >
+                {l(p.name)}
+              </Link>
+              <p className="mt-1 flex flex-wrap items-center gap-x-1.5 text-[12.5px]">
+                <Package className="h-3.5 w-3.5 shrink-0 text-kraft" />
+                <span className="font-semibold text-ink-soft tabular-nums">{qtyText}</span>
+                {!compact && isPack && <span className="text-muted">· {t('packSize', { n: p.packSize! })}</span>}
+                {!compact && <span className="text-muted/80 max-sm:hidden">· {p.sku}</span>}
+              </p>
+              {line.optionsLabel && <p className="mt-0.5 text-[12px] leading-snug text-muted">{line.optionsLabel}</p>}
+            </div>
+            <button
+              type="button"
+              onClick={() => remove(key)}
+              className="-mr-1.5 -mt-1 grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-red-50 hover:text-red-600"
+              aria-label={t('removeLine')}
+              title={t('removeLine')}
             >
-              {l(p.name)}
-            </Link>
-            <p className="mt-1 flex flex-wrap items-center gap-x-1.5 text-[12.5px]">
-              <Package className="h-3.5 w-3.5 shrink-0 text-kraft" />
-              <span className="font-semibold text-ink-soft tabular-nums">{qtyText}</span>
-              {!compact && isPack && <span className="text-muted">· {t('packSize', { n: p.packSize! })}</span>}
-              {!compact && <span className="text-muted/80 max-sm:hidden">· {p.sku}</span>}
-            </p>
-            {line.optionsLabel && <p className="mt-0.5 text-[12px] leading-snug text-muted">{line.optionsLabel}</p>}
+              <Trash2 className="h-4 w-4" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => remove(key)}
-            className="-mr-1.5 -mt-1 grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-red-50 hover:text-red-600"
-            aria-label={t('removeLine')}
-            title={t('removeLine')}
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
-        </div>
 
-        {/* prices */}
-        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5">
-          {isPack && (
-            <span className="rounded-full bg-ink px-2 py-0.5 text-[11px] font-bold tabular-nums text-paper">{t('perPiece', { price: moneyPiece(line.unitPrice / ppu, lang) })}</span>
-          )}
-          <span className="text-[12.5px] tabular-nums text-muted">
-            {isPack ? t('perPack', { price: money(line.unitPrice, lang) }) : `${money(line.unitPrice, lang)} / ${unitLabel(p.unit, lang)}`}
-            {line.regularUnitPrice > line.unitPrice && <s className="ml-1.5 text-muted/60">{money(line.regularUnitPrice, lang)}</s>}
-          </span>
-          {line.tierPct > 0 && (
-            <span className="inline-flex -rotate-2 items-center gap-1 rounded-md bg-lime px-1.5 py-0.5 text-[11px] font-extrabold text-ink shadow-[0_1px_0_rgb(15_29_22/0.12)]">
-              <BadgePercent className="h-3 w-3" />
-              {t('tierBadge', { pct: line.tierPct })}
+          {/* prices */}
+          <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+            {isPack && (
+              <span className="rounded-full bg-ink px-2 py-0.5 text-[11px] font-bold tabular-nums text-paper">{t('perPiece', { price: moneyPiece(line.unitPrice / ppu, lang) })}</span>
+            )}
+            <span className="text-[12.5px] tabular-nums text-muted">
+              {isPack ? t('perPack', { price: money(line.unitPrice, lang) }) : `${money(line.unitPrice, lang)} / ${unitLabel(p.unit, lang)}`}
+              {line.regularUnitPrice > line.unitPrice && <s className="ml-1.5 text-muted/60">{money(line.regularUnitPrice, lang)}</s>}
             </span>
-          )}
+            {line.tierPct > 0 && (
+              <span className="inline-flex -rotate-2 items-center gap-1 rounded-md bg-lime px-1.5 py-0.5 text-[11px] font-extrabold text-ink shadow-[0_1px_0_rgb(15_29_22/0.12)]">
+                <BadgePercent className="h-3 w-3" />
+                {t('tierBadge', { pct: line.tierPct })}
+              </span>
+            )}
+          </div>
         </div>
+      </div>
 
+      {/* controls span the full width on phones, align with the text column from sm up */}
+      <div className={cn('min-w-0', compact ? 'sm:pl-[92px]' : 'sm:pl-[132px]')}>
         {/* quantity + total */}
         <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <div className="flex items-center gap-2">

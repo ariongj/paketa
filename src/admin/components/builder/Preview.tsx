@@ -112,7 +112,7 @@ export function Preview({
         return;
       }
       if (doc.querySelector(`[data-section="${CSS.escape(focus.id)}"]`)) {
-        win.postMessage({ type: 'selca:scrollTo', id: focus.id }, window.location.origin);
+        win.postMessage({ type: 'paketoje:scrollTo', id: focus.id }, window.location.origin);
       } else if (tries++ < 25) {
         timer = window.setTimeout(tick, 120);
       }

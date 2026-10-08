@@ -637,7 +637,7 @@ function ItemsCard({ order, t, onFulfil }: { order: Order; t: Dict; onFulfil: ()
                 {t('prepare')}
               </Button>
             )}
-            {(s === 'shipped' || (s === 'installation' && !!f?.shippedAt)) && ful !== 'partial' && (
+            {s === 'shipped' && ful !== 'partial' && (
               <Button size="sm" shape="rounded" icon={<CheckCircle2 className="h-4 w-4" />} onClick={() => advance('completed')}>
                 {t('markDelivered')}
               </Button>

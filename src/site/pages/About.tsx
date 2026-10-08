@@ -45,7 +45,7 @@ const T = defineDict({
     factsTitle: 'Pravi podaci, *bez uljepšavanja*',
     f_products: 'proizvoda u katalogu, sa cijenom po komadu',
     f_categories: 'kategorija ambalaže — od čaša do pribora',
-    f_cities: 'mjesta u našim zonama dostave',
+    f_kosovo: 'dana do bilo kog mjesta na Kosovu',
     f_fast: 'dostava u Mitrovici i okolini',
     f_free: 'besplatna dostava za narudžbe od tog iznosa',
     howEyebrow: 'Kako radimo',
@@ -101,7 +101,7 @@ const T = defineDict({
     factsTitle: 'Të dhëna reale, *pa zbukurime*',
     f_products: 'produkte në katalog, me çmim për copë',
     f_categories: 'kategori paketimi — nga gotat te takëmet',
-    f_cities: 'vende në zonat tona të dërgesës',
+    f_kosovo: 'ditë deri në çdo vend të Kosovës',
     f_fast: 'dërgesë në Mitrovicë dhe rrethinë',
     f_free: 'dërgesë falas për porosi nga kjo shumë',
     howEyebrow: 'Si punojmë',
@@ -157,7 +157,7 @@ const T = defineDict({
     factsTitle: 'Real figures, *no fluff*',
     f_products: 'products in the catalogue, priced per piece',
     f_categories: 'packaging categories — from cups to cutlery',
-    f_cities: 'places in our delivery zones',
+    f_kosovo: 'days to anywhere in Kosovo',
     f_fast: 'delivery in Mitrovica and surroundings',
     f_free: 'free delivery on orders from this amount',
     howEyebrow: 'How we work',
@@ -221,10 +221,10 @@ export default function About() {
   const factItems = [
     { icon: Boxes, value: String(facts.products), label: t('f_products') },
     { icon: Layers, value: String(facts.categories), label: t('f_categories') },
-    { icon: MapPin, value: String(facts.cities), label: t('f_cities') },
+    { icon: MapPin, value: facts.maxDays > 1 ? `1–${facts.maxDays}` : String(facts.maxDays || 1), label: t('f_kosovo') },
     facts.fastest?.days.trim() === '1'
       ? { icon: Truck, value: '24h', label: t('f_fast') }
-      : { icon: Truck, value: money(facts.freeFrom, lang), label: t('f_free') },
+      : { icon: Truck, value: money(facts.freeFrom, lang, { decimals: facts.freeFrom % 1 !== 0 }), label: t('f_free') },
   ];
 
   return (

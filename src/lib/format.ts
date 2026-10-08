@@ -42,8 +42,53 @@ export function num(value: number, lang: Lang = 'sq', maxDecimals = 2) {
   return new Intl.NumberFormat(LOCALE[lang], { maximumFractionDigits: maxDecimals }).format(value);
 }
 
+/* Chrome ships without Albanian ICU data (sq → English months), so Albanian dates are assembled here. */
+const SQ_MONTHS = ['janar', 'shkurt', 'mars', 'prill', 'maj', 'qershor', 'korrik', 'gusht', 'shtator', 'tetor', 'nëntor', 'dhjetor'];
+const SQ_MONTHS_SHORT = ['jan', 'shk', 'mar', 'pri', 'maj', 'qer', 'korr', 'gush', 'sht', 'tet', 'nën', 'dhj'];
+const SQ_DAYS = ['e diel', 'e hënë', 'e martë', 'e mërkurë', 'e enjte', 'e premte', 'e shtunë'];
+const SQ_DAYS_SHORT = ['Die', 'Hën', 'Mar', 'Mër', 'Enj', 'Pre', 'Sht'];
+
+let sqNative: boolean | null = null;
+function hasAlbanian() {
+  if (sqNative == null) {
+    try {
+      sqNative = new Intl.DateTimeFormat('sq', { month: 'long' }).format(new Date(2026, 9, 1)) === 'tetor';
+    } catch {
+      sqNative = false;
+    }
+  }
+  return sqNative;
+}
+
+function albanianDate(d: Date, opts: Intl.DateTimeFormatOptions) {
+  const tz = opts.timeZone;
+  const monthIdx = Number(new Intl.DateTimeFormat('en-US', { month: 'numeric', timeZone: tz }).format(d)) - 1;
+  const dayIdx = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: tz }).format(d));
+  // en-GB has the same order as Albanian ("8 Oct 2026, 14:05" → "8 tet 2026, 14:05")
+  return new Intl.DateTimeFormat('en-GB', { hourCycle: 'h23', ...opts })
+    .formatToParts(d)
+    .map((p) => {
+      if (p.type === 'month' && (opts.month === 'short' || opts.month === 'long' || opts.month === 'narrow')) {
+        return (opts.month === 'long' ? SQ_MONTHS : SQ_MONTHS_SHORT)[monthIdx] ?? p.value;
+      }
+      if (p.type === 'weekday') return (opts.weekday === 'long' ? SQ_DAYS : SQ_DAYS_SHORT)[dayIdx] ?? p.value;
+      if (p.type === 'dayPeriod') return '';
+      if (p.type === 'literal' && p.value === '/') return '.';
+      return p.value;
+    })
+    .join('')
+    .trim();
+}
+
 export function date(iso: string | Date, lang: Lang = 'sq', opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' }) {
   const d = typeof iso === 'string' ? new Date(iso) : iso;
+  if (lang === 'sq' && !hasAlbanian()) {
+    try {
+      return albanianDate(d, opts);
+    } catch {
+      /* fall through */
+    }
+  }
   try {
     return new Intl.DateTimeFormat(DATE_LOCALE[lang], opts).format(d);
   } catch {

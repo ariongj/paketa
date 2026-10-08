@@ -270,10 +270,10 @@ export default function Posts() {
 
                       <div className="min-w-0">
                         <div className="flex min-w-0 items-center gap-2">
-                          <Link to={`/admin/savjeti/${p.id}`} onClick={(e) => e.stopPropagation()} className="truncate text-[14px] font-semibold text-ink hover:underline">
+                          <Link to={`/admin/savjeti/${p.id}`} onClick={(e) => e.stopPropagation()} className="line-clamp-2 text-[14px] font-semibold leading-snug text-ink hover:underline">
                             {l(p.title)}
                           </Link>
-                          <span className="hidden sm:inline-flex">
+                          <span className="hidden 2xl:inline-flex">
                             <LangDots value={[p.title, p.excerpt, p.body]} />
                           </span>
                         </div>

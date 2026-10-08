@@ -402,7 +402,7 @@ export function MeasureForm({
         )}
 
         <Input label={ts('f_phone')} required type="tel" value={form.phone} onChange={set('phone')} error={errors.phone} placeholder={t('phonePh')} autoComplete="tel" name="phone" />
-        <Input label={ts('f_email')} type="email" value={form.email} onChange={set('email')} autoComplete="email" name="email" />
+        <Input label={ts('f_email')} type="email" value={form.email} onChange={set('email')} autoComplete="email" name="email" wrapClassName={type === 'contact' ? 'sm:col-span-2' : undefined} />
 
         {type !== 'contact' && (
           <Select label={ts('f_city')} value={form.city} onChange={set('city')} name="city">

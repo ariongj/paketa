@@ -132,7 +132,7 @@ export function Operational({ ops, services, staff }: { ops: Ops; services: Serv
           count={ops.unfulfilled.length}
           items={ops.unfulfilled.map((o) => orderItem(o, <OrderStatusBadge status={o.status} />))}
           module="orders"
-          links={(['new', 'confirmed', 'processing'] as const).filter((s) => ops.unfulfilledBy[s] > 0).map((s) => ({ to: `/admin/narudzbe?status=${s}`, label: `${tc(`status_${s}`)} · ${ops.unfulfilledBy[s]}` }))}
+          links={(['new', 'confirmed', 'processing', 'installation'] as const).filter((s) => ops.unfulfilledBy[s] > 0).map((s) => ({ to: `/admin/narudzbe?status=${s}`, label: `${tc(`status_${s}`)} · ${ops.unfulfilledBy[s]}` }))}
         />
         <OpsCard
           icon={CircleDollarSign}

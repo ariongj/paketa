@@ -46,17 +46,19 @@ export const topSeller = (list: Product[]) => [...list].filter((p) => !p.quoteOn
 /* ------------------------------------------------------------------ */
 /* Sticker — rotated round label (price, deal, brand)                   */
 /* ------------------------------------------------------------------ */
+/** `className` positions / sizes / rotates the sticker (e.g. "absolute right-4 top-4 w-28 rotate-6"). */
 export function Sticker({ children, tone = 'lime', className }: { children: ReactNode; tone?: 'lime' | 'pink' | 'white'; className?: string }) {
   return (
-    <div
-      className={cn(
-        'relative grid aspect-square place-items-center rounded-full text-center text-ink shadow-[0_18px_40px_-18px_rgba(15,29,22,0.6)]',
-        tone === 'lime' ? 'bg-lime' : tone === 'pink' ? 'bg-pink' : 'bg-white',
-        className,
-      )}
-    >
-      <span aria-hidden className="pointer-events-none absolute inset-[6px] rounded-full border border-dashed border-ink/30" />
-      <div className="relative">{children}</div>
+    <div className={className}>
+      <div
+        className={cn(
+          'relative grid aspect-square w-full place-items-center rounded-full text-center text-ink shadow-[0_18px_40px_-18px_rgba(15,29,22,0.6)]',
+          tone === 'lime' ? 'bg-lime' : tone === 'pink' ? 'bg-pink' : 'bg-white',
+        )}
+      >
+        <span aria-hidden className="pointer-events-none absolute inset-[6px] rounded-full border border-dashed border-ink/30" />
+        <div className="relative">{children}</div>
+      </div>
     </div>
   );
 }

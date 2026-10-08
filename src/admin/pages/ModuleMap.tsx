@@ -7,7 +7,8 @@ import { toast } from 'sonner';
 import { Printer, RotateCcw } from 'lucide-react';
 import { PageHeader } from '@/admin/components/kit';
 import { Button } from '@/components/ui/Button';
-import { interpolate, useDict, useL, useLang } from '@/i18n';
+import { LANGS, interpolate, useDict, useL, useLang } from '@/i18n';
+import { tzLabel } from '@/admin/components/settings/model';
 import { adm } from '@/admin/i18n';
 import { useDb } from '@/store/db';
 import { ROLES } from '@/lib/permissions';
@@ -19,7 +20,7 @@ import { CRIT_KEY, CritSymbol, CriteriaCard, DecisionCard, ModChip, PhaseColumn,
 import { useMT } from '@/admin/components/modulemap/i18n';
 
 type Filter = 'all' | ModStatus;
-const STORE_KEY = 'selca-module-decisions';
+const STORE_KEY = 'paketoje-module-decisions';
 const CYCLE: Record<DecisionState, DecisionState> = { open: 'discussed', discussed: 'decided', decided: 'open' };
 const num = (i: number) => String(i + 1).padStart(2, '0');
 
@@ -73,17 +74,17 @@ export default function ModuleMap() {
 
   // values the decision hints quote from the live demo
   const ctx = useMemo(() => {
-    const langs = (['me', 'sq', 'en'] as const).filter((x) => settings.languages[x]).map((x) => x.toUpperCase());
+    const langs = LANGS.filter((x) => settings.languages[x.code]).map((x) => x.short);
     return {
       staff: staff.filter((s) => s.active).length,
       roles: ROLES.length,
       langs: langs.join(' / '),
-      tz: settings.timezone,
+      tz: tzLabel(settings.timezone, lang),
       products: products.filter((p) => p.status !== 'archived').length,
       connected: settings.integrations.filter((i) => i.status === 'connected').length,
       test: settings.integrations.filter((i) => i.status === 'test').length,
     };
-  }, [settings, staff, products]);
+  }, [settings, staff, products, lang]);
   const hint = (d: Decision) => (d.hint ? interpolate(l(d.hint), ctx) : null);
 
   const allDecisions = DECISIONS.flatMap((g) => g.items);

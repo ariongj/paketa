@@ -292,6 +292,8 @@ const T = defineDict({
 
 type Key = keyof (typeof T)['me'];
 const LANGS: Lang[] = ['sq', 'en', 'me'];
+/** SQ / EN / SR — the `me` key holds Serbian. */
+const short = (x: Lang) => (x === 'me' ? 'SR' : x.toUpperCase());
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
 export default function Markets() {
@@ -446,7 +448,7 @@ export default function Markets() {
                         </span>
                       ))}
                       <span className="ml-1 text-[12px] text-muted">
-                        {m.currency} · {m.languages.map((x) => x.toUpperCase()).join(' / ')}
+                        {m.currency} · {m.languages.map(short).join(' / ')}
                       </span>
                     </span>
                     <span className="mt-1 block truncate text-[12px] text-muted">
@@ -619,7 +621,7 @@ export default function Markets() {
                       onChange={(v) => patch({ languages: v ? LANGS.filter((y) => y === x || current.languages.includes(y)) : current.languages.filter((y) => y !== x) })}
                       label={
                         <span className="flex items-center gap-2">
-                          <span className="font-mono text-[11.5px] text-muted">{x.toUpperCase()}</span>
+                          <span className="font-mono text-[11.5px] text-muted">{short(x)}</span>
                           {t(`lang_${x}` as Key)}
                         </span>
                       }

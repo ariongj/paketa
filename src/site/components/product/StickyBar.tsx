@@ -4,7 +4,7 @@ import { Img } from '@/components/ui/misc';
 import { useDict, useL, useLang } from '@/i18n';
 import { common } from '@/i18n/common';
 import { num, pieces, unitLabel } from '@/lib/format';
-import { PD, eur } from './dict';
+import { PD, eur, keepUnits, pctOff } from './dict';
 import { useTweenedNumber, type Configurator } from './useConfigurator';
 import { WishButton } from './BuyBox';
 
@@ -34,7 +34,7 @@ export function StickyBar({ cfg, visible, onAdd, onLead }: { cfg: Configurator; 
               <Img src={p.images[0]} small alt="" className="h-full w-full object-cover" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="hidden truncate text-[14.5px] font-semibold text-ink sm:block">{l(p.name)}</div>
+              <div className="hidden truncate text-[14.5px] font-semibold text-ink sm:block">{keepUnits(l(p.name))}</div>
               {p.quoteOnly ? (
                 <div className="truncate text-[13px] font-semibold text-brand-700 max-sm:text-[15px] max-sm:text-ink">{t('quoteOnly')}</div>
               ) : cfg.soldOut ? (
@@ -44,7 +44,7 @@ export function StickyBar({ cfg, visible, onAdd, onLead }: { cfg: Configurator; 
                   <div className="text-[18px] font-bold leading-tight tabular-nums text-ink sm:hidden">{eur(total, lang, cfg.total)}</div>
                   <div className="truncate text-[12.5px] tabular-nums text-muted">
                     {qtyText}
-                    {cfg.tierPct > 0 && <span className="font-semibold text-lime-ink"> · −{cfg.tierPct}%</span>}
+                    {cfg.tierPct > 0 && <span className="font-semibold text-lime-ink"> · {pctOff(cfg.tierPct, lang)}</span>}
                     {cfg.installation && <span className="hidden md:inline"> · {tc('installation')}</span>}
                   </div>
                 </>

@@ -61,7 +61,7 @@ export interface CustomerRecord {
 const NONE: Consent = { status: 'none' };
 export const emptyMarketing = (): Marketing => ({ email: NONE, sms: NONE, whatsapp: NONE, viber: NONE });
 
-/** Last 8 digits — "+382 67 123 456" and "067 123 456" are the same phone. */
+/** Last 8 digits — "+383 44 123 456" and "044 123 456" are the same phone. */
 export const phone8 = (p?: string) => {
   const d = (p ?? '').replace(/\D/g, '');
   return d.length >= 6 ? d.slice(-8) : '';
@@ -178,7 +178,7 @@ export function buildCustomers(input: { orders: Order[]; inquiries: Inquiry[]; b
       addresses: [...addr.values()],
       company,
       pib: sorted.find((o) => o.customer.pib)?.customer.pib ?? manual.find((m) => m.pib)?.pib,
-      lang: sorted[0]?.lang ?? m0?.lang ?? 'me',
+      lang: sorted[0]?.lang ?? m0?.lang ?? 'sq',
       orders: sorted,
       count: sorted.length,
       valid: valid.length,
@@ -277,8 +277,9 @@ function hash(s: string) {
   return h >>> 0;
 }
 const addDays = (iso: string, d: number) => new Date(new Date(iso).getTime() + d * 86400000).toISOString();
-const SQ_FIRST = new Set(['Arben', 'Drita', 'Gjergj', 'Lindita', 'Driton', 'Ardit', 'Elira', 'Besnik', 'Albina', 'Valentina', 'Fatmir', 'Blerim', 'Arta']);
-const TAG_POOL = ['renoviranje', 'novogradnja', 'izvođač', 'arhitekta', 'preporuka', 'apartmani', 'sajam-2026'];
+/** Serbian first names → the customer probably reads Serbian (`me`); everyone else defaults to Albanian. */
+const SR_FIRST = new Set(['Marko', 'Milica', 'Nikola', 'Jelena', 'Stefan', 'Dragan', 'Milan', 'Ivana', 'Nemanja', 'Dušan', 'Jovana', 'Miloš', 'Snežana', 'Nenad', 'Aleksandar', 'Marija']);
+const TAG_POOL = ['kafiteri', 'restorant', 'fast-food', 'ëmbëltore', 'catering', 'shumicë', 'rekomandim'];
 
 export function seedCustomerData(orders: Order[], bookings: Booking[], inquiries: Inquiry[], seededAt: string): CustomerData {
   const profiles: CustomerData['profiles'] = {};
@@ -295,8 +296,9 @@ export function seedCustomerData(orders: Order[], bookings: Booking[], inquiries
     if (h % 7 < 3) tags.push(TAG_POOL[h % TAG_POOL.length]);
     if (h % 11 === 0) tags.push(TAG_POOL[(h >> 4) % TAG_POOL.length]);
     if (c.orders.some((o) => o.items.some((l) => l.installation))) {
-      if (h % 3 === 0) tags.push('montaža');
+      if (h % 3 === 0) tags.push('printim-logo');
     }
+    if (c.orders.some((o) => o.customer.company)) tags.push('b2b');
     profiles[c.key] = {
       tags: [...new Set(tags)],
       notes: [],
@@ -311,17 +313,17 @@ export function seedCustomerData(orders: Order[], bookings: Booking[], inquiries
 
   // Staff notes on the best customers (private — staff only)
   const NOTES: [string, string][] = [
-    ['st-arta', 'Preferon të kontaktohet pas orës 16:00. Kërkon faturë me NIPT për çdo porosi.'],
-    ['st-blerim', 'Montaža završena bez primjedbi. Kupac traži ponudu i za sobna vrata (3 kom) — javiti se do kraja mjeseca.'],
-    ['st-milica', 'Zvao zbog roka isporuke za parket — dogovorena isporuka u subotu prije podne.'],
-    ['st-gent', 'Klient besnik që nga 2024. Rekomandoi dy klientë të rinj nga Tuzi — ofroji 5% në porosinë e ardhshme.'],
+    ['st-ardita', 'Preferon të kontaktohet pas orës 16:00. Kërkon faturë me NUI për çdo porosi.'],
+    ['st-valon', 'Merr çdo javë 2 kartonë gota F95 400 ml + kapakë — dorëzim të hënën para orës 10:00.'],
+    ['st-teuta', 'Pita za štampu logotipa na čašama 300 ml (min. 1 karton). Poslati ponudu do petka.'],
+    ['st-ardita', 'Klient besnik që nga 2024. Rekomandoi dy kafiteri në Vushtrri — ofroji 5 % në porosinë e ardhshme.'],
   ];
   bySpend.slice(0, 4).forEach((c, i) => {
     const [by, text] = NOTES[i];
     const at = addDays(c.last ?? seededAt, i % 2 ? 1 : 0.2);
     profiles[c.key].notes.push({ id: `cn-seed-${i}`, at: at > seededAt ? seededAt : at, by, text });
   });
-  if (bySpend[0]) profiles[bySpend[0].key].tags = [...new Set([...profiles[bySpend[0].key].tags, 'preporuka'])];
+  if (bySpend[0]) profiles[bySpend[0].key].tags = [...new Set([...profiles[bySpend[0].key].tags, 'rekomandim'])];
 
   // Customers met through appointments (no web order yet)
   const known = new Set(base.flatMap((c) => c.phones.map(phone8)));
@@ -333,41 +335,41 @@ export function seedCustomerData(orders: Order[], bookings: Booking[], inquiries
     seen.add(p);
     const [firstName, ...rest] = b.customerName.split(' ');
     const key = manualKey(b.email ?? '', b.phone, b.customerName);
-    manual.push({ key, firstName, lastName: rest.join(' '), email: b.email ?? '', phone: b.phone, city: b.city ?? '', address: b.address ?? '', lang: SQ_FIRST.has(firstName) ? 'sq' : 'me', source: 'appointment', createdAt: b.createdAt });
+    manual.push({ key, firstName, lastName: rest.join(' '), email: b.email ?? '', phone: b.phone, city: b.city ?? '', address: b.address ?? '', lang: SR_FIRST.has(firstName) ? 'me' : 'sq', source: 'appointment', createdAt: b.createdAt });
     profiles[key] = {
-      tags: ['showroom'],
+      tags: ['mostra-falas'],
       notes: [],
-      marketing: { ...emptyMarketing(), whatsapp: { status: 'subscribed', at: b.createdAt, source: 'staff', by: 'st-milica' } },
+      marketing: { ...emptyMarketing(), whatsapp: { status: 'subscribed', at: b.createdAt, source: 'staff', by: 'st-ardita' } },
     };
   }
 
-  // A B2B lead from the contact inbox (hotel renovation) — linked to its enquiry and quote
-  const hotel = inquiries.find((i) => i.id === 'inq_120');
-  if (hotel) {
-    const [firstName, ...rest] = hotel.name.split(' ');
-    const key = manualKey(hotel.email ?? '', hotel.phone, hotel.name);
-    manual.push({ key, firstName, lastName: rest.join(' '), email: hotel.email ?? '', phone: hotel.phone, city: hotel.city ?? '', address: 'Jadranski put 18', company: hotel.company, lang: 'me', source: 'contact', createdAt: hotel.createdAt });
+  // A B2B lead from the contact inbox (wholesale / logo-print request from a business) — linked to its enquiry
+  const lead = inquiries.find((i) => i.type === 'quote' && !!i.company && !known.has(phone8(i.phone)));
+  if (lead) {
+    const [firstName, ...rest] = lead.name.split(' ');
+    const key = manualKey(lead.email ?? '', lead.phone, lead.name);
+    manual.push({ key, firstName, lastName: rest.join(' '), email: lead.email ?? '', phone: lead.phone, city: lead.city ?? '', address: '', company: lead.company, lang: SR_FIRST.has(firstName) ? 'me' : 'sq', source: 'contact', createdAt: lead.createdAt });
     profiles[key] = {
-      tags: ['hotel', 'apartmani'],
-      notes: [{ id: 'cn-seed-hotel', at: addDays(hotel.createdAt, 0.3), by: 'st-arta', text: 'Hotel me 42 dhoma — renovim para sezonës 2027. Oferta Q-2026-031 u dërgua; pret miratimin e drejtorit.' }],
-      marketing: { ...emptyMarketing(), email: { status: 'subscribed', at: hotel.createdAt, source: 'form' } },
+      tags: ['b2b', 'shumicë'],
+      notes: [{ id: 'cn-seed-lead', at: addDays(lead.createdAt, 0.3), by: 'st-ardita', text: 'Biznes me dy lokale — kërkon çmime shumice për enë take-away dhe gota me logo. Oferta u dërgua; pret konfirmimin.' }],
+      marketing: { ...emptyMarketing(), email: { status: 'subscribed', at: lead.createdAt, source: 'form' } },
     };
   }
 
-  // Two records imported from the old webshop that duplicate existing customers
+  // Two records imported from the old Shopify store that duplicate existing customers
   const old = addDays(seededAt, -420);
   const [d1, d2] = byOrders.filter((c) => c.phone && c.email);
   if (d1) {
     const first = fold(d1.firstName);
     const last = fold(d1.lastName).replace(/[^a-z]/g, '');
     const email = `${first[0]}${last}@gmail.com`;
-    manual.push({ key: email, firstName: fold(d1.firstName).replace(/^./, (x) => x.toUpperCase()), lastName: fold(d1.lastName).replace(/^./, (x) => x.toUpperCase()), email, phone: d1.phone.replace('+382 ', '0'), city: d1.city, address: d1.address, lang: d1.lang, source: 'import', createdAt: old });
-    profiles[email] = { tags: ['stari-sajt'], notes: [], marketing: { ...emptyMarketing(), email: { status: 'subscribed', at: old, source: 'import' } } };
+    manual.push({ key: email, firstName: fold(d1.firstName).replace(/^./, (x) => x.toUpperCase()), lastName: fold(d1.lastName).replace(/^./, (x) => x.toUpperCase()), email, phone: d1.phone.replace('+383 ', '0'), city: d1.city, address: d1.address, lang: d1.lang, source: 'import', createdAt: old });
+    profiles[email] = { tags: ['shopify'], notes: [], marketing: { ...emptyMarketing(), email: { status: 'subscribed', at: old, source: 'import' } } };
   }
   if (d2) {
-    const email = `${fold(d2.firstName)}.${fold(d2.lastName).replace(/[^a-z]/g, '')}@t-com.me`;
+    const email = `${fold(d2.firstName)}.${fold(d2.lastName).replace(/[^a-z]/g, '')}@hotmail.com`;
     manual.push({ key: email, firstName: d2.firstName, lastName: d2.lastName, email, phone: '', city: d2.city, address: '', lang: d2.lang, source: 'import', createdAt: old });
-    profiles[email] = { tags: ['stari-sajt'], notes: [], marketing: { ...emptyMarketing(), email: { status: 'unsubscribed', at: addDays(old, 40), source: 'import' } } };
+    profiles[email] = { tags: ['shopify'], notes: [], marketing: { ...emptyMarketing(), email: { status: 'unsubscribed', at: addDays(old, 40), source: 'import' } } };
   }
 
   return { profiles, manual, merges: {}, dismissed: [] };
@@ -387,7 +389,7 @@ export function exportCsv(rows: CustomerRecord[]) {
   const head = ['first_name', 'last_name', 'email', 'phone', 'city', 'address', 'company', 'language', 'orders', 'total_spent_eur', 'last_order', 'customer_since', 'tags', 'email_marketing', 'sms_marketing', 'whatsapp_marketing', 'viber_marketing'];
   const lines = rows.map((r) =>
     [
-      r.firstName, r.lastName, r.email, r.phone, r.city, r.address, r.company ?? '', r.lang, r.valid, r.spent.toFixed(2), r.last?.slice(0, 10) ?? '', r.since.slice(0, 10), r.tags.join(';'),
+      r.firstName, r.lastName, r.email, r.phone, r.city, r.address, r.company ?? '', r.lang === 'me' ? 'sr' : r.lang, r.valid, r.spent.toFixed(2), r.last?.slice(0, 10) ?? '', r.since.slice(0, 10), r.tags.join(';'),
       consentCell(r.marketing.email), consentCell(r.marketing.sms), consentCell(r.marketing.whatsapp), consentCell(r.marketing.viber),
     ].map(esc).join(','),
   );
@@ -466,7 +468,12 @@ export interface ImportRow {
 }
 
 const YES = new Set(['yes', 'y', 'true', '1', 'po', 'da', 'subscribed', 'x']);
-const LANGS: Record<string, Lang> = { me: 'me', cg: 'me', mne: 'me', sr: 'me', crnogorski: 'me', montenegrin: 'me', sq: 'sq', al: 'sq', shqip: 'sq', albanski: 'sq', albanian: 'sq', en: 'en', english: 'en', engleski: 'en', anglisht: 'en' };
+/** Language column → internal key: Serbian is stored under `me`; unknown or empty = Albanian (store default). */
+const LANGS: Record<string, Lang> = {
+  sr: 'me', srpski: 'me', serbian: 'me', serbisht: 'me', me: 'me', cg: 'me', 'sr latn': 'me',
+  sq: 'sq', al: 'sq', shqip: 'sq', albanian: 'sq', albanski: 'sq',
+  en: 'en', english: 'en', engleski: 'en', anglisht: 'en',
+};
 
 export function analyseImport(text: string, existing: CustomerRecord[], now: string): { rows: ImportRow[]; columns: ImportField[]; unknown: string[] } {
   const table = parseCsv(text);
@@ -521,7 +528,7 @@ export function analyseImport(text: string, existing: CustomerRecord[], now: str
       city: get('city'),
       address: get('address'),
       company: get('company') || undefined,
-      lang: LANGS[low(get('lang'))] ?? 'me',
+      lang: LANGS[norm(get('lang'))] ?? 'sq',
       source: 'import',
       createdAt: now,
     };

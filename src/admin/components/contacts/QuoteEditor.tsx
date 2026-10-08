@@ -650,10 +650,12 @@ export function QuoteEditor({ id, inquiryId }: { id: string; inquiryId?: string 
                             <span className="text-[11px] text-muted md:hidden">{t('col_total')}</span>
                             <span className="text-[13.5px] font-semibold tabular-nums text-ink">{money(round2(line.qty * line.price), lang)}</span>
                             {p?.unit === 'pack' && p.packSize && !isPrintLine(line) && line.qty > 0 && (
-                              <span className="text-[11.5px] tabular-nums text-muted">
-                                {pieces(line.qty * p.packSize, lang)}
-                                {p.cartonPacks && line.qty % p.cartonPacks === 0 && ` · ${t('cartons', { n: line.qty / p.cartonPacks, label: cartonLabel(line.qty / p.cartonPacks, lang) })}`}
-                              </span>
+                              <>
+                                <span className="whitespace-nowrap text-[11.5px] tabular-nums text-muted">{pieces(line.qty * p.packSize, lang)}</span>
+                                {p.cartonPacks && line.qty % p.cartonPacks === 0 && (
+                                  <span className="whitespace-nowrap text-[11.5px] tabular-nums text-muted">{t('cartons', { n: line.qty / p.cartonPacks, label: cartonLabel(line.qty / p.cartonPacks, lang) })}</span>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>
@@ -824,7 +826,10 @@ function NumField({ label, value, onChange, locked, step, suffix }: { label: str
             value={Number.isFinite(value) ? value : 0}
             onChange={(e) => onChange(e.target.value === '' ? 0 : Math.max(0, Number(e.target.value)))}
             aria-label={label}
-            className={cn('h-8 w-full rounded-md border border-line bg-white pl-2 text-right text-[13.5px] tabular-nums text-ink outline-none transition-colors focus:border-ink/40 focus:ring-4 focus:ring-ink/5', suffix ? 'pr-8' : 'pr-2')}
+            className={cn(
+              'h-8 w-full rounded-md border border-line bg-white pl-2 text-right text-[13.5px] tabular-nums text-ink outline-none transition-colors focus:border-ink/40 focus:ring-4 focus:ring-ink/5',
+              !suffix ? 'pr-2' : suffix.length > 2 ? 'pr-11' : 'pr-7',
+            )}
           />
           {suffix && <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[11.5px] text-muted">{suffix}</span>}
         </span>

@@ -21,7 +21,7 @@ import type { DraftOrder } from '@/lib/types';
 
 const T = defineDict({
   me: {
-    description: 'Narudžbe koje tim sastavlja za kupce koji zovu telefonom ili dolaze u salon. Slanje predračuna i konverzija su posebne radnje.',
+    description: 'Narudžbe koje tim sastavlja za kupce koji zovu, pišu na WhatsApp ili dolaze u magacin. Slanje predračuna i konverzija su posebne radnje.',
     create: 'Kreiraj nacrt',
     tab_all: 'Svi',
     tab_open: 'Otvoreni',
@@ -56,7 +56,7 @@ const T = defineDict({
     drafts_many: '{n} nacrta',
   },
   sq: {
-    description: 'Porosi që ekipi i përgatit për klientë që telefonojnë ose vijnë në sallon. Dërgimi i faturës dhe konvertimi janë veprime të veçanta.',
+    description: 'Porosi që ekipi i përgatit për klientë që telefonojnë, shkruajnë në WhatsApp ose vijnë në depo. Dërgimi i faturës dhe konvertimi janë veprime të veçanta.',
     create: 'Krijo draft',
     tab_all: 'Të gjitha',
     tab_open: 'Të hapura',
@@ -91,7 +91,7 @@ const T = defineDict({
     drafts_many: '{n} drafte',
   },
   en: {
-    description: 'Orders the team builds for customers who call or visit the showroom. Sending the invoice and converting are separate actions.',
+    description: 'Orders the team builds for customers who call, write on WhatsApp or visit the warehouse. Sending the invoice and converting are separate actions.',
     create: 'Create draft',
     tab_all: 'All',
     tab_open: 'Open',

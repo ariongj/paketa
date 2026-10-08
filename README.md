@@ -46,7 +46,7 @@ npm run build
 | Real (from paketoje.com) | Placeholder — confirm with Paketoje |
 |---|---|
 | 37 products: names, descriptions (sq/en), SKUs PAK-101…604, prices, photos | Pack and carton sizes, stock levels, volume tiers |
-| Address Sylyshaj, Suhodoll, Mitrovicë; refund@paketoje.com | Phone/WhatsApp, info@ address, NUI, VAT no., bank/IBAN |
+| Paketoje SH.P.K, Sylyshaj, Mitrovicë; +383 48 400 061; info@ / refund@paketoje.com; NUI 812224632 | VAT no., bank/IBAN, opening hours, WhatsApp, Instagram |
 | Return policy (5 days), terms, privacy (condensed) | Delivery fees per zone, free delivery ≥ €50 |
 | Logo and brand colours | Logo-print prices/minimums, custom-print (quote) items |
 | Categories incl. "coming soon" ranges (aluminium, PLA) | References (illustrative examples), blog posts, demo orders/customers |

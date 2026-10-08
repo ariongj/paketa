@@ -63,8 +63,8 @@ zustand 5, motion 12 (`motion/react`), lucide-react icons, recharts 3, sonner (`
 - `src/lib/pricing.ts`: prices are per selling unit (`qtyUnits(p, qty) === qty`). New: `packsForPieces(pieces, packSize)`,
   `piecesPerUnit(p)`, `piecesFor(p, qty)`, `piecePrice(p, options?, qty?)`, `tiersOf(p)`, `tierPct(p, qty)`, `nextTier(p, qty)`.
   `unitPrice(p, options, qty)` applies the volume tier for that line qty. `PricedLine.tierPct`; `Totals.pieces`.
-  Printing (`installation`) no longer gives free shipping. `packsForArea`/`WASTE` are deprecated shims — **remove their use**.
-- `src/lib/orders.ts`: `orderLineUnits(l) === l.qty`; new `orderLinePieces(l)`.
+  Printing (`installation`) no longer gives free shipping. (The m² helpers `packsForArea`/`WASTE` were removed.)
+- `src/lib/orders.ts`: `orderLineUnits(l) === l.qty`; new `orderLinePieces(l)`; status `installation` ("Në printim") is unfulfilled and open (it precedes shipping).
 - `src/lib/format.ts`: default lang `sq`; `unitLabel('pack')` = pako/pack/pak.; new `moneyPiece(v, lang)` (2–4 decimals for
   sub-cent piece prices), `piecesLabel(lang)`, `pieces(n, lang)` ("1.000 copë"), `cartonLabel(n, lang)`.
 - `src/lib/color.ts`: `DEFAULT_BRAND = '#00723a'`; the CMS stays neutral black/grey/white (unchanged behaviour).

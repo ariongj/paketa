@@ -776,7 +776,7 @@ export const pd = defineDict({
     col_noManual: 'Nuk ka koleksione manuale.',
     col_unpublished: 'e papublikuar',
     col_noPerm: 'Për të ndryshuar koleksionet nevojitet leje.',
-    c_template: 'Template',
+    c_template: 'Shablloni',
     tpl_standard: 'Produkt standard',
     tpl_standard_h: 'Çmimi për pako, çmimet e shumicës dhe „Shto në shportë“.',
     tpl_quote: 'Kërkesë oferte',

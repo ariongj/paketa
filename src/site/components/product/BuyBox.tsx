@@ -16,7 +16,7 @@ import { useCart, useSettings } from '@/store/hooks';
 import { basePrice, defaultOptions, piecePrice } from '@/lib/pricing';
 import { money, moneyPiece, num, pieces, unitLabel } from '@/lib/format';
 import { cn, round2 } from '@/lib/utils';
-import { PD, eur } from './dict';
+import { PD, eur, keepUnits, pctOff } from './dict';
 import { OptionPicker } from './OptionPicker';
 import { QuantityPicker } from './QuantityPicker';
 import { TierTable } from './TierTable';
@@ -68,7 +68,7 @@ export function BuyBox({
           <Share2 className="h-3.5 w-3.5" /> {t('share')}
         </button>
       </div>
-      <h1 className="display mt-3 text-[32px] leading-[1.02] text-ink sm:text-[40px] xl:text-[44px]">{l(p.name)}</h1>
+      <h1 className="display mt-3 text-balance text-[32px] leading-[1.02] text-ink sm:text-[40px] xl:text-[44px]">{keepUnits(l(p.name))}</h1>
       <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
         <ProductBadges product={p} size="md" />
         <span className="text-[12.5px] font-medium text-muted">
@@ -259,7 +259,7 @@ function Summary({ cfg, onAdd, ctaRef }: { cfg: Configurator; onAdd: () => void;
               <span>
                 {num(cfg.qty, lang)} {unitLabel(p.unit, lang)} × {money(cfg.unitPrice, lang)}
               </span>
-              {cfg.tierPct > 0 && <span className="rounded-full bg-lime px-2 py-0.5 text-[11px] font-bold text-ink">{t('tierBadge', { pct: cfg.tierPct })}</span>}
+              {cfg.tierPct > 0 && <span className="rounded-full bg-lime px-2 py-0.5 text-[11px] font-bold text-ink">{t('tierBadge', { pct: pctOff(cfg.tierPct, lang) })}</span>}
             </div>
             <AnimatePresence initial={false}>
               {cfg.installation && (
@@ -458,7 +458,7 @@ function FitsWith({ products }: { products: Product[] }) {
               </Link>
               <div className="min-w-0 flex-1">
                 <Link to={`/produkt/${x.slug}`} className="line-clamp-1 text-[13.5px] font-semibold text-ink hover:text-brand-700">
-                  {l(x.name)}
+                  {keepUnits(l(x.name))}
                 </Link>
                 <div className="mt-0.5 text-[12px] tabular-nums text-muted">
                   <span className="font-bold text-ink">{money(basePrice(x), lang)}</span> / {unitLabel(x.unit, lang)}

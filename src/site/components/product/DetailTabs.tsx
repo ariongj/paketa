@@ -9,7 +9,7 @@ import { basePrice, piecePrice, tiersOf } from '@/lib/pricing';
 import { cartonLabel, money, moneyPiece, num, pieces, unitLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { isPackProduct } from '@/site/components/Price';
-import { PD } from './dict';
+import { PD, pctOff } from './dict';
 
 type Tab = 'desc' | 'specs' | 'shipping' | 'faq';
 
@@ -110,7 +110,7 @@ function useFacts(p: Product): Fact[] {
         { icon: Package, label: t('spec_pack'), value: pieces(p.packSize ?? 1, lang) },
         p.cartonPacks ? { icon: Boxes, label: t('spec_carton'), value: `${p.cartonPacks} ${unitLabel('pack', lang)} · ${pieces(p.cartonPacks * (p.packSize ?? 1), lang)}` } : null,
         { icon: Coins, label: t('spec_piecePrice'), value: moneyPiece(piecePrice(p), lang) },
-        tiers.length ? { icon: Layers, label: t('spec_tiers'), value: tiers.map((x) => `${x.minQty}+ −${x.pct}%`).join(' · ') } : null,
+        tiers.length ? { icon: Layers, label: t('spec_tiers'), value: tiers.map((x) => `${x.minQty}+ ${pctOff(x.pct, lang)}`).join(' · ') } : null,
         p.installation?.available ? { icon: Stamp, label: t('spec_logo'), value: `+${money(p.installation.price, lang)} ${t('perPack')}` } : null,
         p.leadDays ? { icon: Truck, label: t('spec_lead'), value: t('daysApprox', { n: p.leadDays }) } : null,
       ]
@@ -196,7 +196,7 @@ function Specs({ product: p, category }: { product: Product; category?: Category
           .map((x) => {
             const cartons = p.cartonPacks && x.minQty % p.cartonPacks === 0 ? x.minQty / p.cartonPacks : 0;
             const qty = cartons ? `${cartons} ${cartonLabel(cartons, lang)}` : `${x.minQty}+ ${unitLabel(p.unit, lang)}`;
-            return t('tierLine', { qty, pct: x.pct });
+            return t('tierLine', { qty, pct: pctOff(x.pct, lang) });
           })
           .join(' · '),
       ]);
@@ -337,7 +337,7 @@ function Faq({ product: p }: { product: Product }) {
   const threshold = cart.freeShippingThreshold ?? settings.freeShippingThreshold;
   const pack = isPackProduct(p);
   const tiers = tiersOf(p);
-  const tierText = tiers.map((x) => `${x.minQty}+ ${unitLabel(p.unit, lang)} −${x.pct}%`).join(', ');
+  const tierText = tiers.map((x) => `${x.minQty}+ ${unitLabel(p.unit, lang)} ${pctOff(x.pct, lang)}`).join(', ');
   const items = [
     { q: t('faq1q'), a: pack ? t('faq1a', { n: num(p.packSize ?? 1, lang, 0), price: moneyPiece(piecePrice(p), lang) }) : t('faq1aUnit') },
     { q: t('faq2q'), a: tiers.length ? t('faq2a', { tiers: tierText }) : t('faq2aNone') },

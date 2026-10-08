@@ -369,11 +369,3 @@ export function priceCart(cart: CartItem[], products: Product[], settings: Setti
     couponMinimum,
   };
 }
-
-/**
- * @deprecated m² helpers of the shared platform — Paketoje sells by pack. Kept only until every screen uses
- * packsForPieces(); remove once nothing imports them.
- */
-export const WASTE = 0;
-/** @deprecated use packsForPieces */
-export const packsForArea = (area: number, packSize: number, _waste = 0) => packsForPieces(area, packSize);

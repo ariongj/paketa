@@ -290,7 +290,7 @@ export default function Contact() {
                   aria-selected={type === id}
                   onClick={() => selectType(id)}
                   className={cn(
-                    'inline-flex h-11 items-center justify-center gap-2 rounded-full px-2 text-[13px] font-semibold leading-tight transition-colors sm:text-[14px]',
+                    'inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-2 py-1.5 text-[13px] font-semibold leading-tight transition-colors sm:text-[14px]',
                     type === id ? 'bg-brand-600 text-white shadow-[0_8px_18px_-10px_var(--color-brand-700)]' : 'text-ink-soft hover:text-ink',
                   )}
                 >

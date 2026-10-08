@@ -23,7 +23,7 @@ export function LangChip({ lang, className }: { lang: Lang; className?: string }
   const t = useDict(cx, 'admin');
   return (
     <span title={t(`lang_${lang}`)} className={cn('inline-flex h-5 items-center rounded-md border border-line bg-white px-1.5 text-[10.5px] font-bold tracking-wider text-ink-soft', className)}>
-      {lang.toUpperCase()}
+      {lang === 'me' ? 'SR' : lang.toUpperCase()}
     </span>
   );
 }

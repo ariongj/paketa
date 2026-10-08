@@ -1,14 +1,15 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
-import { AlertCircle, ArrowRightLeft, CheckCircle2, FileText, Plus, Search, Send, Store, Tag, Trash2, Truck, UserRound, Wrench, X } from 'lucide-react';
+import { AlertCircle, ArrowRightLeft, Boxes, CheckCircle2, FileText, Plus, Printer, Search, Send, Store, Tag, Trash2, Truck, UserRound, X } from 'lucide-react';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/misc';
 import { Card, PageHeader, SaveBar, Thumb, confirmDialog } from '@/admin/components/kit';
 import { ProductSearch } from '@/admin/components/orders/ProductSearch';
 import { blankDraft, draftCustomerName, draftProblems, draftTotals, knownCustomers, nextDraftNumber, normalizeItems, type KnownCustomer } from '@/admin/components/orders/drafts';
 import { actorName, discountName, rejectText } from '@/admin/components/orders/helpers';
-import { DraftBadge } from '@/admin/components/orders/status';
+import { DraftBadge, TierChip } from '@/admin/components/orders/status';
+import { piecePriceText, qtyText } from '@/admin/components/products/units';
 import { ActionMenu, Check, CodeChip, NumberInput, SelectInput, Stepper, SumRow, TextArea, TextInput } from '@/admin/components/orders/ui';
 import { od } from '@/admin/components/orders/dict';
 import { adm } from '@/admin/i18n';
@@ -19,7 +20,7 @@ import { useCan, useCurrentStaff } from '@/store/hooks';
 import { allCities, defaultOptions, zoneForCity } from '@/lib/pricing';
 import { normalizeCode } from '@/lib/discounts';
 import { fold } from '@/lib/search';
-import { dateTime, money, num, perUnit } from '@/lib/format';
+import { dateTime, money, perUnit } from '@/lib/format';
 import { cn, uid } from '@/lib/utils';
 import type { CartItem, DraftOrder, Lang, PaymentMethod, Product } from '@/lib/types';
 
@@ -28,7 +29,7 @@ const T = defineDict({
     newTitle: 'Novi nacrt',
     title: 'Nacrt {n}',
     createdBy: 'Kreirao {name} · {date}',
-    newDesc: 'Sastavite narudžbu za kupca koji zove telefonom ili je u salonu.',
+    newDesc: 'Sastavite narudžbu za kupca koji zove telefonom, piše na WhatsApp ili je u magacinu.',
     sendInvoice: 'Pošalji predračun',
     resendInvoice: 'Pošalji ponovo',
     convert: 'Konvertuj u narudžbu',
@@ -57,20 +58,21 @@ const T = defineDict({
     required: 'Obavezno',
     // products
     products: 'Proizvodi',
-    noLines: 'Dodajte proizvode iz kataloga ili posebnu stavku (npr. demontaža, odvoz).',
+    noLines: 'Dodajte proizvode iz kataloga ili posebnu stavku (npr. dizajn logotipa, hitna dostava).',
     addCustom: 'Dodaj posebnu stavku',
     customTitle: 'Naziv posebne stavke',
-    customPh: 'npr. Demontaža i odvoz starih vrata',
+    customPh: 'npr. Priprema dizajna za štampu logotipa',
     price: 'Cijena',
     qty: 'Količina',
     custom: 'Posebna stavka · bez popusta',
-    installation: 'Ugradnja +{price}',
+    installation: 'Štampa logotipa +{price}',
+    carton: '1 karton',
+    cartonTip: 'Postavi količinu na cijeli karton ({n})',
     remove: 'Ukloni',
-    packsArea: '{packs} pak. = {area} m²',
     // payment
     payment: 'Plaćanje',
     codes: 'Kodovi popusta',
-    codePh: 'Unesite kod, npr. SELCA10',
+    codePh: 'Unesite kod, npr. KAFE15',
     apply: 'Primijeni',
     codeExists: 'Kod je već dodat',
     applied: 'Primijenjen',
@@ -78,8 +80,7 @@ const T = defineDict({
     subtotal: 'Međuzbir',
     customLines: 'Posebne stavke',
     shippingRow: 'Dostava',
-    freeInstall: 'Besplatno uz ugradnju',
-    pickupFree: 'Preuzimanje u salonu',
+    pickupFree: 'Preuzimanje u magacinu',
     estimate: 'procjena — izaberite grad',
     total: 'Ukupno',
     vat: 'Uključen PDV {rate}% · {amount}',
@@ -96,7 +97,7 @@ const T = defineDict({
     phone: 'Telefon',
     email: 'E-mail',
     company: 'Firma',
-    pib: 'PIB',
+    pib: 'NUI',
     customerLang: 'Jezik kupca (stavke, predračun)',
     // delivery
     delivery: 'Dostava',
@@ -119,7 +120,7 @@ const T = defineDict({
     newTitle: 'Draft i ri',
     title: 'Drafti {n}',
     createdBy: 'Krijuar nga {name} · {date}',
-    newDesc: 'Përgatitni një porosi për klientin që telefonon ose është në sallon.',
+    newDesc: 'Përgatitni një porosi për klientin që telefonon, shkruan në WhatsApp ose është në depo.',
     sendInvoice: 'Dërgo faturën',
     resendInvoice: 'Ridërgo faturën',
     convert: 'Konverto në porosi',
@@ -147,19 +148,20 @@ const T = defineDict({
     p_address: 'adresën e dërgesës',
     required: 'E detyrueshme',
     products: 'Produktet',
-    noLines: 'Shtoni produkte nga katalogu ose një artikull custom (p.sh. çmontim, largim).',
+    noLines: 'Shtoni produkte nga katalogu ose një artikull custom (p.sh. dizajn i logos, dërgesë urgjente).',
     addCustom: 'Shto artikull custom',
     customTitle: 'Emri i artikullit custom',
-    customPh: 'p.sh. Çmontimi dhe largimi i dyerve të vjetra',
+    customPh: 'p.sh. Përgatitja e dizajnit për printim me logo',
     price: 'Çmimi',
     qty: 'Sasia',
     custom: 'Artikull custom · pa zbritje',
-    installation: 'Montim +{price}',
+    installation: 'Printim me logo +{price}',
+    carton: '1 karton',
+    cartonTip: 'Vendos sasinë për një karton të plotë ({n})',
     remove: 'Hiq',
-    packsArea: '{packs} pako = {area} m²',
     payment: 'Pagesa',
     codes: 'Kodet e zbritjes',
-    codePh: 'Shkruani kodin, p.sh. SELCA10',
+    codePh: 'Shkruani kodin, p.sh. KAFE15',
     apply: 'Apliko',
     codeExists: 'Kodi është shtuar tashmë',
     applied: 'I aplikuar',
@@ -167,8 +169,7 @@ const T = defineDict({
     subtotal: 'Nëntotali',
     customLines: 'Artikuj custom',
     shippingRow: 'Dërgesa',
-    freeInstall: 'Falas me montim',
-    pickupFree: 'Marrje në sallon',
+    pickupFree: 'Marrje në depo',
     estimate: 'vlerësim — zgjidhni qytetin',
     total: 'Totali',
     vat: 'TVSH {rate}% e përfshirë · {amount}',
@@ -184,7 +185,7 @@ const T = defineDict({
     phone: 'Telefoni',
     email: 'E-mail',
     company: 'Kompania',
-    pib: 'NIPT',
+    pib: 'NUI',
     customerLang: 'Gjuha e klientit (artikujt, fatura)',
     delivery: 'Dërgesa',
     city: 'Qyteti',
@@ -205,7 +206,7 @@ const T = defineDict({
     newTitle: 'New draft',
     title: 'Draft {n}',
     createdBy: 'Created by {name} · {date}',
-    newDesc: 'Build an order for a customer calling by phone or visiting the showroom.',
+    newDesc: 'Build an order for a customer who calls, writes on WhatsApp or visits the warehouse.',
     sendInvoice: 'Send invoice',
     resendInvoice: 'Resend invoice',
     convert: 'Convert to order',
@@ -233,19 +234,20 @@ const T = defineDict({
     p_address: 'delivery address',
     required: 'Required',
     products: 'Products',
-    noLines: 'Add catalogue products or a custom item (e.g. removal, disposal).',
+    noLines: 'Add catalogue products or a custom item (e.g. logo design, express delivery).',
     addCustom: 'Add custom item',
     customTitle: 'Custom item name',
-    customPh: 'e.g. Removal and disposal of old doors',
+    customPh: 'e.g. Artwork preparation for the logo print',
     price: 'Price',
     qty: 'Quantity',
     custom: 'Custom item · no discounts',
-    installation: 'Installation +{price}',
+    installation: 'Logo print +{price}',
+    carton: '1 carton',
+    cartonTip: 'Set the quantity to a full carton ({n})',
     remove: 'Remove',
-    packsArea: '{packs} packs = {area} m²',
     payment: 'Payment',
     codes: 'Discount codes',
-    codePh: 'Enter a code, e.g. SELCA10',
+    codePh: 'Enter a code, e.g. KAFE15',
     apply: 'Apply',
     codeExists: 'Code already added',
     applied: 'Applied',
@@ -253,8 +255,7 @@ const T = defineDict({
     subtotal: 'Subtotal',
     customLines: 'Custom items',
     shippingRow: 'Delivery',
-    freeInstall: 'Free with installation',
-    pickupFree: 'Showroom pickup',
+    pickupFree: 'Warehouse pickup',
     estimate: 'estimate — choose a city',
     total: 'Total',
     vat: 'Includes {rate}% VAT · {amount}',
@@ -270,7 +271,7 @@ const T = defineDict({
     phone: 'Phone',
     email: 'E-mail',
     company: 'Company',
-    pib: 'Tax ID',
+    pib: 'Business no. (NUI)',
     customerLang: 'Customer language (items, invoice)',
     delivery: 'Delivery',
     city: 'City',
@@ -533,8 +534,12 @@ function ProductsCard({ draft, setDraft, totals, readOnly, error, t }: { draft: 
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-semibold leading-snug text-ink">{l(p.name)}</p>
-                      <p className="text-[12.5px] text-muted">
-                        {p.sku} · {priced ? `${money(priced.unitPrice, lang)} ${perUnit(p.unit, lang)}` : ''}
+                      <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[12.5px] text-muted">
+                        <span>
+                          {p.sku} · {priced ? `${money(priced.unitPrice, lang)} ${perUnit(p.unit, lang)}` : ''}
+                          {priced && piecePriceText(p, priced.unitPrice, lang) ? ` · ${piecePriceText(p, priced.unitPrice, lang)}` : ''}
+                        </span>
+                        {priced && <TierChip pct={priced.tierPct} />}
                       </p>
                     </div>
                     <div className="shrink-0 text-right tabular-nums">
@@ -545,7 +550,17 @@ function ProductsCard({ draft, setDraft, totals, readOnly, error, t }: { draft: 
 
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <Stepper value={it.qty} min={1} onChange={(n) => setItems((items) => items.map((x, k) => (k === i ? { ...x, qty: n } : x)))} ariaLabel={t('qty')} disabled={readOnly} />
-                    {p.unit === 'm2' && p.packSize ? <span className="text-[12px] text-muted">{t('packsArea', { packs: it.qty, area: num(it.qty * p.packSize, lang) })}</span> : null}
+                    <span className="text-[12px] tabular-nums text-muted">{qtyText(p, it.qty, lang)}</span>
+                    {!readOnly && p.unit === 'pack' && !!p.cartonPacks && it.qty !== p.cartonPacks && (
+                      <button
+                        type="button"
+                        title={t('cartonTip', { n: p.cartonPacks })}
+                        onClick={() => setItems((items) => items.map((x, k) => (k === i ? { ...x, qty: p.cartonPacks as number } : x)))}
+                        className="inline-flex h-8 items-center gap-1 rounded-lg border border-line px-2 text-[12px] font-semibold text-ink-soft hover:border-ink/30 hover:text-ink"
+                      >
+                        <Boxes className="h-3.5 w-3.5" /> {t('carton')}
+                      </button>
+                    )}
                     {p.options.map((o) => (
                       <SelectInput
                         key={o.id}
@@ -567,7 +582,7 @@ function ProductsCard({ draft, setDraft, totals, readOnly, error, t }: { draft: 
                     {p.installation?.available && (
                       <label className={cn('inline-flex h-8 cursor-pointer items-center gap-2 rounded-lg border border-line px-2.5 text-[12.5px] text-ink-soft', it.installation && 'border-ink/40 text-ink', readOnly && 'cursor-not-allowed opacity-60')}>
                         <Check checked={it.installation} disabled={readOnly} onChange={(v) => setItems((items) => items.map((x, k) => (k === i ? { ...x, installation: v } : x)))} label={t('installation', { price: '' })} />
-                        <Wrench className="h-3.5 w-3.5" />
+                        <Printer className="h-3.5 w-3.5" />
                         {t('installation', { price: `${money(p.installation.price, lang)} ${perUnit(p.unit, lang)}` })}
                       </label>
                     )}
@@ -742,9 +757,7 @@ function PaymentCard({ draft, patch, totals, readOnly, t }: { draft: DraftOrder;
               ? t('pickupFree')
               : ship
                 ? nameOf(ship.id)
-                : totals.hasInstallation
-                  ? t('freeInstall')
-                  : totals.shippingEstimate
+                : totals.shippingEstimate
                     ? t('estimate')
                     : undefined
           }

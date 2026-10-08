@@ -15,7 +15,7 @@ const T = defineDict({
 
 /**
  * Category links with photos.
- * - `tile`: tall photo cards with a serif name (search "no results" / start state)
+ * - `tile`: tall photo cards with a display name (search "no results" / start state)
  * - `compact`: white cards with a thumbnail, name and tagline (404 page)
  */
 export function CategoryTiles({ variant = 'tile', limit, className }: { variant?: 'tile' | 'compact'; limit?: number; className?: string }) {

@@ -36,7 +36,7 @@ const EXTRAS: Record<string, { tags: string[]; vendor: string; incoming?: number
   'p-gota-f95-250': { tags: COLD, vendor: V_PET },
   'p-gota-f95-300': { tags: [...COLD, 'catering'], vendor: V_PET },
   'p-gota-f95-350': { tags: COLD, vendor: V_PET },
-  'p-gota-f95-400': { tags: [...COLD, 'logo'], vendor: V_PET },
+  'p-gota-f95-400': { tags: COLD, vendor: V_PET },
   'p-gota-f95-500': { tags: [...COLD, 'smoothie'], vendor: V_PET, incoming: 60 },
   'p-kapak-sheshte': { tags: ['f95', 'kapak', 'kafiteri'], vendor: V_PET },
   'p-kapak-kupole': { tags: ['f95', 'kapak', 'smoothie'], vendor: V_PET },
@@ -51,7 +51,7 @@ const EXTRAS: Record<string, { tags: string[]; vendor: string; incoming?: number
   'p-ene-sallate-1000': { tags: ['sallate', 'kristal', 'catering'], vendor: V_PET },
   'p-gote-venus': { tags: ['embelsira', 'pasticeri', 'e-re'], vendor: V_PET, unavailable: 2 },
   'p-gote-ps': { tags: ['embelsira', 'pasticeri'], vendor: V_PET },
-  'p-gote-bodega-250': { tags: ['embelsira', 'bodega', 'logo'], vendor: V_PET },
+  'p-gote-bodega-250': { tags: ['embelsira', 'bodega'], vendor: V_PET },
   'p-kuti-torte-230': { tags: ['torte', 'pasticeri'], vendor: V_PAPER, incoming: 64, unavailable: 1 },
   'p-ene-torte-kupole': { tags: ['torte', 'pasticeri'], vendor: V_PAPER, incoming: 40 },
   'p-kuti-trekendeshe-gold': { tags: ['torte', 'gold', 'pasticeri'], vendor: V_PAPER, incoming: 60 },
@@ -92,7 +92,8 @@ export function enrichProducts(products: Product[]): Product[] {
       ...p,
       cost: round2(p.price * (COST_FACTOR[p.categoryId] ?? 0.6)),
       vendor: x?.vendor,
-      tags: x?.tags ?? [],
+      // catalogue tags first, CMS merchandising tags added (no duplicates)
+      tags: [...new Set([...(p.tags ?? []), ...(x?.tags ?? [])])],
       barcode: ean13(p.sku, 900 + i),
       incoming: x?.incoming ?? 0,
       unavailable: x?.unavailable ?? 0,
@@ -698,7 +699,7 @@ export function buildPlacements(home: HomeSection[]): Placement[] {
       order: 2,
     },
     ann('pl-a1', 1, T('Besplatni uzorci za lokale · dostava za 24h u Mitrovici', 'Mostra falas për lokale · dërgesë 24h në Mitrovicë', 'Free samples for venues · 24h delivery in Mitrovica'), undefined, '/sherbimet'),
-    ann('pl-a2', 2, T('Besplatna dostava za narudžbe preko 50 € širom Kosova', 'Transport falas për porosi mbi 50 € në gjithë Kosovën', 'Free delivery on orders over €50 across Kosovo'), undefined, '/produktet'),
+    ann('pl-a2', 2, T('Besplatna dostava za narudžbe preko 50 € širom Kosova', 'Transport falas për porosi mbi 50 € në gjithë Kosovën', 'Free delivery on orders over €50 across Kosovo'), undefined, '/faqe/transporti'),
     ann('pl-a3', 3, T('4 pakovanja čaša F95 → 1 pakovanje poklopaca gratis, automatski', '4 pako gota F95 → 1 pako kapakë falas, automatikisht', '4 packs of F95 cups → 1 pack of lids free, automatically'), 'of-pije-te-ftohta', '/koleksioni/per-kafiteri'),
     ann('pl-a4', 4, T('Black Friday: −20 % na sve uz kod BLACKFRIDAY', 'Black Friday: −20 % në gjithçka me kodin BLACKFRIDAY', 'Black Friday: −20 % on everything with code BLACKFRIDAY'), 'of-blackfriday', '/oferta/black-friday'),
   ];
@@ -1190,9 +1191,9 @@ export function buildReturns(now: Date, orders: Order[]): { returns: ReturnReque
 
 export function buildQuotes(now: Date): Quote[] {
   const terms = T(
-    'Cijene uključuju PDV 18 %. Za štampu logotipa avans 50 %, ostatak prije isporuke. Izrada 7–10 radnih dana od odobrenja probnog dizajna. Besplatna dostava na Kosovu.',
-    'Çmimet përfshijnë TVSH 18 %. Për printimin me logo avans 50 %, pjesa tjetër para dërgesës. Prodhimi 7–10 ditë pune nga aprovimi i dizajnit provë. Dërgesë falas në Kosovë.',
-    'Prices include 18 % VAT. Logo print: 50 % deposit, balance before delivery. Production 7–10 working days from proof approval. Free delivery within Kosovo.',
+    'Cijene uključuju PDV 18 %. Za štampu logotipa avans 50 %, ostatak prije isporuke. Izrada 7–10 radnih dana od odobrenja probnog dizajna. Besplatna dostava na Kosovu za narudžbe preko 50 €.',
+    'Çmimet përfshijnë TVSH 18 %. Për printimin me logo avans 50 %, pjesa tjetër para dërgesës. Prodhimi 7–10 ditë pune nga aprovimi i dizajnit provë. Dërgesë falas në Kosovë për porosi mbi 50 €.',
+    'Prices include 18 % VAT. Logo print: 50 % deposit, balance before delivery. Production 7–10 working days from proof approval. Free delivery in Kosovo on orders over €50.',
   );
   return [
     {
@@ -1246,8 +1247,17 @@ const CATEGORY_LINKS: [string, L10n][] = [
   ['cat-shkopinj', T('Slamke i kašičice', 'Shkopinj & lugë kafeje', 'Straws & stirrers')],
 ];
 
+/** Made-to-order (custom print, quote) and "coming soon" ranges — main menu only (the mega menu groups them). */
+const EXTRA_CATEGORY_LINKS: [string, L10n][] = [
+  ['cat-karton', T('Papir i karton', 'Letër & karton', 'Paper & cardboard')],
+  ['cat-etiketa', T('Rolne i etikete', 'Rrotulla & etiketa', 'Rolls & labels')],
+  ['cat-alumini', T('Aluminijum', 'Alumin', 'Aluminium')],
+  ['cat-pla', T('PLA i bio', 'PLA & bio', 'PLA & bio')],
+];
+
 export function buildMenus(): Menu[] {
-  const cat = (prefix: string) => CATEGORY_LINKS.map(([id, label]) => ({ id: `mi-${prefix}${id}`, label, type: 'category' as const, target: id }));
+  const cat = (prefix: string, extra = false) =>
+    (extra ? [...CATEGORY_LINKS, ...EXTRA_CATEGORY_LINKS] : CATEGORY_LINKS).map(([id, label]) => ({ id: `mi-${prefix}${id}`, label, type: 'category' as const, target: id }));
   const url = (id: string, label: L10n, target: string, children?: Menu['items']) => ({ id, label, type: 'url' as const, target, ...(children ? { children } : {}) });
   const page = (id: string, label: L10n) => ({ id: `mi-${id}`, label, type: 'page' as const, target: id });
   return [
@@ -1256,7 +1266,7 @@ export function buildMenus(): Menu[] {
       handle: 'main',
       title: 'Menuja kryesore',
       items: [
-        url('mi-products', T('Proizvodi', 'Produktet', 'Products'), '/produktet', cat('')),
+        url('mi-products', T('Proizvodi', 'Produktet', 'Products'), '/produktet', cat('', true)),
         url('mi-business', T('Za biznis', 'Për biznese', 'For business'), '/sherbimet'),
         url('mi-projects', T('Reference', 'Referencat', 'References'), '/referencat'),
         url('mi-blog', T('Blog', 'Blog', 'Blog'), '/blog'),

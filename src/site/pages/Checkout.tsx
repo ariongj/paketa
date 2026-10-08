@@ -50,6 +50,7 @@ const T = defineDict({
     vatNoHint: 'Samo ako je firma u sistemu TVSH-a.',
     optional: 'opciono',
     zonesTitle: 'Zone dostave',
+    shipTerms: 'Uslovi dostave',
     city: 'Grad',
     chooseCity: 'Izaberite grad',
     address: 'Adresa dostave',
@@ -126,6 +127,7 @@ const T = defineDict({
     vatNoHint: 'Vetëm nëse biznesi është në sistemin e TVSH-së.',
     optional: 'opsionale',
     zonesTitle: 'Zonat e dërgesës',
+    shipTerms: 'Kushtet e transportit',
     city: 'Qyteti',
     chooseCity: 'Zgjidhni qytetin',
     address: 'Adresa e dërgesës',
@@ -202,6 +204,7 @@ const T = defineDict({
     vatNoHint: 'Only if the business is VAT-registered.',
     optional: 'optional',
     zonesTitle: 'Delivery zones',
+    shipTerms: 'Delivery terms',
     city: 'City',
     chooseCity: 'Choose a city',
     address: 'Delivery address',
@@ -713,7 +716,12 @@ export default function Checkout() {
                       <div className="pt-6">
                         {zones.length > 0 && (
                           <div>
-                            <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-muted">{t('zonesTitle')}</p>
+                            <div className="mb-2 flex items-baseline justify-between gap-3">
+                              <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-muted">{t('zonesTitle')}</p>
+                              <Link to="/faqe/transporti" target="_blank" className="text-[12px] font-semibold text-brand-700 underline decoration-brand-700/30 underline-offset-2 hover:decoration-brand-700">
+                                {t('shipTerms')}
+                              </Link>
+                            </div>
                             <div className={cn('grid gap-2', zones.length >= 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2')}>
                               {zones.map((z) => {
                                 const active = zone?.id === z.id;

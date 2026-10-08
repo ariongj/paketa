@@ -7,12 +7,14 @@ const T = (me: string, sq: string, en: string): L10n => ({ me, sq, en });
 /* ------------------------------------------------------------------ */
 /* Settings                                                            */
 /* ------------------------------------------------------------------ */
-// PLACEHOLDERS — confirm with the client before going live: legalName, phone, whatsapp, hours, pib (NUI), pdv (Nr. TVSH),
-// bankName, bankAccount, instagram, the Prishtina pickup point (loc-pr) and the integration providers.
-// Real data: address (Sylyshaj, Suhodoll, Mitrovicë), refund@paketoje.com, the 5-day return policy.
+// Real data (published in paketoje.com's own Terms of Service / refund policy): legal name Paketoje SH.P.K,
+// info@paketoje.com, refund@paketoje.com, Sylyshaj (P.N/Suhodoll), Mitrovicë, tel. +383 48 400 061,
+// business number (NUI) 812224632, the 5-day return policy.
+// PLACEHOLDERS — confirm with the client before going live: hours, pdv (Nr. TVSH), bankName, bankAccount, whatsapp,
+// instagram, the Prishtina pickup point (loc-pr) and the integration providers.
 export const DEFAULT_SETTINGS: Settings = {
   companyName: 'Paketoje',
-  legalName: 'Paketoje SH.P.K.',
+  legalName: 'Paketoje SH.P.K',
   tagline: T('Ambalaža za hranu za vaš biznis', 'Paketim ushqimi për biznesin tuaj', 'Food packaging for your business'),
   about: T(
     'Paketoje snabdijeva kafiće, restorane, brzu hranu, poslastičarnice i sladoledžinice ambalažom za hranu i piće: čaše F95 i poklopci, posude za poneti, čašice za sos, pribor i slamke. Prodajemo na pakovanja i kartone po veleprodajnim cijenama, štampamo vaš logo na čašama i kutijama i dostavljamo širom Kosova — iz našeg magacina u Suhodollu, Mitrovica.',
@@ -20,14 +22,14 @@ export const DEFAULT_SETTINGS: Settings = {
     'Paketoje supplies cafés, restaurants, fast-food outlets, pastry shops and ice-cream parlours with food and drink packaging: F95 cups and lids, take-away containers, sauce cups, cutlery and straws. We sell by the pack and by the carton at wholesale prices, print your logo on cups and boxes, and deliver across Kosovo — from our warehouse in Suhodoll, Mitrovica.',
   ),
   email: 'info@paketoje.com',
-  phone: '+383 44 123 456',
+  phone: '+383 48 400 061',
   phone2: '',
-  whatsapp: '+383 44 123 456',
+  whatsapp: '+383 48 400 061',
   address: 'Sylyshaj, Suhodoll',
   city: 'Mitrovicë',
   mapUrl: 'https://www.google.com/maps/search/?api=1&query=Suhodoll%2C+Mitrovic%C3%AB',
   hours: T('Pon–Pet 08–17h · Sub 08–14h', 'Hën–Pre 08:00–17:00 · Sht 08:00–14:00', 'Mon–Fri 8am–5pm · Sat 8am–2pm'),
-  pib: '81XXXXXXX',
+  pib: '812224632',
   pdv: '330XXXXXX',
   bankName: 'Banka (shembull)',
   bankAccount: 'XK05 XXXX XXXX XXXX XXXX',
@@ -156,7 +158,7 @@ export function buildHome(now = new Date()): HomeSection[] {
               'Microwave containers, compartment boxes, sushi and salad containers — leak-proof, sturdy and delivered within 24 hours in Mitrovica.',
             ),
             primary: { label: T('Posude za hranu', 'Enët e ushqimit', 'Food containers'), href: '/produktet/ene-ushqimi' },
-            secondary: { label: T('Besplatni uzorci', 'Mostra falas', 'Free samples'), href: '/#mjerenje' },
+            secondary: { label: T('Besplatni uzorci', 'Mostra falas', 'Free samples'), href: '/#mostra' },
           },
         ],
       },
@@ -1216,7 +1218,7 @@ Pri plaćanju upišite naziv firme, NUI i PDV broj. Račun se izdaje na firmu, s
 Za narudžbe od više kartona, mjesečno snabdijevanje ili proizvode kojih nema u katalogu [zatražite ponudu](/kontakti) — odgovaramo u roku od jednog radnog dana.
 
 ## Besplatni uzorci
-Niste sigurni za veličinu? Pošaljemo vam besplatne uzorke čaša, poklopaca i posuda — [zatražite uzorke](/#mjerenje).
+Niste sigurni za veličinu? Pošaljemo vam besplatne uzorke čaša, poklopaca i posuda — [zatražite uzorke](/#mostra).
 
 ## Štampa logotipa
 Čaše, kutije i naljepnice sa vašim logotipom od 1 kartona — pogledajte [kako funkcioniše štampa](/faqe/printimi-me-logo).`,
@@ -1246,7 +1248,7 @@ Në arkë shënoni emrin e kompanisë, NUI-në dhe numrin e TVSH-së. Fatura lë
 Për porosi me disa kartona, furnizim mujor ose produkte që nuk janë në katalog, [kërkoni ofertë](/kontakti) — përgjigjemi brenda një dite pune.
 
 ## Mostra falas
-Nuk jeni të sigurt për madhësinë? Ju dërgojmë mostra falas të gotave, kapakëve dhe enëve — [kërkoni mostra](/#mjerenje).
+Nuk jeni të sigurt për madhësinë? Ju dërgojmë mostra falas të gotave, kapakëve dhe enëve — [kërkoni mostra](/#mostra).
 
 ## Printim me logo
 Gota, kuti dhe ngjitëse me logon tuaj nga 1 karton — shih [si funksionon printimi](/faqe/printimi-me-logo).`,
@@ -1276,7 +1278,7 @@ Enter your company name, NUI and VAT number at checkout. The invoice is issued t
 For multi-carton orders, monthly supply or products not in the catalogue, [ask for a quote](/kontakti) — we reply within one working day.
 
 ## Free samples
-Not sure about the size? We'll send free samples of cups, lids and containers — [request samples](/#mjerenje).
+Not sure about the size? We'll send free samples of cups, lids and containers — [request samples](/#mostra).
 
 ## Logo printing
 Cups, boxes and stickers with your logo from 1 carton — see [how logo printing works](/faqe/printimi-me-logo).`,
@@ -1438,7 +1440,7 @@ Ukupno **0,08 € po piću**. Sa punim kartonima (čaše −10 %, poklopci i sla
 ## Tri greške koje treba izbjeći
 - Ne koristite čaše F95 za topla pića — to su čaše za hladne napitke
 - Ne punite do vrha: ostavite oko 1 cm da se poklopac zatvori bez prosipanja
-- Ne naručujte bez probe: zatražite [besplatne uzorke](/#mjerenje) i isprobajte veličine sa svojim receptima
+- Ne naručujte bez probe: zatražite [besplatne uzorke](/#mostra) i isprobajte veličine sa svojim receptima
 
 Spremni za narudžbu? Pogledajte [čaše F95](/produktet/gota) i [poklopce](/produktet/kapake).`,
         `Gota e duhur nuk është vetëm çështje madhësie: prej saj varet sa akull futet, si duket pija në vitrinë dhe sa ju kushton çdo porosi. Ja një udhëzues i shkurtër për gotat F95 dhe kapakët e tyre.
@@ -1477,7 +1479,7 @@ Gjithsej **0,08 € për pije**. Me kartona të plotë (gotat −10 %, kapakët 
 ## Tri gabime që duhen shmangur
 - Mos përdorni gota F95 për pije të nxehta — janë gota për pije të ftohta
 - Mos i mbushni deri në buzë: lini rreth 1 cm që kapaku të mbyllet pa derdhje
-- Mos porositni pa provuar: kërkoni [mostra falas](/#mjerenje) dhe provoni madhësitë me recetat tuaja
+- Mos porositni pa provuar: kërkoni [mostra falas](/#mostra) dhe provoni madhësitë me recetat tuaja
 
 Gati për porosi? Shikoni [gotat F95](/produktet/gota) dhe [kapakët](/produktet/kapake).`,
         `The right cup isn't just a question of size: it decides how much ice fits, how the drink looks on the counter and what every order costs you. Here's a quick guide to F95 cups and their lids.
@@ -1516,7 +1518,7 @@ That's **€0.08 per drink**. With full cartons (cups −10 %, lids and straws �
 ## Three mistakes to avoid
 - Don't use F95 cups for hot drinks — they are cold cups
 - Don't fill to the brim: leave about 1 cm so the lid closes without spills
-- Don't order blind: ask for [free samples](/#mjerenje) and test the sizes with your own recipes
+- Don't order blind: ask for [free samples](/#mostra) and test the sizes with your own recipes
 
 Ready to order? See our [F95 cups](/produktet/gota) and [lids](/produktet/kapake).`,
       ),
