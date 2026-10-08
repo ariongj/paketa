@@ -264,6 +264,18 @@ export function buildHome(now = new Date()): HomeSection[] {
         autoplay: true,
         slides: [
           {
+            id: 's3',
+            image: '/images/p/etiketa-ushqimore-rrotull-2.webp',
+            eyebrow: T('Etiketa & shrink sleeve', 'Labels & shrink sleeves'),
+            title: T('Etiketa që *mbeten.*', 'Labels that *stay.*'),
+            subtitle: T(
+              'HP Indigo për tirazhe të shkurtra, flexo LED UV me 8 ngjyra për volume — në rrotull, gati për linjën tuaj të mbushjes.',
+              'HP Indigo for short runs, 8-colour LED UV flexo for volume — on rolls, ready for your filling line.',
+            ),
+            primary: { label: T('Shiko etiketat', 'Shop labels'), href: '/produktet/etiketa' },
+            secondary: { label: T('Udhëzuesi i skedarëve', 'Artwork guide'), href: '/faqe/si-te-pergatisni-skedaret' },
+          },
+          {
             id: 's1',
             image: '/images/p/kuti-cokollate.webp',
             eyebrow: T('Printim & paketim · Prishtinë', 'Print & packaging · Prishtina'),
@@ -286,18 +298,6 @@ export function buildHome(now = new Date()): HomeSection[] {
             ),
             primary: { label: T('Paketime ushqimore', 'Food packaging'), href: '/produktet/kuti-ushqimore' },
             secondary: { label: T('Kërko ofertë', 'Get a quote'), href: '/kerko-oferte' },
-          },
-          {
-            id: 's3',
-            image: '/images/p/etiketa-ushqimore-rrotull-2.webp',
-            eyebrow: T('Etiketa & shrink sleeve', 'Labels & shrink sleeves'),
-            title: T('Etiketa që *mbeten.*', 'Labels that *stay.*'),
-            subtitle: T(
-              'HP Indigo për tirazhe të shkurtra, flexo LED UV me 8 ngjyra për volume — në rrotull, gati për linjën tuaj të mbushjes.',
-              'HP Indigo for short runs, 8-colour LED UV flexo for volume — on rolls, ready for your filling line.',
-            ),
-            primary: { label: T('Shiko etiketat', 'Shop labels'), href: '/produktet/etiketa' },
-            secondary: { label: T('Udhëzuesi i skedarëve', 'Artwork guide'), href: '/faqe/si-te-pergatisni-skedaret' },
           },
         ],
       },

@@ -9,7 +9,7 @@ import {
 } from './cms';
 
 /** Bump to force every browser to reload fresh demo data (storage key `pw-db`). */
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
 
 /**
  * Every bundled image (public/images, without the -sm variants), exposed in the CMS media library:
