@@ -58,7 +58,7 @@ export function ArtworkPicker({ cfg, showError }: { cfg: Configurator; showError
               {cfg.file ? (
                 <ArtworkFileCard art={cfg.file} onRemove={() => cfg.setFile(null)} onReplace={(a) => cfg.setFile(a)} />
               ) : (
-                <FileDrop onFile={(a) => cfg.setFile(a)} className={cn(showError && 'border-amber-500 bg-amber-50/60')} />
+                <FileDrop onFile={(a) => cfg.setFile(a)} error={showError} />
               )}
               {showError && !cfg.file && (
                 <p className="mt-2 flex items-center gap-1.5 text-[12.5px] font-medium text-amber-800" role="alert">

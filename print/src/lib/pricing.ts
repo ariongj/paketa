@@ -34,6 +34,9 @@ export function optionsDelta(p: Product, options: Record<string, string>) {
   return delta;
 }
 
+/** Per-piece print prices go down to fractions of a cent (€0,085) — keep 4 decimals; line totals are rounded to cents. */
+const round4 = (n: number) => Math.round(n * 10000) / 10000;
+
 /** Tier unit price for an ordered quantity (highest break ≤ qty); falls back to the base price. */
 export function tierPrice(p: Product, qty?: number) {
   const base = basePrice(p);
@@ -52,7 +55,7 @@ export function minQty(p: Product) {
 
 /** Unit price for the chosen options (and quantity, for tiered print products) — per piece, per m² or per metre. */
 export function unitPrice(p: Product, options: Record<string, string> = {}, qty?: number) {
-  return round2(tierPrice(p, qty) + optionsDelta(p, options));
+  return round4(tierPrice(p, qty) + optionsDelta(p, options));
 }
 
 /** "Was" price per unit: the matching tier's list price, ignoring any sale. */
@@ -61,9 +64,9 @@ export function regularUnitPrice(p: Product, options: Record<string, string> = {
     const sorted = [...p.tiers].sort((a, b) => a.qty - b.qty);
     let price = sorted[0].price;
     for (const t of sorted) if (t.qty <= qty) price = t.price;
-    return round2(Math.max(price, tierPrice(p, qty)) + optionsDelta(p, options));
+    return round4(Math.max(price, tierPrice(p, qty)) + optionsDelta(p, options));
   }
-  return round2(p.price + optionsDelta(p, options));
+  return round4(p.price + optionsDelta(p, options));
 }
 
 /** Design / prepress add-on for a line: flat per line (`per: 'line'`) or per unit (legacy). */
@@ -175,6 +178,11 @@ function couponView(d: Discount, applied: AppliedDiscount): Coupon {
 export function zoneForCity(settings: Settings, city?: string) {
   if (!city) return null;
   return settings.shippingZones.find((z) => z.cities.some((c) => c.toLowerCase() === city.toLowerCase())) ?? null;
+}
+
+/** Zone with the lowest fee — the basis of the "from €x" delivery estimate. */
+function cheapestZone(settings: Settings) {
+  return settings.shippingZones.reduce<Settings['shippingZones'][number] | null>((best, z) => (!best || z.fee < best.fee ? z : best), null);
 }
 
 export function allCities(settings: Settings) {
@@ -302,7 +310,8 @@ export function priceCart(cart: CartItem[], products: Product[], settings: Setti
     discounts,
     codes,
     shipping: fee,
-    shippingZoneId: zone?.id ?? null,
+    // before a city is chosen, evaluate shipping rules against the cheapest zone (the "from" estimate shown)
+    shippingZoneId: (zone ?? cheapestZone(settings))?.id ?? null,
     customer: opts.customer,
     now: opts.now,
   });

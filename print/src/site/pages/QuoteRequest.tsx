@@ -45,7 +45,7 @@ export default function QuoteRequest() {
   const [dir, setDir] = useState(1);
   const [tried, setTried] = useState<Record<number, boolean>>({});
   const [done, setDone] = useState<{ id: string; name: string; email: string; kind: string } | null>(null);
-  const patch = (p: Partial<RfqForm>) => setForm((f) => ({ ...f, ...p }));
+  const patch = (p: Partial<RfqForm> | ((f: RfqForm) => Partial<RfqForm>)) => setForm((f) => ({ ...f, ...(typeof p === 'function' ? p(f) : p) }));
 
   const errors = useMemo(() => {
     const e: RfqErrors = {};

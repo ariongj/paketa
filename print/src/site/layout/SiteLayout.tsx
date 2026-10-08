@@ -9,22 +9,37 @@ import { useDict, LANGS, useLang } from '@/i18n';
 import { site } from '@/i18n/site';
 import { useSettings } from '@/store/hooks';
 import { useDb } from '@/store/db';
+import { cn } from '@/lib/utils';
 
-/** Floating "demo store → open the CMS" pill (Settings → demo banner). Hidden inside the builder preview. */
+/** Routes where the pill would sit on top of forms, cart lines or the sticky buy bar. */
+const NO_BADGE = /^\/(shporta|pagesa|porosia|kerko-oferte)(\/|$)/;
+const NO_BADGE_MOBILE = /^\/produkt\//;
+
+/**
+ * Floating "demo store → open the CMS" pill (Settings → demo banner). Hidden inside the builder preview and on the
+ * checkout flow; a compact icon that expands on hover, so it never hides content.
+ */
 function DemoBadge() {
   const t = useDict(site);
   const settings = useSettings();
-  if (!settings.demoBanner) return null;
+  const { pathname } = useLocation();
+  if (!settings.demoBanner || NO_BADGE.test(pathname)) return null;
   return (
     <Link
       to="/admin"
-      className="group fixed bottom-4 left-4 z-30 flex items-center gap-2.5 rounded-full bg-ink/90 py-1.5 pl-1.5 pr-4 text-[12px] font-semibold text-paper shadow-xl ring-1 ring-white/10 backdrop-blur transition-all hover:bg-ink"
+      aria-label={`${t('demoBanner')} ${t('demoBannerCta')}`}
+      title={t('demoBanner')}
+      className={cn(
+        'group fixed bottom-4 left-4 z-30 flex items-center rounded-full bg-ink/90 p-1.5 text-[12px] font-semibold text-paper shadow-xl ring-1 ring-white/10 backdrop-blur transition-all hover:bg-ink hover:pr-4',
+        NO_BADGE_MOBILE.test(pathname) && 'max-sm:hidden',
+      )}
     >
-      <span className="grid h-7 w-7 place-items-center rounded-full bg-brand-600">
+      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-brand-600">
         <LayoutDashboard className="h-3.5 w-3.5" />
       </span>
-      <span className="hidden sm:inline">{t('demoBanner')}</span>
-      <span className="text-brand-200 group-hover:text-white">{t('demoBannerCta')} →</span>
+      <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-all duration-300 group-hover:ml-2.5 group-hover:max-w-[420px] group-hover:opacity-100 group-focus-visible:ml-2.5 group-focus-visible:max-w-[420px] group-focus-visible:opacity-100">
+        {t('demoBanner')} <span className="text-brand-200">{t('demoBannerCta')} →</span>
+      </span>
     </Link>
   );
 }

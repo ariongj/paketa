@@ -92,4 +92,13 @@ export function refundForLines(o: Pick<Order, 'items' | 'discount' | 'subtotal'>
 }
 
 /** Order is still open for fulfilment (counts as "committed" stock). */
-export const isOpenOrder = (o: Pick<Order, 'status'>) => o.status === 'new' || o.status === 'confirmed' || o.status === 'processing';
+export const isOpenOrder = (o: Pick<Order, 'status'>) => o.status === 'new' || o.status === 'confirmed' || o.status === 'proof' || o.status === 'processing';
+
+/**
+ * Gross ÷ net for orders priced net (VAT added on top of the line amounts), else 1 — derived from the stored totals,
+ * so refunds computed from line amounts (refundForLines) can be turned into what the customer actually paid.
+ */
+export function grossFactor(o: Pick<Order, 'subtotal' | 'installationTotal' | 'discount' | 'shipping' | 'total'>) {
+  const base = (o.subtotal ?? 0) + (o.installationTotal ?? 0) - (o.discount ?? 0) + (o.shipping ?? 0);
+  return base > 0 && o.total > base + 0.01 ? o.total / base : 1;
+}

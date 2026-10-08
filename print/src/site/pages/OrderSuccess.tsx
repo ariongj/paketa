@@ -295,7 +295,7 @@ function FilesCard({ order }: { order: Order }) {
             <div className="flex items-center gap-2">
               {it.artwork?.status === 'uploaded' && <ArtworkThumb art={it.artwork} className="h-8 w-8" />}
               {it.artwork && <ArtworkChip art={it.artwork} />}
-              {it.artwork?.status === 'later' && <AttachButton onFile={(a) => attach(i, a)} label={t('uploadFile')} className="h-8 border-solid border-ink bg-ink px-3 text-paper hover:border-brand-600 hover:bg-brand-600 hover:text-white" />}
+              {it.artwork?.status === 'later' && <AttachButton onFile={(a) => attach(i, a)} label={t('uploadFile')} solid />}
             </div>
           </li>
         ))}

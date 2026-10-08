@@ -11,7 +11,7 @@ import { QT } from './dict';
 import { RFQ_KINDS, type RfqKind } from './kinds';
 import { COLOURS, FINISHES, KIND_ICON, MATERIALS, QTY_PRESETS, RFQ_FILE_EXT, SIZE_MODE, sizeText, type RfqForm } from './model';
 
-type Patch = (p: Partial<RfqForm>) => void;
+type Patch = (p: Partial<RfqForm> | ((f: RfqForm) => Partial<RfqForm>)) => void;
 export type RfqErrors = Partial<Record<'kind' | 'qty' | 'name' | 'email' | 'phone', string>>;
 
 export function StepHead({ title, text }: { title: string; text: string }) {
@@ -176,7 +176,7 @@ export function StepSpecs({ form, patch, errors }: { form: RfqForm; patch: Patch
           <Label hint={t('finishesHint')}>{t('finishes')}</Label>
           <div className="flex flex-wrap gap-2">
             {FINISHES.map((f) => (
-              <Chip key={f} on={form.finishes.includes(f)} onClick={() => patch({ finishes: form.finishes.includes(f) ? form.finishes.filter((x) => x !== f) : [...form.finishes, f] })}>
+              <Chip key={f} on={form.finishes.includes(f)} onClick={() => patch((s) => ({ finishes: s.finishes.includes(f) ? s.finishes.filter((x) => x !== f) : [...s.finishes, f] }))}>
                 {t(`f_${f}`)}
               </Chip>
             ))}

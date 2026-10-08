@@ -7,7 +7,7 @@ import type {
   InventoryMovement, L10n, Menu, Offer, Order, Placement, Product, Project, PurchaseOrder, Quote, ReturnRequest, Segment, Service, Staff,
 } from '@/lib/types';
 import { defaultOptions } from '@/lib/pricing';
-import { refundForLines } from '@/lib/orders';
+import { grossFactor, refundForLines } from '@/lib/orders';
 import { round2 } from '@/lib/utils';
 import { LEGACY_PRODUCT, clientCustomer } from './demo';
 
@@ -1320,7 +1320,7 @@ export function buildReturns(now: Date, orders: Order[]): { returns: ReturnReque
   if (colour) {
     const line = lineOf(colour, ['PW-LB', 'PW-PK'])!;
     const lines = [{ productId: line.productId, qty: part(line.qty, 0.2) }];
-    const amount = refundForLines(colour, lines);
+    const amount = Math.round(refundForLines(colour, lines) * grossFactor(colour) * 100) / 100;
     const t0 = Math.min(now.getTime() - 9 * DAY, new Date(colour.createdAt).getTime() + 16 * DAY);
     returns.push({
       id: 'rt-1001',
@@ -1361,7 +1361,7 @@ export function buildReturns(now: Date, orders: Order[]): { returns: ReturnReque
       lines,
       reason: 'Prerja me matricë e zhvendosur ~2 mm në një pjesë të kutive — printimi del jashtë skajit.',
       status: 'approved',
-      refundAmount: refundForLines(diecut, lines),
+      refundAmount: Math.round(refundForLines(diecut, lines) * grossFactor(diecut) * 100) / 100,
       restock: false,
       createdAt: at(t0, 0),
       timeline: [
@@ -1381,7 +1381,7 @@ export function buildReturns(now: Date, orders: Order[]): { returns: ReturnReque
       lines,
       reason: 'Dëmtuar gjatë transportit — dy kartona të lagur nga shiu gjatë shkarkimit.',
       status: 'requested',
-      refundAmount: refundForLines(transit, lines),
+      refundAmount: Math.round(refundForLines(transit, lines) * grossFactor(transit) * 100) / 100,
       restock: false,
       createdAt: t,
       timeline: [{ at: t, status: 'requested', by: 'web', note: 'E-mail me foto të kartonave dhe fletëdërgesën e nënshkruar.' }],
@@ -1398,7 +1398,7 @@ export function buildReturns(now: Date, orders: Order[]): { returns: ReturnReque
       lines,
       reason: 'Klienti kërkon kthim pasi ndryshoi tekstin e dizajnit pas dorëzimit.',
       status: 'rejected',
-      refundAmount: refundForLines(design, lines),
+      refundAmount: Math.round(refundForLines(design, lines) * grossFactor(design) * 100) / 100,
       restock: false,
       createdAt: at(t0, 0),
       timeline: [

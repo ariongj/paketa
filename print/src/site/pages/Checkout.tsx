@@ -281,7 +281,7 @@ export default function Checkout() {
     return m.length ? [...m] : (['bank'] as PaymentMethod[]);
   }, [settings.payments]);
   const companyMode = settings.checkout?.companyField ?? 'optional';
-  const termsSlug = pages.find((p) => p.published && /kusht|terms|uslov/.test(p.slug))?.slug ?? 'kushtet-e-shitjes';
+  const termsSlug = pages.find((p) => p.id === 'pg-uslovi')?.slug ?? pages.find((p) => p.published && /kusht|terms/.test(p.slug))?.slug ?? 'kushtet-e-shitjes';
 
   const [draft] = useState(loadDraft);
   const [form, setForm] = useState<FormState>(() => ({ ...EMPTY, ...draft.form, ...(companyMode === 'hidden' ? { business: false } : {}) }));

@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { BadgeCheck, Clock, FileCheck2, Layers, MapPin, Palette, PenTool, Ruler, ScanLine, Store, Truck, Type } from 'lucide-react';
+import { ArrowRight, BadgeCheck, Clock, FileCheck2, Layers, MapPin, Palette, PenTool, Ruler, ScanLine, Store, Truck, Type } from 'lucide-react';
+import { Link } from 'react-router';
 import type { Category } from '@/lib/types';
+import { useDb } from '@/store/db';
 import { Accordion, Accent, Img, Tabs } from '@/components/ui/misc';
 import { useDict, useL, useLang } from '@/i18n';
 import { useSettings } from '@/store/hooks';
@@ -209,9 +211,15 @@ function BleedDiagram() {
   );
 }
 
+/** Published CMS page slug by id (content seed: pg-skedaret, pg-dostava…). */
+function usePageSlug(id: string) {
+  return useDb((s) => s.pages.find((p) => p.id === id && p.published)?.slug);
+}
+
 function ArtworkGuide() {
   const t = useDict(PD);
   const settings = useSettings();
+  const guide = usePageSlug('pg-skedaret');
   const rules = [
     { icon: ScanLine, title: t('g_bleed'), text: t('g_bleedText') },
     { icon: Ruler, title: t('g_safe'), text: t('g_safeText') },
@@ -254,6 +262,11 @@ function ArtworkGuide() {
           <BadgeCheck className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
           {t('dieline', { email: settings.email })}
         </p>
+        {guide && (
+          <Link to={`/faqe/${guide}`} className="mt-4 inline-flex items-center gap-1.5 text-[14px] font-semibold text-ink hover:text-brand-700">
+            {t('guideLink')} <ArrowRight className="h-4 w-4" />
+          </Link>
+        )}
       </div>
     </div>
   );
@@ -264,6 +277,7 @@ function Delivery({ cfg }: { cfg: Configurator }) {
   const t = useDict(PD);
   const lang = useLang();
   const settings = useSettings();
+  const page = usePageSlug('pg-dostava');
   const days = cfg.product.leadDays ?? 0;
   const steps = [
     { title: t('p1'), when: t('p1w') },
@@ -322,6 +336,11 @@ function Delivery({ cfg }: { cfg: Configurator }) {
             </p>
           </div>
         </div>
+        {page && (
+          <Link to={`/faqe/${page}`} className="mt-4 inline-flex items-center gap-1.5 text-[14px] font-semibold text-ink hover:text-brand-700">
+            {t('deliveryLink')} <ArrowRight className="h-4 w-4" />
+          </Link>
+        )}
       </div>
     </div>
   );

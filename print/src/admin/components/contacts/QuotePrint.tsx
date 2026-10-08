@@ -18,6 +18,9 @@ const T = defineDict({
   en: { title: 'Quote preview', desc: 'This is what the customer sees — print it or save it as a PDF.', print: 'Print / PDF', docLang: 'Document language', close: 'Close' },
 });
 
+/** Settings may hold "NUI 81…" or a bare number — the sheet adds its own label. */
+const bare = (v?: string) => (v ?? '').replace(/^\s*(NUI|NIPT|TVSH|VAT|PIB|PDV)[\s.:]*/i, '');
+
 /** Print only the sheet: every other child of <body> (the app, this modal) is hidden while printing. */
 const PRINT_CSS = `
 .pw-quote-print { display: none; }
@@ -118,7 +121,7 @@ export function QuoteSheet({ quote, owner, lang, className, print }: { quote: Qu
               {s.address}, {s.city}, {qd(lang, 'country')}
             </p>
             <p>
-              {s.pib} · {s.pdv}
+              NUI {bare(s.pib)} · {qd(lang, 'vatNo')} {bare(s.pdv)}
             </p>
             <p>
               {s.phone} · {s.email} · printwor-ks.com
@@ -151,7 +154,7 @@ export function QuoteSheet({ quote, owner, lang, className, print }: { quote: Qu
           <p className="mt-1 text-[13px] font-bold text-ink">{q.customer.company || q.customer.name || '—'}</p>
           {q.nui && (
             <p className="text-ink-soft">
-              {qd(lang, 'nui')}: {q.nui}
+              {qd(lang, 'nui')}: {bare(q.nui)}
             </p>
           )}
           {q.customer.company && q.customer.name && (

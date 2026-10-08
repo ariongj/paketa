@@ -1,14 +1,16 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { CartItem, Lang, RoleId } from '@/lib/types';
+import type { ArtworkRef, CartItem, Lang, RoleId } from '@/lib/types';
 import { safeStorage } from './storage';
 
-export function cartKey(productId: string, options: Record<string, string>, installation: boolean) {
+/** Line identity: product + options + design flag (+ the uploaded file, so two artworks of the same product stay two lines). */
+export function cartKey(productId: string, options: Record<string, string>, installation: boolean, artwork?: ArtworkRef) {
   const opts = Object.keys(options)
     .sort()
     .map((k) => `${k}=${options[k]}`)
     .join('&');
-  return `${productId}|${opts}|${installation ? 'i' : ''}`;
+  const file = artwork?.status === 'uploaded' && artwork.name ? `|f:${artwork.name}` : '';
+  return `${productId}|${opts}|${installation ? 'i' : ''}${file}`;
 }
 
 /** Codes are stored trimmed, without spaces, uppercase (same as the discount engine). */
@@ -35,6 +37,8 @@ interface UiState {
   addToCart: (item: Omit<CartItem, 'key'>) => void;
   setQty: (key: string, qty: number) => void;
   setInstallation: (key: string, on: boolean) => void;
+  /** Replace a line's artwork (re-keys the line; merges into an identical line if one exists) */
+  setLineArtwork: (key: string, artwork: ArtworkRef) => void;
   removeFromCart: (key: string) => void;
   clearCart: () => void;
   setCartOpen: (open: boolean) => void;
@@ -74,7 +78,7 @@ export const useUi = create<UiState>()(
       setAdminLang: (adminLang) => set({ adminLang }),
       addToCart: (item) =>
         set((s) => {
-          const key = cartKey(item.productId, item.options, item.installation);
+          const key = cartKey(item.productId, item.options, item.installation, item.artwork);
           const existing = s.cart.find((c) => c.key === key);
           if (existing) {
             return { cart: s.cart.map((c) => (c.key === key ? { ...c, qty: c.qty + item.qty } : c)) };
@@ -89,7 +93,7 @@ export const useUi = create<UiState>()(
         set((s) => {
           const line = s.cart.find((c) => c.key === key);
           if (!line) return {};
-          const newKey = cartKey(line.productId, line.options, on);
+          const newKey = cartKey(line.productId, line.options, on, line.artwork);
           const clash = s.cart.find((c) => c.key === newKey);
           if (clash) {
             return {
@@ -99,6 +103,15 @@ export const useUi = create<UiState>()(
             };
           }
           return { cart: s.cart.map((c) => (c.key === key ? { ...c, installation: on, key: newKey } : c)) };
+        }),
+      setLineArtwork: (key, artwork) =>
+        set((s) => {
+          const line = s.cart.find((c) => c.key === key);
+          if (!line) return {};
+          const newKey = cartKey(line.productId, line.options, line.installation, artwork);
+          const clash = newKey !== key ? s.cart.find((c) => c.key === newKey) : undefined;
+          if (clash) return { cart: s.cart.filter((c) => c.key !== key).map((c) => (c.key === newKey ? { ...c, qty: c.qty + line.qty } : c)) };
+          return { cart: s.cart.map((c) => (c.key === key ? { ...c, artwork, key: newKey } : c)) };
         }),
       removeFromCart: (key) => set((s) => ({ cart: s.cart.filter((c) => c.key !== key) })),
       clearCart: () => set({ cart: [], ...withCodes([]) }),

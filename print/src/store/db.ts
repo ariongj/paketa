@@ -7,7 +7,9 @@ import type {
 } from '@/lib/types';
 import { createSeed, DB_VERSION } from '@/data/seed';
 import { priceCart } from '@/lib/pricing';
-import { refundForLines } from '@/lib/orders';
+import { grossFactor, refundForLines } from '@/lib/orders';
+
+const r2Gross = (n: number) => Math.round(n * 100) / 100;
 import { checkBooking, type BookingConflict } from '@/lib/bookings';
 import { isTracked } from '@/lib/inventory';
 import { lt } from '@/i18n';
@@ -646,7 +648,7 @@ export const useDb = create<DbStore>()(
           lines,
           reason: input.reason,
           status: 'requested',
-          refundAmount: refundForLines(o, lines),
+          refundAmount: r2Gross(refundForLines(o, lines) * grossFactor(o)),
           restock: input.restock ?? true,
           createdAt: now,
           timeline: [{ at: now, status: 'requested', by, ...(input.note ? { note: input.note } : {}) }],

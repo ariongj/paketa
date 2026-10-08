@@ -32,7 +32,7 @@ export function useArtworkReader() {
 }
 
 /** Drag & drop zone (+ click to browse) for one print file. */
-export function FileDrop({ onFile, compact, className }: { onFile: (a: ArtworkRef) => void; compact?: boolean; className?: string }) {
+export function FileDrop({ onFile, compact, error, className }: { onFile: (a: ArtworkRef) => void; compact?: boolean; error?: boolean; className?: string }) {
   const t = useDict(PD);
   const input = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
@@ -63,7 +63,7 @@ export function FileDrop({ onFile, compact, className }: { onFile: (a: ArtworkRe
       className={cn(
         'group/drop relative flex cursor-pointer items-center gap-3.5 rounded-xl border border-dashed text-left transition-colors outline-none focus-visible:ring-4 focus-visible:ring-brand-600/15',
         compact ? 'px-3 py-2.5' : 'flex-col justify-center px-4 py-6 text-center sm:py-7',
-        over ? 'border-brand-600 bg-brand-50/70' : 'border-ink/25 bg-paper/60 hover:border-ink/50 hover:bg-white',
+        over ? 'border-brand-600 bg-brand-50/70' : error ? 'border-amber-500 bg-amber-50/60' : 'border-ink/25 bg-paper/60 hover:border-ink/50 hover:bg-white',
         className,
       )}
     >
