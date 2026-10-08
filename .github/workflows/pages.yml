@@ -41,6 +41,27 @@ jobs:
           cp dist/index.html dist/404.html
           touch dist/.nojekyll
 
+      # PrintWorks (source in print/) — published under /paketa/print/ in the same Pages artifact.
+      - name: Install PrintWorks (print/)
+        working-directory: print
+        run: npm ci
+
+      - name: Build PrintWorks (base /paketa/print/)
+        working-directory: print
+        run: npm run build
+        env:
+          BASE_PATH: /paketa/print/
+
+      # Deep links such as /paketa/print/admin/porosite hit the site-level 404.html (the Paketoje shell above),
+      # so it first forwards anything under /paketa/print/ to the PrintWorks app, which restores the path (?__p=).
+      - name: Add PrintWorks to the site
+        run: |
+          mkdir -p dist/print
+          cp -r print/dist/. dist/print/
+          SNIPPET="<script>(function(){var b='/paketa/print',l=location;if(l.pathname===b||l.pathname.indexOf(b+'/')===0){l.replace(b+'/?__p='+encodeURIComponent(l.pathname.slice(b.length)+l.search+l.hash));}})();</script>"
+          sed -i "0,/<head>/s##<head>${SNIPPET}#" dist/404.html
+          grep -q "/paketa/print" dist/404.html
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
