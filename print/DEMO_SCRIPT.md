@@ -18,6 +18,10 @@ dashboard numbers are fresh.
 - Open the **octagonal pizza box**: choose Ø 33 cm, print inside + outside, pick **1,000 pcs** — the unit price drops
   live from the tier table; add **professional design (+€45)** or upload a PDF; add to cart.
 - Open **food labels on rolls**: 5,000 pcs, white PP, gloss varnish, upload artwork (file name + preview).
+- **Studio 3D** (header icon, the band on the homepage, or "Shiheni këtë qese në 3D" on any paper bag): pick the
+  **Butik · folje ari** example, turn the bag so the gold foil catches the light, switch to kraft with twisted handles,
+  put the handles down, add a text and a **QR code** on the back, change the quantity — the price follows the catalogue
+  tiers — and **Shto në shportë**: the cart line shows the bag exactly as designed.
 - Cart: artwork status per line, free delivery progress, **total excl. VAT → VAT 18 % → total**, code `PRINT10`.
 - Checkout as a business: company, **NUI**, PO number, bank transfer with pro-forma → order confirmation with the
   "proof within 24 h → approve → production → delivery" timeline.
@@ -29,7 +33,8 @@ dashboard numbers are fresh.
 
 ## 4. Running the print shop in the CMS (6 min)
 - **Përmbledhje** — revenue (net and gross), orders, average order, orders waiting for files, proofs awaiting approval.
-- **Porositë** → the new order: **Prepress & provë** card — mark the file received, send proof v1, the customer asks
+- **Porositë** → the new order: the Studio 3D line carries the picture of the designed bag and the full design
+  description (texts, fonts, sizes in cm, inks, handle) as the customer note; **Prepress & provë** card — mark the file received, send proof v1, the customer asks
   for changes, send v2, approve → "Nis prodhimin" → ship → delivered; print the **invoice / pro-forma** (NUI, TVSH 18 %).
 - **Kontaktet** → the quote request → **Krijo ofertë** (net prices + VAT) → send.
 - **Produktet** → a product: the **quantity-tier price editor**, minimum order, quantity step, design-service fee,

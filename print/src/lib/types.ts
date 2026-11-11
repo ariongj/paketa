@@ -56,6 +56,8 @@ export interface ArtworkRef {
   thumb?: string;
   /** Customer note for prepress */
   note?: string;
+  /** Designed in the 3D studio: `thumb` is a picture of the finished bag and `note` describes the design */
+  studio?: boolean;
 }
 
 /** Prepress / proof approval on an order (print workflow). */

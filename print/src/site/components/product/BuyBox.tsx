@@ -20,6 +20,8 @@ import { ArtworkPicker } from './ArtworkPicker';
 import { QuoteForm } from './QuoteForm';
 import { addWorkingDays, fromUnitPrice, qtyText, shortDay, unitMoney } from './print';
 import { useTweenedNumber, type Configurator } from './useConfigurator';
+import { StudioCta } from '@/site/components/studio/StudioBand';
+import { isBag, studioHref } from '@/site/components/studio/model';
 
 export function BuyBox({ cfg, category, onAdd, ctaRef, artError }: { cfg: Configurator; category?: Category; onAdd: () => void; ctaRef?: Ref<HTMLDivElement>; artError?: boolean }) {
   const t = useDict(PD);
@@ -66,6 +68,7 @@ export function BuyBox({ cfg, category, onAdd, ctaRef, artError }: { cfg: Config
       </div>
       {l(p.short) && <p className="mt-4 text-[15.5px] leading-relaxed text-ink-soft">{l(p.short)}</p>}
       <FactRow cfg={cfg} />
+      {isBag(p) && <StudioCta to={studioHref(p, cfg.options)} className="mt-5" />}
 
       <div className="my-7 h-px bg-line" />
 

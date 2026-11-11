@@ -31,6 +31,7 @@ import OfferPage from '@/site/pages/OfferPage';
 import NotFound from '@/site/pages/NotFound';
 import Industries from '@/site/pages/Industries';
 import QuoteRequest from '@/site/pages/QuoteRequest';
+import Studio3D from '@/site/pages/Studio3D';
 
 // CMS (lazy — separate bundle)
 const AdminLayout = lazy(() => import('@/admin/layout/AdminLayout'));
@@ -210,6 +211,7 @@ const router = createBrowserRouter([
           { path: 'industrite', element: <Industries /> },
           { path: 'industrite/:slug', element: <Industries /> },
           { path: 'kerko-oferte', element: <QuoteRequest /> },
+          { path: 'studio-3d', element: <Studio3D /> },
           { path: 'projektet', element: <Projects /> },
           { path: 'rreth-nesh', element: <About /> },
           { path: 'kontakt', element: <Contact /> },

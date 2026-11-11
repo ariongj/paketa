@@ -80,7 +80,8 @@ export function CartLine({ line, compact, onNavigate }: { line: PricedLine; comp
   return (
     <div className="flex gap-3.5 py-5 sm:gap-4">
       <Link to={to} onClick={onNavigate} className={cn('shrink-0 overflow-hidden rounded-xl bg-white ring-1 ring-line', compact ? 'h-[72px] w-[72px]' : 'h-24 w-24 sm:h-28 sm:w-28')}>
-        <Img src={p.images[0]} small alt="" className="h-full w-full object-cover" />
+        {/* a bag designed in the 3D studio shows the design itself */}
+        <Img src={(line.item.artwork?.studio && line.item.artwork.thumb) || p.images[0]} small alt="" className="h-full w-full object-cover" />
       </Link>
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">

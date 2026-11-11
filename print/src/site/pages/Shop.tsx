@@ -31,6 +31,8 @@ import { AllHeader, CategoryBanner, CategoryChips } from '@/site/components/shop
 import { FilterPanel } from '@/site/components/shop/FilterPanel';
 import { DensityToggle, FilterButton, FilterPills, SortSelect, type Pill } from '@/site/components/shop/Toolbar';
 import { HelpBand } from '@/site/components/shop/HelpBand';
+import { StudioBand } from '@/site/components/studio/StudioBand';
+import { BAG_CATEGORY } from '@/site/components/studio/model';
 
 const PAGE = 24;
 const DENSITY_KEY = 'pw-shop-cols';
@@ -155,6 +157,7 @@ function ShopView({ slug }: { slug?: string }) {
     <>
       {category ? <CategoryBanner category={category} products={scope} /> : <AllHeader products={products} categories={categories} params={params} />}
       <CategoryChips categories={categories} products={products} active={category?.id ?? null} params={params} />
+      {category?.id === BAG_CATEGORY && <StudioBand compact className="pt-6 lg:pt-10" />}
 
       <section className="container-x pt-6 lg:pt-10">
         <div className="lg:grid lg:grid-cols-[248px_minmax(0,1fr)] lg:gap-12 xl:gap-14">

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type ReactNode } from 'react';
+import { Fragment, useEffect, useMemo, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router';
 import type { HomeSection } from '@/lib/types';
 import { useDb } from '@/store/db';
@@ -9,6 +9,7 @@ import {
   ProjectsSection, PromoSection, ServicesSection, StatsSection, TrustSection,
 } from '@/site/sections/HomeSections';
 import { IndustriesSection, LogosSection, TechnologySection } from '@/site/sections/PrintSections';
+import { StudioBand } from '@/site/components/studio/StudioBand';
 
 function renderSection(s: HomeSection): ReactNode {
   switch (s.type) {
@@ -77,12 +78,19 @@ export default function Home() {
     return () => window.removeEventListener('message', onMessage);
   }, []);
 
+  // The 3D studio call-out is part of the storefront, not a CMS section: it follows the product ranges.
+  const ranges = enabled.findIndex((s) => s.type === 'categories');
+  const studioAfter = enabled[ranges >= 0 ? ranges : 0]?.id;
+
   return (
     <>
       {enabled.map((s) => (
-        <div key={s.id} data-section={s.id} className="scroll-mt-24">
-          {renderSection(s)}
-        </div>
+        <Fragment key={s.id}>
+          <div data-section={s.id} className="scroll-mt-24">
+            {renderSection(s)}
+          </div>
+          {s.id === studioAfter && <StudioBand className="pb-24 sm:pb-28" />}
+        </Fragment>
       ))}
     </>
   );

@@ -41,5 +41,15 @@ export default defineConfig({
   },
   server: { port: 3370, strictPort: true, host: true },
   preview: { port: 3371, host: true },
-  build: { chunkSizeWarningLimit: 1500 },
+  build: {
+    chunkSizeWarningLimit: 1500,
+    // Two pages: the storefront + CMS (index.html) and the 3D bag studio (studio.html), which the storefront embeds
+    // in an iframe on /studio-3d so three.js is only downloaded by visitors who open it.
+    rollupOptions: {
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        studio: fileURLToPath(new URL('./studio.html', import.meta.url)),
+      },
+    },
+  },
 });

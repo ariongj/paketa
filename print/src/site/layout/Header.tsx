@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, NavLink, useLocation } from 'react-router';
-import { ArrowRight, ArrowUpRight, ChevronDown, FileText, Heart, Mail, Menu, Phone, Search, ShoppingBag } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, ChevronDown, FileText, Heart, Mail, Menu, Phone, Rotate3d, Search, ShoppingBag } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Logo } from '@/components/brand/Logo';
 import { LangSwitcher } from '@/components/LangSwitcher';
@@ -14,6 +14,7 @@ import { useDb } from '@/store/db';
 import { useActiveProducts, useCategories, usePlacements, useSettings } from '@/store/hooks';
 import { isPromo, type NavNode } from '@/admin/components/menus/links';
 import { useNavMenu } from '@/admin/components/menus/useNav';
+import { SD, STUDIO_PATH } from '@/site/components/studio/model';
 import { money } from '@/lib/format';
 import type { L10n } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -209,6 +210,7 @@ const panelMotion = {
 
 function ShopMenu({ item, onClose }: { item: NavItem; onClose: () => void }) {
   const d = useDict(D);
+  const sd = useDict(SD);
   const tiles = useShopTiles(item);
   const products = useActiveProducts();
   const sample = useDb((s) => s.products.find((p) => p.id === SAMPLE_KIT && p.status === 'active'));
@@ -253,6 +255,9 @@ function ShopMenu({ item, onClose }: { item: NavItem; onClose: () => void }) {
                   {c.label}
                 </NavTarget>
               ))}
+              <Link to={STUDIO_PATH} onClick={onClose} className="inline-flex items-center gap-1.5 font-semibold text-brand-700 hover:text-brand-800">
+                <Rotate3d className="h-4 w-4" /> {sd('nav')}
+              </Link>
               <Link to="/faqe/si-te-pergatisni-skedaret" onClick={onClose} className="inline-flex items-center gap-1.5 font-semibold text-ink-soft hover:text-ink">
                 <FileText className="h-4 w-4" /> {d('artwork')}
               </Link>
@@ -320,6 +325,7 @@ function LinksMenu({ item, onClose }: { item: NavItem; onClose: () => void }) {
 export function Header({ transparentTop = false }: { transparentTop?: boolean }) {
   const t = useDict(site);
   const d = useDict(D);
+  const sd = useDict(SD);
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
@@ -432,6 +438,17 @@ export function Header({ transparentTop = false }: { transparentTop?: boolean })
                 </span>
               )}
             </button>
+            {/* hidden between lg and xl, where the full menu leaves no room for it */}
+            <Link
+              to={STUDIO_PATH}
+              className={cn(iconBtn, 'max-sm:hidden lg:max-xl:hidden 2xl:flex 2xl:w-auto 2xl:items-center 2xl:gap-1.5 2xl:px-3 2xl:text-[13.5px] 2xl:font-semibold')}
+              aria-label={sd('nav')}
+              title={sd('nav')}
+            >
+              <Rotate3d className="h-[19px] w-[19px]" />
+              <span className="hidden 2xl:inline">{sd('nav')}</span>
+              <span aria-hidden className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-brand-600 ring-2 ring-white/80 2xl:hidden" />
+            </Link>
             <div className="hidden xl:block">
               <LangSwitcher tone={solid ? 'dark' : 'light'} compact />
             </div>
@@ -460,6 +477,7 @@ export function Header({ transparentTop = false }: { transparentTop?: boolean })
 function MobileMenu({ open, onClose, nav }: { open: boolean; onClose: () => void; nav: NavItem[] }) {
   const t = useDict(site);
   const d = useDict(D);
+  const sd = useDict(SD);
   const settings = useSettings();
   const location = useLocation();
   const shop = nav.find(isShop);
@@ -486,6 +504,13 @@ function MobileMenu({ open, onClose, nav }: { open: boolean; onClose: () => void
         </div>
 
         <nav className="mt-6 flex flex-col border-t border-line">
+          <Link to={STUDIO_PATH} onClick={onClose} className={rowCls(location.pathname === STUDIO_PATH)}>
+            <span className="inline-flex items-center gap-2.5">
+              <Rotate3d className="h-[18px] w-[18px] text-brand-600" /> {sd('nav')}
+              <span className="rounded-full bg-brand-600 px-1.5 py-0.5 font-mono text-[9.5px] font-medium uppercase tracking-[0.08em] text-white">{sd('new')}</span>
+            </span>
+            <ArrowRight className="h-4 w-4 text-ink/25" />
+          </Link>
           {rows.map((n) => (
             <div key={n.id} className="flex flex-col">
               {!n.to ? (

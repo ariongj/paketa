@@ -10,6 +10,11 @@ specialty finishing. *Innovative Printing. Exceptional Packaging.*
   excl. VAT with 18 % VAT added), order confirmation with the proof → production → delivery timeline, a multi-step
   **request-a-quote** flow for custom packaging, industries, technology, projects, about, contact, blog, CMS pages,
   search and saved items.
+- **Studio 3D** (`/studio-3d`) — a paper bag the shopper builds and prints on in 3D: kraft or art paper in any brand
+  colour, four sizes, matte / gloss / soft-touch laminate, rope, twisted-paper, flat-paper or satin-ribbon handles, and
+  logo, text and QR code on both sides (gold and silver foil included). The design is priced from the catalogue's own
+  quantity tiers and added to the cart with a picture of the bag and a prepress note, which then show on the order in the
+  CMS. Linked from the homepage, the paper-bag category, every paper-bag product page and the header.
 - **CMS** (`/admin`) — dashboard, orders with a **prepress & proof** workflow (artwork per line, proof versions,
   approvals), printable invoices / pro-formas, draft orders, complaints, products with a **quantity-tier price
   editor**, collections, categories, inventory, purchasing, customers & segments, contacts inbox with structured
@@ -73,10 +78,20 @@ Each visitor's browser keeps its own copy of the demo data.
 | Client-side rendering | Server-side rendering / prerendering for SEO in both languages |
 | — | Domain printwor-ks.com, transactional e-mail, Google Analytics, Meta pixel |
 
+## Studio 3D
+
+The studio is its own page, `studio.html` + `src/studio/studio.js` (three.js, plain JavaScript), built as a second Vite
+entry so the storefront only downloads three.js when a visitor opens it. `src/site/pages/Studio3D.tsx` shows it in an
+iframe, listens for its `pw-studio` messages and maps the design to a catalogue product in
+`src/site/components/studio/model.ts` (kraft → kraft bag, XL → large shopping bag, otherwise the premium rope-handle
+bag). Sizes, papers, handles and finishes in `studio.js` use the same ids as the bag options in `src/data/catalog.ts`;
+change them in both places. The banner picture `public/images/studio/studio-bags.webp` is a render of three studio
+examples.
+
 ## Tech
 
 Vite · React 19 · TypeScript · Tailwind CSS v4 · React Router 7 · Zustand · Motion · Recharts · Lucide icons ·
-DM Sans + DM Mono (self-hosted).
+three.js (3D studio) · DM Sans + DM Mono (self-hosted).
 
 ```
 src/

@@ -231,7 +231,7 @@ function buildOrder(s: Db, input: PlaceOrderInput, extra: { customLines?: DraftO
     productId: l.product.id,
     sku: l.product.sku,
     name: lt(l.product.name, input.lang),
-    image: l.product.images[0] ?? '',
+    image: (l.item.artwork?.studio && l.item.artwork.thumb) || (l.product.images[0] ?? ''),   // 3D studio lines keep the picture of the designed bag
     unit: l.product.unit,
     packSize: l.product.packSize,
     qty: l.item.qty,
