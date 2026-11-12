@@ -18,8 +18,9 @@ dashboard numbers are fresh.
 - Open the **octagonal pizza box**: choose Ø 33 cm, print inside + outside, pick **1,000 pcs** — the unit price drops
   live from the tier table; add **professional design (+€45)** or upload a PDF; add to cart.
 - Open **food labels on rolls**: 5,000 pcs, white PP, gloss varnish, upload artwork (file name + preview).
-- **Studio 3D** (header icon, the band on the homepage, or "Shiheni këtë qese në 3D" on any paper bag): pick the
-  **Butik · folje ari** example, turn the bag so the gold foil catches the light, switch to kraft with twisted handles,
+- **Studio 3D** — start on the homepage: right under the hero a 3D bag turns by itself; switch the examples under it,
+  drag it round, then **Hape Studion 3D** (also the header icon, or "Shiheni këtë qese në 3D" on any paper bag). The
+  first six examples are PrintWorks' own catalogue bags. Pick the **Butik · folje ari** example, turn the bag so the gold foil catches the light, switch to kraft with twisted handles,
   put the handles down, add a text and a **QR code** on the back, change the quantity — the price follows the catalogue
   tiers — and **Shto në shportë**: the cart line shows the bag exactly as designed.
 - Cart: artwork status per line, free delivery progress, **total excl. VAT → VAT 18 % → total**, code `PRINT10`.

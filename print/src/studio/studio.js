@@ -23,6 +23,10 @@ const PAPER_TILE = 3.2;   // cm covered by one tile of the paper grain texture
 
 // ---------------- language ----------------
 const params = new URLSearchParams(location.search);
+// ?embed=1: only the bag, turning slowly (the homepage showcase); ?bg=ecebef sets the backdrop to match the page around it.
+const embed = params.has('embed');
+if (embed) document.body.classList.add('embed');
+if (/^[0-9a-f]{6}$/i.test(params.get('bg') || '')) document.documentElement.style.setProperty('--stage', '#' + params.get('bg'));
 let lang = params.get('lang') === 'en' ? 'en' : 'sq';
 const I18N = {
   sq: {
@@ -56,6 +60,9 @@ const I18N = {
     n_text: 'Vendosni **dy yje** rreth fjalëve për t’i bërë më të trasha. Enter për rresht të ri.',
     n_foil: 'Folja stampohet me nxehtësi pas printimit. Rrotullojeni qesen që të shihni si e kap dritën.',
     save_image: 'Ruaj imazhin',
+    motif: 'Motivi', m_none: 'Pa motiv', m_chevron: 'Shevrona', m_dots: 'Pika', m_stripes: 'Vija', m_top: 'Bllok lart', m_bottom: 'Bllok poshtë',
+    motif_colour: 'Ngjyra e motivit', duplicate: 'Dyfisho', rotate: 'Rrotulloje vetë', fullscreen: 'Ekran i plotë',
+    g_catalogue: 'Nga katalogu PrintWorks', g_ideas: 'Ide sipas industrisë', spec_motif: 'Motivi',
     spec_title: 'Dizajn nga Studio 3D', spec_empty: 'pa printim', spec_text: 'tekst', spec_logo: 'logo', spec_qr: 'kod QR', spec_graphic: 'grafikë',
     spec_bag: 'Ngjyra e qeses', spec_handle: 'Doreza', spec_full: 'CMYK',
   },
@@ -90,6 +97,9 @@ const I18N = {
     n_text: 'Put **double asterisks** around words to make them bold. Press Enter for a new line.',
     n_foil: 'Foil is hot-stamped after printing. Turn the bag to see it catch the light.',
     save_image: 'Save image',
+    motif: 'Pattern', m_none: 'None', m_chevron: 'Chevrons', m_dots: 'Dots', m_stripes: 'Stripes', m_top: 'Top block', m_bottom: 'Bottom block',
+    motif_colour: 'Pattern colour', duplicate: 'Duplicate', rotate: 'Turn by itself', fullscreen: 'Full screen',
+    g_catalogue: 'From the PrintWorks catalogue', g_ideas: 'Ideas by industry', spec_motif: 'Pattern',
     spec_title: 'Design from Studio 3D', spec_empty: 'no print', spec_text: 'text', spec_logo: 'logo', spec_qr: 'QR code', spec_graphic: 'artwork',
     spec_bag: 'Bag colour', spec_handle: 'Handle', spec_full: 'CMYK',
   },
@@ -133,7 +143,7 @@ const BAG_COLOURS = [
 ];
 const HANDLE_COLOURS = [
   [['E zezë', 'Black'], BLACK], [['E bardhë', 'White'], '#f1efe9'], [['Natyrale', 'Natural'], '#b98b5d'], [['Si qesja', 'Match the bag'], 'match'],
-  [['Vjollcë', 'Purple'], PURPLE], [['Blu marine', 'Navy'], '#1f2b4d'], [['E kuqe', 'Red'], '#c8262c'], [['Ari', 'Gold'], '#b8975a'],
+  [['Vjollcë', 'Purple'], PURPLE], [['Blu', 'Blue'], '#2b4db5'], [['Blu marine', 'Navy'], '#1f2b4d'], [['E kuqe', 'Red'], '#c8262c'], [['Ari', 'Gold'], '#b8975a'],
 ];
 // [name, colour, hot-foil?]
 const INKS = [
@@ -156,6 +166,8 @@ const STYLES = {
 const state = {
   paper: 'art', size: 'M', W: 24, H: 32, D: 10,
   colour: WHITE, finish: 'matte', handle: 'rope', handleColour: BLACK, pose: 'upright',
+  motif: 'none', motifColour: PURPLE,   // all-over print
+  product: null,                        // the catalogue product an example stands for (a hint for the storefront)
 };
 const paperCol = () => PAPERS[state.paper].colour || state.colour;
 const hd = () => HANDLES[state.handle];
@@ -665,6 +677,44 @@ function cutPath(ctx, PX, x, y) {
   }
 }
 
+// All-over print: a repeating motif or a colour block that runs round the four upright panels.
+// `u0` is where the area starts, measured round the bag from the left gusset (cm), so the pattern lines up from
+// panel to panel and matches in the flat editor.
+const MOTIFS = ['none', 'chevron', 'dots', 'stripes', 'top', 'bottom'];
+const motifTiles = new Map();
+function motifTile(kind, colour, PX) {
+  const k = [kind, colour, Math.round(PX * 100), state.W].join('|');
+  if (motifTiles.has(k)) return motifTiles.get(k);
+  if (motifTiles.size > 12) motifTiles.clear();
+  const c = document.createElement('canvas'), x = c.getContext('2d');
+  if (kind === 'chevron') {   // the PrintWorks chevron row, two staggered rows per tile
+    const tw = Math.max(9, state.W * 0.5), th = tw * 0.66, s = tw * 0.7 * PX / 330, row = new Path2D(PW_ROW);
+    c.width = Math.round(tw * PX); c.height = Math.round(th * PX);
+    x.fillStyle = colour;
+    for (const [ox, oy] of [[0.06, 0.08], [0.56, 0.58], [-0.44, 0.58]]) { x.save(); x.translate(ox * c.width, oy * c.height); x.scale(s, s); x.fill(row); x.restore(); }
+  } else if (kind === 'dots') {
+    c.width = c.height = Math.round(2.6 * PX); x.fillStyle = colour;
+    for (const q of [0.25, 0.75]) { x.beginPath(); x.arc(q * c.width, q * c.height, 0.42 * PX, 0, Math.PI * 2); x.fill(); }
+  } else {
+    c.width = Math.round(2.4 * PX); c.height = 8; x.fillStyle = colour; x.fillRect(0, 0, c.width / 2, 8);
+  }
+  motifTiles.set(k, c); return c;
+}
+function drawMotif(ctx, PX, x, y, w, h, u0) {
+  const kind = state.motif; if (kind === 'none') return;
+  ctx.save(); ctx.globalAlpha *= state.paper === 'art' ? 1 : 0.92; ctx.fillStyle = state.motifColour;
+  if (kind === 'top') ctx.fillRect(x * PX, y * PX, w * PX, h * 0.46 * PX);
+  else if (kind === 'bottom') ctx.fillRect(x * PX, (y + h * 0.64) * PX, w * PX, h * 0.36 * PX);
+  else {
+    const pat = ctx.createPattern(motifTile(kind, state.motifColour, PX), 'repeat');
+    pat.setTransform(new DOMMatrix().translate((x - u0) * PX, y * PX));
+    ctx.beginPath(); ctx.rect(x * PX, y * PX, w * PX, h * PX); ctx.clip();
+    ctx.fillStyle = pat; ctx.fillRect(x * PX, y * PX, w * PX, h * PX);
+  }
+  ctx.restore();
+}
+const roundBag = () => [[L.left, 0], [L.front, state.D], [L.right, state.D + state.W], [L.back, 2 * state.D + state.W]];
+
 let PXa = 40, baseKey = '', bumpKey = '';
 const ATLAS_MAX = Math.min(renderer.capabilities.maxTextureSize, innerWidth < 760 ? 2800 : 4000);   // phones get a smaller texture
 const baseC = document.createElement('canvas');   // the plain paper with its creases, reused while only the print changes
@@ -680,7 +730,7 @@ function redrawAtlas() {
   if (atlas.width !== wpx || atlas.height !== hpx) for (const tx of [atlasTex, bumpTex, roughTex, alphaTex]) tx.dispose();
 
   // colour: the plain paper layer is rebuilt only when the paper, its size or its colour changes
-  const k = [state.paper, W, state.H, D, col, wpx, hpx].join('|');
+  const k = [state.paper, W, state.H, D, col, state.motif, state.motifColour, wpx, hpx].join('|');
   if (k !== baseKey) {
     baseKey = k; baseC.width = wpx; baseC.height = hpx;
     const bx = baseC.getContext('2d');
@@ -692,6 +742,7 @@ function redrawAtlas() {
     if (state.paper === 'kraft-brown') { tile(mottle, PX / 40, 'soft-light', 0.16); tile(fibres, PX / 40, 'soft-light', 0.5); tile(flecks, PX / 40, 'multiply', 0.32); tile(mottle, PX / 90, 'soft-light', 0.2); }
     else if (state.paper === 'kraft-white') { tile(fibres, PX / 40, 'soft-light', 0.3); tile(flecks, PX / 40, 'multiply', 0.07); tile(mottle, PX / 90, 'soft-light', 0.12); }
     else tile(mottle, PX / 90, 'soft-light', 0.05);
+    for (const [R, u0] of roundBag()) drawMotif(bx, PX, R[0], R[1], R[2], R[3], u0);
     bx.save(); bx.strokeStyle = creaseColour(col); bx.lineWidth = 0.05 * PX; bx.globalAlpha = art ? 0.3 : 0.55;
     drawCreases(bx, PX); bx.restore();
   }
@@ -892,6 +943,9 @@ function syncControls() {
   swatches('bagSw', BAG_COLOURS, state.colour, v => { state.colour = v; afterLook(); });
   $('customColour').value = state.colour;
   seg('finishSeg', Object.entries(FINISHES).map(([k, v]) => [k, P2(v.name)]), state.finish, v => { state.finish = v; afterLook(); });
+  seg('motifSeg', MOTIFS.map(k => [k, t('m_' + k)]), state.motif, v => { state.motif = v; afterLook(); });
+  $('motifSw').hidden = state.motif === 'none';
+  swatches('motifSw', INKS.filter(i => !i[2]), state.motifColour, v => { state.motifColour = v; afterLook(); });
   seg('handleSeg', P.handles.map(k => [k, P2(HANDLES[k].name)]), state.handle, setHandle);
   swatches('handleSw', HANDLE_COLOURS, state.handleColour, v => { state.handleColour = v; afterLook(); });
   document.querySelectorAll('#poseSeg button').forEach(b => b.classList.toggle('on', b.dataset.v === state.pose));
@@ -947,6 +1001,16 @@ function applyLight() {
 }
 envRot.oninput = applyLight; expo.oninput = applyLight; applyLight();
 
+// stage tools: a slow turntable, and full screen for presenting
+const spin = $('spin'), full = $('full');
+function setSpin(on) {
+  controls.autoRotate = on; controls.autoRotateSpeed = embed ? 1.1 : 1.6;
+  spin.classList.toggle('on', on); spin.setAttribute('aria-pressed', on); dirty = true;
+}
+spin.onclick = () => setSpin(!controls.autoRotate);
+if (!document.fullscreenEnabled) full.hidden = true;
+full.onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {}); };
+
 // ---------------- artwork loading ----------------
 function loadImage(src) { return new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; }); }
 // Turn any logo into an ink mask: keep real transparency, otherwise separate ink from a light (or dark) background.
@@ -988,52 +1052,83 @@ function pwMark() {
 
 // ---------------- examples ----------------
 // Positions are fractions of the panel (fx, fy = centre, fw = width) so each example fits whatever size it is shown at.
-// Text may be [Albanian, English].
+// Text may be [Albanian, English]. The first group follows the six paper bags in the catalogue (src/data/catalog.ts)
+// and the way they are photographed there; `product` tells the storefront which one an example is ordered as.
 const pwBag = (word, mark) => [
   { text: 'PrintWorks', style: 'dm-600', track: -0.03, fx: 0.5, fy: 0.27, fw: 0.8, ink: word },
   { text: 'solutions', style: 'sans-500', fx: 0.76, fy: 0.345, fw: 0.2, ink: word },
   { kind: 'graphic', graphic: 'pw', fx: 0.5, fy: 0.64, fw: 0.76, ink: mark },
 ];
-const atelier = [
-  { text: 'ATELIER', style: 'serif-500', track: 0.2, fx: 0.5, fy: 0.47, fw: 0.66, ink: GOLD },
-  { text: 'PRISHTINË', style: 'sans-500', track: 0.45, fx: 0.5, fy: 0.565, fw: 0.34, ink: GOLD },
+const lines = (...l) => l.join('\n');
+const one = (text, style, fy, fw, ink, track = 0) => ({ text, style, track, fx: 0.5, fy, fw, ink });
+const atelier = [one('ATELIER', 'serif-500', 0.47, 0.66, GOLD, 0.2), one('PRISHTINË', 'sans-500', 0.565, 0.34, GOLD, 0.45)];
+const kantina = [one('KANTINA', 'serif-700', 0.44, 0.7, GOLD, 0.08), one(['VERË · RAKI · DHURATA', 'WINE · SPIRITS · GIFTS'], 'sans-500', 0.56, 0.56, GOLD, 0.3)];
+const lume = [one('lumë', 'serif-500', 0.47, 0.5, '#4a4a4c'), one(['KOZMETIKË NATYRALE', 'NATURAL SKINCARE'], 'sans-500', 0.6, 0.5, '#4a4a4c', 0.34)];
+const flora = [one('flora', 'script-700', 0.5, 0.62, WHITE), one(['LULE & DHURATA', 'FLOWERS & GIFTS'], 'sans-500', 0.67, 0.5, WHITE, 0.3)];
+const paperBag = ink => [
+  { text: lines('PAPER', 'BAG'), style: 'serif-500', fx: 0.27, fy: 0.19, fw: 0.36, ink: BLACK },
+  { kind: 'graphic', graphic: 'pw', fx: 0.5, fy: 0.52, fw: 0.74, ink: BLACK },
+  one('PrintWorks', 'dm-600', 0.82, 0.62, ink, -0.03),
 ];
 const SAMPLES = [
-  { id: 'printworks', name: ['PrintWorks', 'PrintWorks'], paper: 'art', size: 'M', colour: WHITE, finish: 'matte', handle: 'rope', handleColour: '#f1efe9', ink: PURPLE,
+  // from the catalogue
+  { id: 'premium', group: 'catalogue', product: 'p-qese-premium', name: ['Premium me litar', 'Premium rope handle'], paper: 'art', size: 'M', colour: WHITE, finish: 'matte', handle: 'rope', handleColour: '#f1efe9', ink: PURPLE,
     front: pwBag(BLACK, PURPLE), back: pwBag(BLACK, PURPLE) },
-  { id: 'butik', name: ['Butik · folje ari', 'Boutique · gold foil'], paper: 'art', size: 'M', colour: BLACK, finish: 'softtouch', handle: 'rope', handleColour: BLACK, ink: GOLD,
+  { id: 'ngjyre', group: 'catalogue', product: 'p-qese-ngjyre', name: ['Ngjyrë e plotë', 'Full colour'], paper: 'art', size: 'M', colour: '#e772c4', finish: 'matte', handle: 'rope', handleColour: '#f1efe9', ink: BLACK,
+    front: paperBag(WHITE), back: paperBag(WHITE) },
+  { id: 'kraft', group: 'catalogue', product: 'p-qese-kraft', name: ['Kraft dyngjyrëshe', 'Two-tone kraft'], paper: 'kraft-brown', size: 'M', handle: 'twisted', handleColour: BLACK, ink: '#d9a39c', motif: 'top', motifColour: '#d9a39c',
+    front: [{ text: lines('Paper', 'Bag'), style: 'dm-800', track: -0.02, fx: 0.5, fy: 0.42, fw: 0.5, ink: '#ecd3b4' }, { kind: 'graphic', graphic: 'pw', fx: 0.5, fy: 0.18, fw: 0.22, ink: '#ecd3b4' },
+            { kind: 'graphic', graphic: 'pw', fx: 0.5, fy: 0.8, fw: 0.22, ink: '#d9a39c' }], back: [] },
+  { id: 'luksoze', group: 'catalogue', product: 'p-qese-luksoze', name: ['Luksoze me motiv', 'Luxury all-over'], paper: 'art', size: 'L', colour: WHITE, finish: 'matte', handle: 'rope', handleColour: '#f1efe9', ink: PURPLE,
+    motif: 'chevron', motifColour: PURPLE, front: [], back: [] },
+  { id: 'pastel', group: 'catalogue', product: 'p-qese-pastel', name: ['Seria pastel', 'Pastel series'], paper: 'art', size: 'M', colour: '#cdbfe6', finish: 'matte', handle: 'ribbon', handleColour: '#2b4db5', ink: '#2b4db5',
+    front: [{ kind: 'graphic', graphic: 'pw', fx: 0.5, fy: 0.5, fw: 0.82, ink: '#2b4db5' }, { text: 'PAPER BAG', style: 'dm-600', fx: 0.3, fy: 0.9, fw: 0.36, ink: '#2b4db5' }],
+    back: [{ kind: 'graphic', graphic: 'pw', fx: 0.5, fy: 0.5, fw: 0.82, ink: '#2b4db5' }] },
+  { id: 'blerjesh', group: 'catalogue', product: 'p-qese-blerjesh', name: ['Blerjesh e madhe', 'Large shopping bag'], paper: 'art', size: 'XL', colour: '#dde07e', finish: 'matte', handle: 'rope', handleColour: BLACK, ink: PURPLE,
+    motif: 'chevron', motifColour: '#e6c634',
+    front: [one('ShoppingBag', 'dm-600', 0.47, 0.78, PURPLE, -0.03), { kind: 'graphic', graphic: 'pw', fx: 0.4, fy: 0.62, fw: 0.14, ink: PURPLE }, { text: 'PrintWorks', style: 'dm-600', track: -0.03, fx: 0.63, fy: 0.62, fw: 0.3, ink: PURPLE }],
+    back: [one('ShoppingBag', 'dm-600', 0.5, 0.78, PURPLE, -0.03)] },
+  // ideas by industry
+  { id: 'butik', group: 'ideas', name: ['Butik · folje ari', 'Boutique · gold foil'], paper: 'art', size: 'M', colour: BLACK, finish: 'softtouch', handle: 'rope', handleColour: BLACK, ink: GOLD,
     front: atelier, back: atelier },
-  { id: 'kraft', name: ['Kraft · takeaway', 'Kraft · takeaway'], paper: 'kraft-brown', size: 'M', handle: 'twisted', handleColour: '#b98b5d', ink: BLACK,
-    front: [{ text: [['bukë', '& kafe'].join('\n'), ['bread', '& coffee'].join('\n')], style: 'serif-700', fx: 0.5, fy: 0.44, fw: 0.6, ink: BLACK },
-            { text: ['E PJEKUR ÇDO MËNGJES', 'BAKED EVERY MORNING'], style: 'sans-500', track: 0.22, fx: 0.5, fy: 0.69, fw: 0.56, ink: BLACK }],
-    back: [{ kind: 'qr', data: 'https://printwor-ks.com', fx: 0.5, fy: 0.46, fw: 0.34, ink: BLACK },
-           { text: ['SKANO MENYNË', 'SCAN THE MENU'], style: 'sans-700', track: 0.2, fx: 0.5, fy: 0.68, fw: 0.42, ink: BLACK }] },
-  { id: 'vjollce', name: ['Ngjyrë e plotë', 'Full colour'], paper: 'art', size: 'L', colour: PURPLE, finish: 'gloss', handle: 'rope', handleColour: '#f1efe9', ink: WHITE,
-    front: [{ kind: 'graphic', graphic: 'pw', fx: 0.5, fy: 0.5, fw: 0.78, ink: WHITE }, { text: 'PrintWorks', style: 'dm-600', track: -0.03, fx: 0.5, fy: 0.84, fw: 0.36, ink: WHITE }],
-    back: [{ text: ['Përsosmëri\ne printuar.', 'Perfection\nPrinted.'], style: 'dm-600', track: -0.03, fx: 0.5, fy: 0.5, fw: 0.7, ink: WHITE }] },
-  { id: 'pastel', name: ['Pastel · shirit saten', 'Pastel · satin ribbon'], paper: 'art', size: 'S', colour: '#f2b8cf', finish: 'matte', handle: 'ribbon', handleColour: '#f1efe9', ink: WHITE,
-    front: [{ text: 'flora', style: 'script-700', fx: 0.5, fy: 0.5, fw: 0.62, ink: WHITE }, { text: ['LULE & DHURATA', 'FLOWERS & GIFTS'], style: 'sans-500', track: 0.3, fx: 0.5, fy: 0.67, fw: 0.5, ink: WHITE }],
-    back: [{ text: 'flora', style: 'script-700', fx: 0.5, fy: 0.5, fw: 0.62, ink: WHITE }] },
-  { id: 'eko', name: ['Kraft i bardhë · eko', 'White kraft · eco'], paper: 'kraft-white', size: 'M', handle: 'flat', handleColour: '#f1efe9', ink: '#2e7d4f',
-    front: [{ text: ['E GJELBËR', 'GREEN'], style: 'cond-700', track: 0.04, fx: 0.5, fy: 0.42, fw: 0.7, ink: '#2e7d4f' },
-            { text: ['100% e riciklueshme', '100% recyclable'], style: 'sans-500', track: 0.08, fx: 0.5, fy: 0.6, fw: 0.56, ink: '#2e7d4f' }],
-    back: [] },
+  { id: 'kafe', group: 'ideas', name: ['Furrë & kafe', 'Bakery & café'], paper: 'kraft-brown', size: 'M', handle: 'twisted', handleColour: '#b98b5d', ink: BLACK,
+    front: [one([lines('bukë', '& kafe'), lines('bread', '& coffee')], 'serif-700', 0.44, 0.6, BLACK), one(['E PJEKUR ÇDO MËNGJES', 'BAKED EVERY MORNING'], 'sans-500', 0.69, 0.56, BLACK, 0.22)],
+    back: [{ kind: 'qr', data: 'https://printwor-ks.com', fx: 0.5, fy: 0.46, fw: 0.34, ink: BLACK }, one(['SKANO MENYNË', 'SCAN THE MENU'], 'sans-700', 0.68, 0.42, BLACK, 0.2)] },
+  { id: 'vere', group: 'ideas', name: ['Verë & dhurata', 'Wine & gifts'], paper: 'art', size: 'M', colour: '#1f4d3a', finish: 'matte', handle: 'rope', handleColour: '#b8975a', ink: GOLD,
+    front: kantina, back: kantina },
+  { id: 'kozmetike', group: 'ideas', name: ['Kozmetikë · soft-touch', 'Cosmetics · soft-touch'], paper: 'art', size: 'S', colour: '#dccbb0', finish: 'softtouch', handle: 'ribbon', handleColour: BLACK, ink: '#4a4a4c',
+    front: lume, back: lume },
+  { id: 'flora', group: 'ideas', name: ['Lule · shirit saten', 'Florist · satin ribbon'], paper: 'art', size: 'S', colour: '#f2b8cf', finish: 'matte', handle: 'ribbon', handleColour: '#f1efe9', ink: WHITE,
+    front: flora, back: [flora[0]] },
+  { id: 'takeaway', group: 'ideas', name: ['Takeaway', 'Takeaway'], paper: 'kraft-brown', size: 'M', handle: 'flat', handleColour: '#b98b5d', ink: BLACK, motif: 'bottom', motifColour: BLACK,
+    front: [one(lines('BURGER', '& CO.'), 'cond-700', 0.34, 0.62, BLACK, 0.02), one(['POROSIT ONLINE', 'ORDER ONLINE'], 'sans-700', 0.8, 0.5, WHITE, 0.2)],
+    back: [{ kind: 'qr', data: 'https://printwor-ks.com', fx: 0.5, fy: 0.36, fw: 0.3, ink: BLACK }, one(['SKANO & POROSIT', 'SCAN & ORDER'], 'sans-700', 0.8, 0.5, WHITE, 0.2)] },
+  { id: 'femije', group: 'ideas', name: ['Lodra & fëmijë', 'Toys & kids'], paper: 'art', size: 'M', colour: '#f1d54a', finish: 'gloss', handle: 'twisted', handleColour: '#f1efe9', ink: '#1f2b4d',
+    motif: 'dots', motifColour: WHITE, front: [one('lodra', 'dm-800', 0.5, 0.62, '#1f2b4d', -0.03)], back: [one('lodra', 'dm-800', 0.5, 0.62, '#1f2b4d', -0.03)] },
+  { id: 'eko', group: 'ideas', name: ['Kraft i bardhë · eko', 'White kraft · eco'], paper: 'kraft-white', size: 'M', handle: 'flat', handleColour: '#f1efe9', ink: '#2e7d4f',
+    front: [one(['E GJELBËR', 'GREEN'], 'cond-700', 0.42, 0.7, '#2e7d4f', 0.04), one(['100% e riciklueshme', '100% recyclable'], 'sans-500', 0.6, 0.56, '#2e7d4f', 0.08)], back: [] },
 ];
 const colourName = hex => { const hit = BAG_COLOURS.find(([, v]) => v === hex); return hit ? P2(hit[0]) : hex; };
 function renderSamples() {
   const on = samplesEl.querySelector('.sample.on')?.dataset.i;
   samplesEl.innerHTML = '';
-  SAMPLES.forEach((s, i) => {
-    const b = document.createElement('button'); b.className = 'sample'; b.dataset.i = i;
-    b.innerHTML = '<i class="dot"></i><span><b></b><small></small></span>';
-    const col = PAPERS[s.paper].colour || s.colour;
-    b.querySelector('.dot').style.background = `linear-gradient(135deg, ${col} 58%, ${s.ink} 58%)`;
-    b.querySelector('b').textContent = P2(s.name);
-    b.querySelector('small').textContent = `${s.size} · ${P2(PAPERS[s.paper].name)}`;
-    b.classList.toggle('on', String(i) === on);
-    b.onclick = () => loadSample(i);
-    samplesEl.appendChild(b);
-  });
+  for (const group of ['catalogue', 'ideas']) {
+    const list = SAMPLES.map((smp, i) => [smp, i]).filter(([smp]) => smp.group === group);
+    const h = document.createElement('h3'); h.textContent = t('g_' + group);
+    const n = document.createElement('span'); n.textContent = list.length; h.appendChild(n);
+    samplesEl.appendChild(h);
+    for (const [smp, i] of list) {
+      const b = document.createElement('button'); b.className = 'sample'; b.dataset.i = i;
+      b.innerHTML = '<i class="dot"></i><span><b></b><small></small></span>';
+      const col = PAPERS[smp.paper].colour || smp.colour;
+      b.querySelector('.dot').style.background = `linear-gradient(135deg, ${col} 58%, ${smp.ink} 58%)`;
+      b.querySelector('b').textContent = P2(smp.name);
+      b.querySelector('small').textContent = `${smp.size} · ${P2(PAPERS[smp.paper].name)}`;
+      b.classList.toggle('on', String(i) === on);
+      b.onclick = () => loadSample(i);
+      samplesEl.appendChild(b);
+    }
+  }
 }
 function loadSample(i, over = {}) {
   const s = { ...SAMPLES[i], ...over }, z = sizeOf(PAPERS[s.paper].sizes.includes(s.size) ? s.size : 'M');
@@ -1041,6 +1136,7 @@ function loadSample(i, over = {}) {
   Object.assign(state, {
     paper: s.paper, size: z[0], W: z[1], H: z[2], D: z[3], colour: s.colour || WHITE, finish: s.finish || 'matte',
     handle: PAPERS[s.paper].handles.includes(s.handle) ? s.handle : PAPERS[s.paper].handles[0], handleColour: s.handleColour || BLACK,
+    motif: s.motif || 'none', motifColour: s.motifColour || PURPLE, product: s.product || null,
   });
   for (const k of ['front', 'back']) design[k] = s[k].map(({ fx, fy, fw, ...e }) => {
     const el = { kind: 'text', ...e, id: nextId++, x: fx * state.W, y: fy * state.H, w: fw * state.W };
@@ -1057,6 +1153,7 @@ const ed = $('editor'), edx = ed.getContext('2d');
 const props = $('props'), designNote = $('designNote');
 const pText = $('pText'), pStyle = $('pStyle'), pQr = $('pQr'), pMethod = $('pMethod'), pInk = $('pInk'), pSize = $('pSize'), pNote = $('pNote'), copyBtn = $('copySide');
 let edScale = 10, drag = null, atlasQueued = false;
+const guides = { x: false, y: false };   // centre lines shown while an item snaps to them
 const selected = () => design[side].find(e => e.id === selId) || null;
 
 function changed() {   // editor now, 3D on the next frame (dragging stays smooth)
@@ -1084,12 +1181,19 @@ function drawEditor() {
   const P = s * dpr, a = printArea(), dark = new THREE.Color(paperCol()).getHSL({}).l < 0.5;
   edx.setTransform(1, 0, 0, 1, 0, 0);
   edx.fillStyle = paperCol(); edx.fillRect(0, 0, ed.width, ed.height);
+  drawMotif(edx, P, 0, 0, W, H, side === 'front' ? state.D : 2 * state.D + W);
   edx.save(); edx.beginPath(); edx.rect(0, 0, ed.width, ed.height); edx.rect(a.x0 * P, a.y0 * P, (a.x1 - a.x0) * P, (a.y1 - a.y0) * P);
   edx.fillStyle = edx.createPattern(hatch(dark), 'repeat'); edx.fill('evenodd');
   edx.setLineDash([4 * dpr, 4 * dpr]); edx.strokeStyle = dark ? 'rgba(255,255,255,0.45)' : 'rgba(0,0,0,0.3)'; edx.lineWidth = dpr;
   edx.strokeRect(a.x0 * P, a.y0 * P, (a.x1 - a.x0) * P, (a.y1 - a.y0) * P); edx.restore();
   edx.save(); edx.fillStyle = '#f7f7f8'; cutPath(edx, P, 0, 0); edx.fill(); edx.restore();   // punched holes show the page behind
   drawSide(edx, P, 0, 0, design[side]);
+  if (guides.x || guides.y) {
+    edx.save(); edx.strokeStyle = '#e6007e'; edx.lineWidth = dpr; edx.beginPath();
+    if (guides.x) { edx.moveTo(W / 2 * P, 0); edx.lineTo(W / 2 * P, ed.height); }
+    if (guides.y) { const cy = (a.y0 + a.y1) / 2 * P; edx.moveTo(0, cy); edx.lineTo(ed.width, cy); }
+    edx.stroke(); edx.restore();
+  }
   const el = selected();
   if (el) {
     const [w, h] = elementSize(el), x = (el.x - w / 2) * P, y = (el.y - h / 2) * P, k = 10 * dpr;
@@ -1119,11 +1223,17 @@ ed.addEventListener('pointermove', e => {
   const [x, y] = edPoint(e);
   if (!drag) { const [el, mode] = hitTest(x, y); ed.style.cursor = mode === 'resize' ? 'nwse-resize' : el ? 'move' : 'default'; return; }
   const el = drag.el;
-  if (drag.mode === 'move') { el.x = drag.ex + x - drag.x0; el.y = drag.ey + y - drag.y0; }
+  if (drag.mode === 'move') {
+    el.x = drag.ex + x - drag.x0; el.y = drag.ey + y - drag.y0;
+    const a = printArea(), cy = (a.y0 + a.y1) / 2, tol = 6 / edScale;
+    guides.x = Math.abs(el.x - state.W / 2) < tol; guides.y = Math.abs(el.y - cy) < tol;
+    if (guides.x) el.x = state.W / 2;
+    if (guides.y) el.y = cy;
+  }
   else el.w = Math.max(minWidth(el), drag.w0 + 2 * (x - drag.x0));   // resizes about the centre
   clampEl(el); syncProps(); changed();
 });
-const endDrag = () => { drag = null; };
+const endDrag = () => { drag = null; if (guides.x || guides.y) { guides.x = guides.y = false; drawEditor(); } };
 ed.addEventListener('pointerup', endDrag); ed.addEventListener('pointercancel', endDrag);
 ed.addEventListener('keydown', e => {
   const el = selected(); if (!el) return;
@@ -1170,6 +1280,11 @@ pMethod.addEventListener('click', e => { const b = e.target.closest('button'), e
 pSize.addEventListener('input', () => { const el = selected(); if (el) { el.w = +pSize.value; clampEl(el); syncProps(); changed(); } });
 $('pCenter').onclick = () => { const el = selected(); if (el) { el.x = state.W / 2; clampEl(el); changed(); } };
 $('delItem').onclick = removeSelected;
+$('pDup').onclick = () => {
+  const el = selected(); if (!el) return;
+  const copy = { ...el, id: nextId++, x: el.x + 1, y: el.y + 1 };
+  clampEl(copy); design[side].push(copy); selId = copy.id; syncProps(); changed();
+};
 
 // adding items
 const defaultInk = () => relLum(paperCol()) > 0.3 ? BLACK : WHITE;
@@ -1185,7 +1300,7 @@ $('addQr').onclick = () => {   // QR codes usually sit in a lower corner, clear 
 $('addLogo').onchange = async e => {
   const f = e.target.files[0]; if (!f) return;
   try {
-    const img = await loadImage(URL.createObjectURL(f)), id = 'logo' + nextId++;
+    const img = await loadImage(URL.createObjectURL(f)), id = 'logo' + Date.now().toString(36) + nextId++;
     assets.set(id, toArt(img, f.name));
     addItem({ kind: 'logo', asset: id, method: 'mono', w: Math.min(12, state.W * 0.5) });
     designNote.textContent = t('added', { name: f.name });
@@ -1213,6 +1328,7 @@ function applyLang() {
   document.documentElement.lang = lang;
   document.querySelectorAll('[data-t]').forEach(el => { el.textContent = t(el.dataset.t); });
   document.querySelectorAll('[data-t-aria]').forEach(el => el.setAttribute('aria-label', t(el.dataset.tAria)));
+  document.querySelectorAll('[data-t-title]').forEach(el => { el.title = t(el.dataset.tTitle); el.setAttribute('aria-label', el.title); });
   designNote.textContent = t('design_note');
   renderSamples(); syncControls(); syncSideUI(); syncProps();
 }
@@ -1276,7 +1392,9 @@ function setQuality(q) {
 }
 new ResizeObserver(resize).observe(stage); resize();
 
+let active = true;   // the homepage pauses the embedded bag while it is off screen
 function render(force = false) {
+  if (!active && !force) return;
   let moved = false;
   if (tween) {
     moved = true;
@@ -1302,6 +1420,7 @@ renderer.setAnimationLoop(render);
 
 // ---------------- the storefront's side of the glass ----------------
 // What the shopper has built, in the catalogue's own vocabulary (option ids match src/data/catalog.ts).
+const inkName = hex => { const hit = INKS.find(i => i[1] === hex); return hit ? P2(hit[0]).toLowerCase() : hex; };
 function describe() {
   const item = el => {
     const ink = el.kind === 'logo' && el.method === 'full' ? t('spec_full') : P2((INKS.find(i => i[1] === el.ink) || [[el.ink, el.ink]])[0]).toLowerCase();
@@ -1312,18 +1431,21 @@ function describe() {
   const sideText = k => design[k].length ? design[k].map(item).join('; ') : t('spec_empty');
   const hc = HANDLE_COLOURS.find(([, v]) => v === state.handleColour);
   return `${t('spec_title')} — ${t('front')}: ${sideText('front')}. ${t('back')}: ${sideText('back')}. `
-    + `${t('spec_bag')}: ${colourName(paperCol())}. ${t('spec_handle')}: ${P2(hd().name).toLowerCase()}, ${(hc ? P2(hc[0]) : state.handleColour).toLowerCase()}.`;
+    + `${t('spec_bag')}: ${colourName(paperCol())}. ${t('spec_handle')}: ${P2(hd().name).toLowerCase()}, ${(hc ? P2(hc[0]) : state.handleColour).toLowerCase()}.`
+    + (state.motif === 'none' ? '' : ` ${t('spec_motif')}: ${t('m_' + state.motif).toLowerCase()}, ${inkName(state.motifColour)}.`);
 }
 function getConfig() {
   const all = [...design.front, ...design.back];
   return {
     paper: state.paper, size: state.size, width: state.W, depth: state.D, height: state.H,
     colour: paperCol(), finish: state.paper === 'art' ? state.finish : null, handle: state.handle, handleColour: handleHex(),
+    motif: state.motif, product: state.product,
     foil: all.some(isFoil), items: { front: design.front.length, back: design.back.length }, spec: describe(),
   };
 }
 let notifyQueued = false;
 function queueNotify() {
+  saveSoon();
   if (notifyQueued || window.parent === window) return;
   notifyQueued = true;
   queueMicrotask(() => { notifyQueued = false; window.parent.postMessage({ source: 'pw-studio', type: 'change', config: getConfig() }, location.origin); });
@@ -1343,7 +1465,40 @@ function setLang(next) {
   if (next !== 'sq' && next !== 'en' || next === lang) return;
   lang = next; applyLang(); queueNotify();
 }
-window.pwStudio = { getConfig, snapshot, setLang };
+// The design is kept for the browser tab, so a visitor who goes to the cart and comes back finds it again.
+const STORE = 'pw-studio-design-v1';
+let saveTimer = 0;
+function saveSoon() { if (embed || !window.__ready) return; clearTimeout(saveTimer); saveTimer = setTimeout(save, 500); }
+function save() {
+  try {
+    const logos = {}; let bytes = 0;
+    for (const el of [...design.front, ...design.back]) if (el.kind === 'logo' && !logos[el.asset]) {
+      const a = assets.get(el.asset); if (!a) continue;
+      const k = Math.min(1, 900 / Math.max(a.color.width, a.color.height)), c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(a.color.width * k)); c.height = Math.max(1, Math.round(a.color.height * k));
+      c.getContext('2d').drawImage(a.color, 0, 0, c.width, c.height);
+      const url = c.toDataURL('image/png'); bytes += url.length;
+      if (bytes > 2.5e6) return;   // too much to keep: the last saved state stays
+      logos[el.asset] = { url, name: a.name };
+    }
+    sessionStorage.setItem(STORE, JSON.stringify({ state, design, side, logos }));
+  } catch { /* storage unavailable or full: the design simply is not kept */ }
+}
+async function restore() {
+  try {
+    const d = JSON.parse(sessionStorage.getItem(STORE) || 'null');
+    if (!d || !PAPERS[d.state?.paper] || !sizeOf(d.state.size) || !HANDLES[d.state.handle] || !FINISHES[d.state.finish]) return false;
+    for (const [id, l] of Object.entries(d.logos || {})) assets.set(id, toArt(await loadImage(l.url), l.name));
+    Object.assign(state, d.state);
+    if (!MOTIFS.includes(state.motif)) state.motif = 'none';
+    for (const k of ['front', 'back']) design[k] = (d.design?.[k] || []).filter(el => el.kind !== 'logo' || assets.has(el.asset)).map(el => ({ ...el, id: nextId++ }));
+    side = d.side === 'back' ? 'back' : 'front'; selId = null;
+    return true;
+  } catch { return false; }
+}
+const showSample = id => { const i = SAMPLES.findIndex(smp => smp.id === id); if (i >= 0) loadSample(i); };
+const setActive = on => { active = !!on; if (active) dirty = true; };
+window.pwStudio = { getConfig, snapshot, setLang, loadSample: showSample, setActive };
 
 // ---------------- start ----------------
 function fontsReady() {
@@ -1362,18 +1517,25 @@ if (qrcode.stringToBytesFuncs?.['UTF-8']) qrcode.stringToBytes = qrcode.stringTo
 graphics.pw = pwMark();
 applyLang();
 applyColours(); rebuild(); setView('34', false);
-fontsReady().then(() => {
+fontsReady().then(async () => {
   maskCache.clear();
-  // The storefront can open the studio on a given bag: ?paper=kraft-brown&size=M&handle=twisted&finish=matte (ids as in the catalogue)
+  // The storefront can open the studio on a given bag, ?paper=kraft-brown&size=M&handle=twisted&finish=matte (ids as in the
+  // catalogue), or on an example, ?sample=butik. Without either, a visitor who comes back finds the design they left.
   const paper = PAPERS[params.get('paper')] ? params.get('paper') : null, size = (params.get('size') || '').toUpperCase();
-  const start = Math.max(0, SAMPLES.findIndex(s => paper ? s.paper === paper : s.id === params.get('sample')));
+  const asked = SAMPLES.findIndex(smp => paper ? smp.paper === paper : smp.id === params.get('sample'));
   const over = {};
   if (sizeOf(size)) over.size = size;
   if (HANDLES[params.get('handle')]) over.handle = params.get('handle');
   if (FINISHES[params.get('finish')]) over.finish = params.get('finish');
-  loadSample(start, over);
+  if (!embed && asked < 0 && await restore()) { syncControls(); syncSideUI(); applyColours(); rebuild(); drawEditor(); syncProps(); }
+  else loadSample(Math.max(0, asked), over);
   if (Object.keys(over).length || paper) showTab('bag');
   setView('34', false);
+  if (embed) {   // a showpiece, not a tool: it turns by itself, the mouse can spin it, and scrolling the page is never caught
+    controls.enableZoom = false; controls.enablePan = false;
+    if (matchMedia('(pointer: coarse)').matches) { controls.enabled = false; renderer.domElement.style.touchAction = 'auto'; }
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setSpin(true);
+  }
   window.__ready = true;
   $('boot').classList.add('done');
   if (window.parent !== window) window.parent.postMessage({ source: 'pw-studio', type: 'ready', config: getConfig() }, location.origin);

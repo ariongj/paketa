@@ -12,9 +12,13 @@ specialty finishing. *Innovative Printing. Exceptional Packaging.*
   search and saved items.
 - **Studio 3D** (`/studio-3d`) — a paper bag the shopper builds and prints on in 3D: kraft or art paper in any brand
   colour, four sizes, matte / gloss / soft-touch laminate, rope, twisted-paper, flat-paper or satin-ribbon handles, and
-  logo, text and QR code on both sides (gold and silver foil included). The design is priced from the catalogue's own
-  quantity tiers and added to the cart with a picture of the bag and a prepress note, which then show on the order in the
-  CMS. Linked from the homepage, the paper-bag category, every paper-bag product page and the header.
+  logo, text and QR code on both sides (gold and silver foil included), plus all-over patterns and colour blocks.
+  Fourteen ready-made examples: the six paper bags of the catalogue as they are photographed, and eight ideas by
+  industry. The design is priced from the catalogue's own quantity tiers and added to the cart with a picture of the bag
+  and a prepress note, which then show on the order in the CMS; it is kept for the browser tab, so a visitor who goes to
+  the cart and comes back finds it again. The homepage opens with a showcase right under the hero: a live, turning 3D
+  bag with examples to switch between. Also linked from the paper-bag category, every paper-bag product page and the
+  header.
 - **CMS** (`/admin`) — dashboard, orders with a **prepress & proof** workflow (artwork per line, proof versions,
   approvals), printable invoices / pro-formas, draft orders, complaints, products with a **quantity-tier price
   editor**, collections, categories, inventory, purchasing, customers & segments, contacts inbox with structured
@@ -85,8 +89,10 @@ entry so the storefront only downloads three.js when a visitor opens it. `src/si
 iframe, listens for its `pw-studio` messages and maps the design to a catalogue product in
 `src/site/components/studio/model.ts` (kraft → kraft bag, XL → large shopping bag, otherwise the premium rope-handle
 bag). Sizes, papers, handles and finishes in `studio.js` use the same ids as the bag options in `src/data/catalog.ts`;
-change them in both places. The banner picture `public/images/studio/studio-bags.webp` is a render of three studio
-examples.
+change them in both places. `studio.html?embed=1` shows only the turning bag; the homepage showcase
+(`src/site/components/studio/StudioShowcase.tsx`) loads it when the section is about to scroll into view and pauses it
+while off screen. The picture `public/images/studio/studio-bags.webp` (category banner, and the stand-in until the live
+bag is ready) is a render of three studio examples.
 
 ## Tech
 

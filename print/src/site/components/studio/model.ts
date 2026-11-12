@@ -20,6 +20,10 @@ export interface StudioConfig {
   finish: 'matte' | 'gloss' | 'softtouch' | null;
   handle: 'rope' | 'twisted' | 'flat' | 'ribbon';
   handleColour: string;
+  /** All-over print: none, chevron, dots, stripes, top or bottom colour block */
+  motif: string;
+  /** Catalogue product id the chosen example stands for, if any */
+  product: string | null;
   /** The design uses hot-foil ink */
   foil: boolean;
   items: { front: number; back: number };
@@ -33,6 +37,10 @@ export interface StudioApi {
   /** Square JPEG data URL of the bag as designed */
   snapshot: (size?: number) => string;
   setLang: (lang: 'sq' | 'en') => void;
+  /** Show one of the studio's examples by id */
+  loadSample: (id: string) => void;
+  /** Pause / resume drawing (the homepage pauses the bag while it is off screen) */
+  setActive: (on: boolean) => void;
 }
 
 export const studioApi = (frame: HTMLIFrameElement | null): StudioApi | undefined =>
@@ -59,7 +67,8 @@ export function matchProduct(cfg: StudioConfig, products: Product[]): { product:
     // paper and size must fit; handle and finish only rank the candidates
     if (kraft ? !has(p, 'paper', cfg.paper) : hasOption(p, 'paper') && !has(p, 'paper', 'art')) continue;
     if (cfg.size === 'XL' ? hasOption(p, 'size') : !has(p, 'size', size)) continue;
-    let score = p.id === preferred ? 3 : 0;
+    // an example taken from the catalogue is ordered as that product for as long as it still fits
+    let score = p.id === cfg.product ? 6 : p.id === preferred ? 3 : 0;
     if (has(p, 'handle', cfg.handle)) score += 2;
     if (cfg.finish && has(p, 'finish', cfg.finish)) score += 1;
     if (cfg.foil && has(p, 'finish', 'foil')) score += 1;
@@ -120,6 +129,15 @@ export const SD = defineDict({
     step2Text: 'Logo, tekst dhe kod QR në të dyja anët, në çdo ngjyrë — edhe me folje ari ose argjendi.',
     step3: 'Porositni',
     step3Text: 'Çmimi llogaritet menjëherë sipas sasisë. Dizajni shkon te prepress-i dhe prova ju vjen brenda 24 orësh.',
+    showTitle: 'Qesja juaj në 3D, para se të shtypet',
+    showText: 'Zgjidhni letrën, ngjyrën dhe dorezën, vendosni logon, tekstin ose kodin QR dhe rrotullojeni qesen nga çdo anë. Çmimi del menjëherë dhe dizajni shkon drejt te prepress-i.',
+    showB1: '3 lloje letre, 4 madhësi, 4 doreza dhe çdo ngjyrë',
+    showB2: 'Logo, tekst, kod QR dhe folje ari në të dyja anët',
+    showB3: 'Çmim i menjëhershëm dhe provë brenda 24 orësh',
+    showSecond: 'Shiko qeset e letrës',
+    showLive: 'Model 3D — tërhiqeni për ta rrotulluar',
+    showDesign: 'Dizajno këtë qese',
+    showPick: 'Shembuj të gatshëm',
     bandEyebrow: 'E re · Studio 3D',
     bandTitle: 'Shiheni qesen tuaj para se ta porosisni',
     bandText: 'Dizajnoni qesen në 3D: letra, madhësia, doreza, logoja, teksti dhe kodi QR — rrotullojeni dhe shiheni nga çdo anë, pastaj porositeni me një klikim.',
@@ -155,6 +173,15 @@ export const SD = defineDict({
     step2Text: 'Logo, text and a QR code on both sides, in any colour — gold or silver foil included.',
     step3: 'Order',
     step3Text: 'The price follows the quantity straight away. Your design goes to prepress and the proof reaches you within 24 hours.',
+    showTitle: 'Your bag in 3D, before it is printed',
+    showText: 'Pick the paper, colour and handle, place your logo, text or QR code and turn the bag to see every side. The price is there at once and the design goes straight to prepress.',
+    showB1: '3 papers, 4 sizes, 4 handles and any colour',
+    showB2: 'Logo, text, QR code and gold foil on both sides',
+    showB3: 'Instant price and a proof within 24 hours',
+    showSecond: 'See the paper bags',
+    showLive: '3D model — drag to turn it',
+    showDesign: 'Design this bag',
+    showPick: 'Ready-made examples',
     bandEyebrow: 'New · 3D Studio',
     bandTitle: 'See your bag before you order it',
     bandText: 'Design the bag in 3D: paper, size, handle, logo, text and QR code — turn it round, see every side, then order it in one click.',

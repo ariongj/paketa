@@ -441,13 +441,12 @@ export function Header({ transparentTop = false }: { transparentTop?: boolean })
             {/* hidden between lg and xl, where the full menu leaves no room for it */}
             <Link
               to={STUDIO_PATH}
-              className={cn(iconBtn, 'max-sm:hidden lg:max-xl:hidden 2xl:flex 2xl:w-auto 2xl:items-center 2xl:gap-1.5 2xl:px-3 2xl:text-[13.5px] 2xl:font-semibold')}
+              className={cn(iconBtn, 'max-sm:hidden lg:max-xl:hidden')}
               aria-label={sd('nav')}
               title={sd('nav')}
             >
               <Rotate3d className="h-[19px] w-[19px]" />
-              <span className="hidden 2xl:inline">{sd('nav')}</span>
-              <span aria-hidden className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-brand-600 ring-2 ring-white/80 2xl:hidden" />
+              <span aria-hidden className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-brand-600 ring-2 ring-white/80" />
             </Link>
             <div className="hidden xl:block">
               <LangSwitcher tone={solid ? 'dark' : 'light'} compact />
